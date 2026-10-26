@@ -1,4 +1,4 @@
-# Skills by Pipecorn: instructions for Claude
+# GTM Skills: instructions for Claude
 
 This folder holds go-to-market skills. Each lives in `plugins/<plugin>/skills/<skill>/` with a `SKILL.md`
 (the instructions to follow), a `prereqs.json` (what it needs) and usually `scripts/`. The slash commands in
@@ -10,5 +10,5 @@ walk the user through the fix; never install anything that needs a password your
 - The user's work goes in `workspace/`. Keys go in `.env.local`; never print a key back.
 - Never change `plugins/` or `.claude/commands/`: `git pull` updates them. To change a skill for good, make
   the user's own version in `.claude/skills/my-<skill>/` (a `SKILL.md` that reads ours, then applies their rules).
-- Some skills mention the Skills by Pipecorn app (its editor, its pages): without the app, run the same steps here.
+- Some skills mention the GTM Skills app (its editor, its pages): without the app, run the same steps here.
 - Reply in the user's language. Never invent a number, a name or a result.

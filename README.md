@@ -1,12 +1,12 @@
-# Skills by Pipecorn
+# GTM Skills
 
 **Go-to-market skills for Claude Code.** By [Pipecorn](https://pipecorn.com). Version 0.2.2.
 
 Each skill is a whole job, written down and tested: the method, the steps, the tools and the checks. You give
 Claude Code your file and answer its few questions; it does the job start to finish, on your Mac.
 
-Prefer an app, with a visual editor and everything installed for you? Download Skills by Pipecorn for macOS:
-https://skills-by-pipecorn.vercel.app
+Prefer an app, with a visual editor and everything installed for you? Download GTM Skills for macOS:
+https://gtm-skills.pipecorn.com
 
 ## The skills
 
@@ -28,10 +28,10 @@ on a Claude subscription, [Homebrew](https://brew.sh), then:
 
 ```bash
 brew install ffmpeg node git
-git clone https://github.com/ihsaneGTM/skills-by-pipecorn.git ~/"Skills by Pipecorn"
+git clone https://github.com/ihsaneGTM/gtm-skills.git ~/"GTM Skills"
 ```
 
-Open the `Skills by Pipecorn` folder in Claude Code and type a command, for example
+Open the `GTM Skills` folder in Claude Code and type a command, for example
 `/video-short-editor ~/Downloads/take.mp4`. The first run sets up the rest by itself (the rendering engine,
 the speech-to-text model, the music and the sound effects), once.
 
@@ -48,5 +48,5 @@ To update: `git pull` in the folder.
 ## Licence
 
 [PolyForm Shield 1.0.0](LICENSE.md): use the skills for any purpose, your business and your clients' work
-included; you may not sell them or build a product that competes with Skills by Pipecorn.
+included; you may not sell them or build a product that competes with GTM Skills.
 Third-party components keep their own licences.

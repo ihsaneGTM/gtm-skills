@@ -1,0 +1,39 @@
+{
+  "source": "/absolute/path/to/workspace/projects/<slug>/source/take.mp4",
+  "out": "/absolute/path/to/workspace/videos/<slug>.mp4",
+  "duration": 50.367,
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "speed": 1,
+  "blurBand": 0,
+  "bed": "music.wav",
+  "bedDb": -19.0,
+  "lufs": -14,
+  "ceilingDbtp": -1,
+  "sfxMasterDb": -5.2,
+  "style": "explainer",
+  "layout": "/absolute/path/to/plugins/video/skills/explainer-editor/scripts/layout.mjs",
+  "stage": {
+    "crop": 0.2306,
+    "full": {
+      "zoom": 1.191,
+      "x": 0.4037,
+      "y": 0.1104
+    },
+    "captionY": 0.6542,
+    "boxW": 0.5537,
+    "boxX": 0.22315
+  },
+  "musicTrack": "convergence.mp3",
+  "musicFrom": 18.29,
+  "musicDrops": [
+    [
+      20.67,
+      24.13
+    ]
+  ],
+  "voiceLufs": -20.5,
+  "sfxCalibrated": true,
+  "lang": "en"
+}

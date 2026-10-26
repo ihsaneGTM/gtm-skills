@@ -1,0 +1,146 @@
+{
+  "skill": "voiceover-video",
+  "summary": "Intro + your voice: you film only the intro of a YouTube video (16:9); it is dressed in the style, and the rest is your cloned voice in motion design parts, with real stock shots, GIFs and your dressed cutbacks; one music, -14 LUFS, checked; a 1080p draft, the 4K on request.",
+  "prerequisites": [
+    {
+      "id": "ffmpeg",
+      "label": "ffmpeg (cuts, compositing, render, mix, measurements)",
+      "type": "bin",
+      "required": true,
+      "bin": "ffmpeg",
+      "hint": "brew install ffmpeg"
+    },
+    {
+      "id": "ffprobe",
+      "label": "ffprobe (file checks)",
+      "type": "bin",
+      "required": true,
+      "bin": "ffprobe",
+      "hint": "Ships with ffmpeg."
+    },
+    {
+      "id": "node",
+      "label": "Node.js 22 or later (the skill's scripts)",
+      "type": "bin",
+      "required": true,
+      "bin": "node",
+      "hint": "brew install node"
+    },
+    {
+      "id": "python3",
+      "label": "Python 3 (speech-to-text runtime)",
+      "type": "bin",
+      "required": true,
+      "bin": "python3",
+      "hint": "xcode-select --install"
+    },
+    {
+      "id": "swiftc",
+      "label": "Swift compiler (cutting you out of your intro, Apple Vision)",
+      "type": "bin",
+      "required": true,
+      "bin": "swiftc",
+      "hint": "xcode-select --install"
+    },
+    {
+      "id": "whisper",
+      "label": "Speech-to-text (Whisper, on your Mac's GPU)",
+      "type": "file",
+      "required": false,
+      "auto": true,
+      "path": "${WHISPER_PY:-~/.venv/whisper/bin/python}",
+      "hint": "Installed on the first video by the video engine's bootstrap (plugins/video/skills/short-editor/scripts/bootstrap.mjs): it hears your take on this Mac, free, nothing sent."
+    },
+    {
+      "id": "elevenlabs",
+      "label": "ELEVENLABS_API_KEY (the AI voice: your clone or an ElevenLabs voice)",
+      "type": "env",
+      "required": false,
+      "vars": [
+        "ELEVENLABS_API_KEY"
+      ],
+      "hint": "Only for the two ways with an AI voice (Motion design + AI voice, Facecam + Motion design + AI voice): in the app, Settings › Connectors › Add key (elevenlabs.io › Developers › API keys). Your voice cloned from your take (made once, kept on your Mac) needs a plan that allows Instant Voice Cloning (Starter or above); an ElevenLabs voice works on any plan. Billed by ElevenLabs per character read (a 3:45 video: about 3,500 characters). Facecam + Motion design needs no key: your take is heard on your Mac (Whisper). With a key, Scribe can hear it instead if you ask.",
+      "does": "Says the script with your cloned voice or an ElevenLabs voice: the two ways with an AI voice need it.",
+      "without": "No AI voice. Facecam + Motion design needs no key: your take is heard on your Mac.",
+      "cost": "Billed by ElevenLabs per character: a 4-minute video is about 3,500 characters. Cloning your voice needs the Starter plan or above; an ElevenLabs voice works on any plan.",
+      "requiredFor": [
+        "ai",
+        "hybrid"
+      ]
+    },
+    {
+      "id": "gemini",
+      "label": "GEMINI_API_KEY (the fictional people's headshots, Nano Banana 2)",
+      "type": "env",
+      "required": false,
+      "vars": [
+        "GEMINI_API_KEY"
+      ],
+      "altVars": [
+        "NANO_BANANA_API_KEY"
+      ],
+      "hint": "About $0.07 a headshot (1K), billed by Google. Without one, the people the video needs come from pictures you have the rights to, or are left out.",
+      "does": "Makes the headshots of the made-up people the video shows (Nano Banana 2).",
+      "without": "No headshot generated: pictures you have the rights to, or none.",
+      "cost": "About $0.07 a headshot, billed by Google."
+    },
+    {
+      "id": "giphy",
+      "label": "GIPHY_API_KEY (searching the GIFs)",
+      "type": "env",
+      "required": false,
+      "vars": [
+        "GIPHY_API_KEY"
+      ],
+      "hint": "Free at developers.giphy.com. Without it, a GIF comes from a giphy.com link given by hand. GIPHY grants no commercial licence: organic use only.",
+      "does": "Searches the GIFs pinned as prints in the video.",
+      "without": "No GIF search: a GIF only from a giphy.com link you give.",
+      "cost": "Free (developers.giphy.com). GIFs are for organic posts only."
+    },
+    {
+      "id": "pexels",
+      "label": "PEXELS_API_KEY (searching Pexels' stock videos)",
+      "type": "env",
+      "required": false,
+      "vars": [
+        "PEXELS_API_KEY"
+      ],
+      "hint": "Free at pexels.com/api. Without it, Mixkit's free clips are searched (no key) and a Pexels video page given by hand is fetched through its own free-download link.",
+      "does": "Searches Pexels' stock videos for the shots between your scenes.",
+      "without": "Mixkit's free clips only (no key needed), or a Pexels page you give.",
+      "cost": "Free (pexels.com/api)."
+    },
+    {
+      "id": "chrome",
+      "label": "Google Chrome (draws the films; required for the 4K)",
+      "type": "file",
+      "required": false,
+      "path": "/Applications/Google Chrome.app",
+      "hint": "google.com/chrome. Without it, the 1080p draft is drawn by the headless Chrome of the motion kit; the 4K needs Google Chrome (the headless one stalls at that size)."
+    },
+    {
+      "id": "motion-kit",
+      "label": "The motion kit (fonts, Chrome, the Mac's tools)",
+      "type": "file",
+      "required": false,
+      "auto": true,
+      "path": "plugins/video/motion/native/cutout",
+      "hint": "Set up on the first video by node plugins/video/motion/bootstrap.mjs (fonts, a headless Chrome if there is none, the Swift tools)."
+    },
+    {
+      "id": "music",
+      "label": "Music shelf (Mixkit + 4 tracks of the sound pack)",
+      "type": "files",
+      "required": false,
+      "auto": true,
+      "paths": [
+        "plugins/video/assets/music/mixkit-gimme-that-groove-872.mp3",
+        "plugins/video/assets/music/convergence.mp3",
+        "plugins/video/assets/music/ridgeclub-do-i-clench-my-fists.mp3",
+        "plugins/video/assets/music/ta1ls-fatigue.mp3",
+        "plugins/video/assets/music/alvedon-retire.mp3"
+      ],
+      "hint": "The Mixkit track downloads from mixkit.co on the first video; the other four come with the app's sound pack (not Mixkit: fine in a video, they can block its monetisation)."
+    }
+  ]
+}

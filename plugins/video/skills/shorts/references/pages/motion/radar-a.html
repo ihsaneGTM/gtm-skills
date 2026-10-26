@@ -1,0 +1,185 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+#cam{position:absolute;inset:0;perspective:2200px;perspective-origin:540px 960px}
+#plane{position:absolute;left:103px;top:450px;width:874px;height:1040px;transform-style:preserve-3d;transform-origin:437px 520px}
+#feedwrap{position:absolute;inset:0;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 120px,#000 calc(100% - 150px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 120px,#000 calc(100% - 150px),transparent 100%)}
+#feed{position:absolute;left:0;top:0;width:874px}
+.row{position:absolute;left:0;width:874px;height:150px;display:flex;align-items:flex-start;padding:33px 34px 0;gap:28px;background:#fff;border-radius:30px;
+  box-shadow:0 1px 2px rgba(26,26,26,.05),0 18px 36px -20px rgba(26,26,26,.22)}
+.mark{flex:0 0 84px;height:84px;border-radius:24px;background:#F3F2F6;display:grid;place-items:center}
+.mark svg{width:46px;height:46px}
+.who{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.nm{font:700 44px/1 Title;letter-spacing:-.03em;color:var(--ink)}
+.role{position:relative;z-index:0;isolation:isolate;align-self:flex-start;font:500 31px/1.15 Title;letter-spacing:-.01em;color:var(--ink2);padding:2px 8px;margin-left:-8px}
+.role b{font-weight:700;color:var(--ink)}
+.hl{position:absolute;left:0;top:-2px;bottom:-4px;width:100%;background:var(--y);border-radius:10px 14px 9px 12px;transform-origin:0 50%;transform:scaleX(0) skewX(-6deg);z-index:-1}
+.role span{position:relative}
+.age{margin-top:30px;font:500 22px/1 Mono;color:#A3A0AE;letter-spacing:.02em}
+.slot{position:absolute;left:0;width:874px;height:150px;border-radius:30px;border:3px dashed #D9D7E0;opacity:0}
+#lifts .row{will-change:transform}
+#team{position:absolute;opacity:0}
+.seat{position:absolute;width:136px;height:136px;border-radius:50%;overflow:hidden;box-shadow:0 2px 3px rgba(26,26,26,.08),0 16px 30px -14px rgba(26,26,26,.35);border:5px solid #fff}
+.seat img{width:100%;height:100%;object-fit:cover;display:block}
+.lbl{font:500 22px/1 Mono;letter-spacing:.08em;text-transform:uppercase;color:#9C99A8}
+</style></head><body><div id="stage"></div>
+<script src="vendor/gsap/gsap.min.js"></script><script src="vendor/gsap/CustomEase.min.js"></script><script src="vendor/gsap/DrawSVGPlugin.min.js"></script>
+<script src="kit.js"></script><script src="words.js"></script>
+<script>
+gsap.registerPlugin(CustomEase, DrawSVGPlugin);
+const ROW = 168, N = 34, SNAP = 26;            // the feed snaps with row SNAP at the plane's top
+const SDR = [SNAP + 1, SNAP + 3, SNAP + 5];    // the three posts hiring an SDR
+const NAMES = ["Halvorn","Cobaltine","Fernquist","Lumavale","Quillstone","Ardenta","Vexley","Pellatrix","Brightwell","Corvane","Tessaro","Kestrel","Nimbra","Oakhurst","Solvane","Marlo","Driftway","Hexa","Bramble","Orrin","Calder","Pinewick","Stellan","Juno","Wrenfield","Northpeak","Avalis","Fennick","Lattice","Mirefold","Ottavia","Rowan","Sable","Tidewell"];
+const ROLES = ["Product Designer","Backend Engineer","Office Manager","Data Analyst","Head of Finance","iOS Engineer","Recruiter","Legal Counsel","DevOps Engineer","Brand Designer","Support Lead","QA Engineer"];
+const GLY = [ // monochrome marks, drawn
+  '<circle cx="23" cy="23" r="15" fill="none" stroke="#1A1A1A" stroke-width="7"/>',
+  '<path d="M6 38 L23 8 L40 38Z" fill="#1A1A1A"/>',
+  '<rect x="8" y="8" width="30" height="30" rx="8" fill="#1A1A1A"/><rect x="18" y="18" width="10" height="10" rx="3" fill="#F3F2F6"/>',
+  '<path d="M8 30a15 15 0 0 1 30 0Z" fill="#1A1A1A"/><rect x="8" y="34" width="30" height="5" rx="2.5" fill="#1A1A1A"/>',
+  '<path d="M23 5 L41 23 L23 41 L5 23Z" fill="#1A1A1A"/>',
+  '<path d="M8 10h12l6 13-6 13H8l6-13Z" fill="#1A1A1A"/><path d="M26 10h12l-6 13 6 13H26l6-13Z" fill="#1A1A1A" opacity=".45"/>',
+  '<circle cx="15" cy="23" r="9" fill="#1A1A1A"/><circle cx="31" cy="23" r="9" fill="#1A1A1A" opacity=".45"/>',
+  '<path d="M8 38V8l30 30V8" fill="none" stroke="#1A1A1A" stroke-width="7" stroke-linejoin="round"/>',
+];
+const ease = n => gsap.parseEase(n);
+const eIO = ease("expo.inOut"), eOut = ease("power3.out"), eBack = ease("back.out(1.4)"), eIn = ease("power2.in"), eIO2 = ease("power2.inOut");
+const seg = (t, a, b, e = x => x) => e(K.clamp((t - a) / (b - a)));
+
+function rowEl(i, parent, top) {
+  const sdr = SDR.includes(i);
+  const r = K.el("div", { class: "row", style: { top: top + "px" } }, parent);
+  r.innerHTML = `<div class="mark"><svg viewBox="0 0 46 46">${GLY[(i * 5) % GLY.length]}</svg></div>
+    <div class="who"><div class="nm">${NAMES[i % NAMES.length]}</div>
+    <div class="role"><i class="hl"></i><span>${sdr ? "Sales Development Rep · <b>SDR</b>" : ROLES[(i * 7) % ROLES.length]}</span></div></div>
+    <div class="age">${1 + (i * 3) % 6}d</div>`;
+  return r;
+}
+
+let plane, feedwrap, feed, mb, lifts = [], slots = [], origs = {};
+PAGE({ dur: 9.64,
+  cues: [
+    { t: 0.42, name: "m:data-whoosh", gain: -18 },
+    { t: 3.62, name: "m:ui-digital-click", gain: -17 },
+    { t: 4.08, name: "p:mixkit-writing-scribble-2369", gain: -19 },
+    { t: 4.80, name: "m:ui-premium-open", gain: -17 },
+    { t: 7.72, name: "m:premium-pop-1", gain: -16 },
+    { t: 8.80, name: "m:cinematic-data-collect", gain: -19 },
+  ],
+  build(tl) {
+    const st = document.getElementById("stage");
+    st.insertAdjacentHTML("beforeend", `<svg width="0" height="0" style="position:absolute"><filter id="mb" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur id="mbg" stdDeviation="0 0"/></filter></svg>`);
+    mb = document.getElementById("mbg");
+    const cam = K.el("div", { id: "cam" });
+    plane = K.el("div", { id: "plane" }, cam);
+    feedwrap = K.el("div", { id: "feedwrap" }, plane);
+    feed = K.el("div", { id: "feed" }, feedwrap);
+    for (let i = 0; i < N; i++) { const r = rowEl(i, feed, i * ROW + 9); if (SDR.includes(i)) origs[i] = r; }
+    // the lifted copies, in the plane itself (3D), and the dashed slots they leave
+    const liftL = K.el("div", { id: "lifts", style: { position: "absolute", inset: 0, transformStyle: "preserve-3d" } }, plane);
+    SDR.forEach((i, k) => {
+      const top = (i - SNAP) * ROW + 9;
+      slots.push(K.el("div", { class: "slot", style: { top: top + "px" } }, feedwrap));
+      const c = rowEl(i, liftL, top); c.style.opacity = 0; c.querySelector(".hl").style.transform = "scaleX(1) skewX(-6deg)";
+      lifts.push(c);
+    });
+
+    // ── « hiring »: the marker sweeps the three SDR posts
+    const hiring = K.A("hiring");
+    SDR.forEach((i, k) => tl.to(origs[i].querySelector(".hl"), { scaleX: 1, duration: 0.2, ease: "power2.inOut" }, hiring + 0.02 + k * 0.13));
+    // the other rows go quiet on « an »
+    // ── « SDR »: the three lift out of the feed (copies take over, slots show)
+    const T = K.A("sdr,");
+    tl.set(lifts, { opacity: 1 }, T - 0.001);
+    tl.set(SDR.map(i => origs[i]), { opacity: 0 }, T - 0.001);
+    tl.to(slots, { opacity: 1, duration: 0.2 }, T);
+    lifts.forEach((c, k) => tl.fromTo(c, { z: 0, rotateX: 0 }, { z: 240, rotateX: -8, duration: 0.5, ease: "back.out(2.2)", immediateRender: false }, T + k * 0.07));
+    // ── « so you know »: they fly into one deck in the middle of the frame — your list
+    const S = K.A("so") - 0.08;
+    const deckTop = 495;
+    lifts.forEach((c, k) => {
+      tl.to(c, { y: deckTop - parseFloat(c.style.top) - k * 30, z: -k * 70, rotateX: 0, rotateZ: [0, -2.2, 2.4][k], duration: 0.6, ease: "expo.inOut" }, S + k * 0.06);
+    });
+    // the feed drops away (exits through the bottom edge)
+    tl.to(feedwrap, { y: 1550, duration: 0.75, ease: "power3.in" }, S - 0.02);
+
+    // ── « this team »: the front post flips over: its back is the company's sales team
+    const TEAM = K.A("team") - 0.2;
+    const front = lifts[0];
+    front.style.backfaceVisibility = "hidden";
+    const back = rowEl(SDR[0], liftL, deckTop + 75 - 240);
+    back.querySelector(".hl").style.transform = "scaleX(1) skewX(-6deg)";
+    Object.assign(back.style, { height: "480px", backfaceVisibility: "hidden", overflow: "hidden" });
+    gsap.set(back, { rotateX: 180, opacity: 0 });
+    const team = K.el("div", { id: "team", style: { left: 0, top: "150px", width: "874px", height: "700px", opacity: 1 } }, back);
+    tl.set(back, { opacity: 1 }, TEAM);
+    tl.to(front, { rotateX: -180, duration: 0.7, ease: "expo.inOut" }, TEAM);
+    tl.fromTo(back, { rotateX: 180, scaleY: 0.4 }, { rotateX: 0, scaleY: 1, duration: 0.7, ease: "expo.inOut", immediateRender: false }, TEAM);
+    lifts.slice(1).forEach((c, k) => tl.to(c, { y: "+=1500", rotateZ: k ? 9 : -7, duration: 0.6, ease: "power3.in" }, TEAM - 0.05 + k * 0.06));
+    const people = ["marcus", "julia", "kenji", "sofia"];
+    const sx = k => 53 + k * 158, sy = 110;
+    K.el("div", { class: "lbl", text: "Sales team", style: { position: "absolute", left: "56px", top: "36px" } }, team);
+    const seats = people.map((p, k) => { const s = K.el("div", { class: "seat", style: { left: sx(k) + "px", top: sy + "px" } }, team); K.el("img", { src: K.img(`people/${p}.jpg`) }, s); return s; });
+    const empty = K.el("div", { style: { position: "absolute", left: sx(4) + "px", top: sy + "px", width: "136px", height: "136px", borderRadius: "50%", border: "4px dashed #C9C6D2", display: "grid", placeItems: "center", font: "700 30px/1 Title", color: "#A3A0AE", letterSpacing: "-.01em" }, text: "SDR" }, team);
+    const ring = K.el("div", { style: { position: "absolute", left: sx(4) - 14 + "px", top: sy - 14 + "px", width: "164px", height: "164px", borderRadius: "50%", border: "6px solid var(--y)", opacity: 0 } }, team);
+    const hire = K.el("div", { class: "seat", style: { left: sx(4) + "px", top: sy + "px", borderColor: "var(--y)" } }, team);
+    K.el("img", { src: K.img("people/nina.jpg") }, hire);
+    const tag = K.el("div", { text: "SDR", style: { position: "absolute", left: sx(4) + 28 + "px", top: sy + 116 + "px", padding: "6px 14px", borderRadius: "14px", background: "var(--ink)", color: "var(--y)", font: "700 24px/1 Title", letterSpacing: ".01em", boxShadow: "var(--shadow)" } }, team);
+    const TS = TEAM + 0.45;
+    tl.from(team.querySelector(".lbl"), { opacity: 0, x: -20, duration: 0.3, ease: "power2.out" }, TS);
+    seats.forEach((s, k) => tl.from(s, { scale: 0, y: 30, duration: 0.42, ease: "back.out(2.2)" }, TS + 0.04 + k * 0.07));
+    tl.from(empty, { scale: 0, rotation: -40, duration: 0.42, ease: "back.out(2.2)" }, TS + 0.34);
+    // the empty seat calls: a yellow ring pulses on « looking for »
+    const L = K.A("looking");
+    [0, 0.5].forEach(d => tl.fromTo(ring, { scale: 0.85, opacity: 0.95 }, { scale: 1.35, opacity: 0, duration: 0.5, ease: "power2.out", immediateRender: false }, L + d));
+    tl.set(hire, { scale: 0 }, 0);
+    // « improvements »: the seat is filled
+    const I = K.A("improvements");
+    tl.to(empty, { scale: 0.6, opacity: 0, duration: 0.18, ease: "power2.in" }, I - 0.06);
+    tl.to(hire, { scale: 1, duration: 0.5, ease: "back.out(2.6)" }, I);
+    tl.from(tag, { scale: 0, y: -14, duration: 0.4, ease: "back.out(3)" }, I + 0.18);
+
+    // « sales field »: the team's sales line climbs, its jump under the new seat
+    const SA = K.A("sales") - 0.12;
+    const svg = K.el("svg", { viewBox: "0 0 874 380", width: 874, height: 380, style: { position: "absolute", left: 0, top: "290px", overflow: "visible" } }, team);
+    K.el("text", { x: 56, y: 40, "font-family": "Mono", "font-size": 22, fill: "#9C99A8", "letter-spacing": "2", text: "SALES" }, svg);
+    const base = K.el("path", { d: "M56 340 H 818", stroke: "#E6E4EC", "stroke-width": 3, fill: "none" }, svg);
+    const LINE = "M56 300 C 140 296, 200 304, 290 292 S 470 286, 560 278 S 660 268, 690 250 C 730 220, 760 130, 800 80";
+    const area = K.el("path", { d: LINE + " L800 340 L56 340Z", fill: "#F4F3F7" }, svg);
+    const drop = K.el("path", { d: "M753 -40 V 340", stroke: "var(--y)", "stroke-width": 4, "stroke-dasharray": "2 12", "stroke-linecap": "round", fill: "none" }, svg);
+    const line = K.el("path", { d: LINE, stroke: "var(--ink)", "stroke-width": 10, fill: "none", "stroke-linecap": "round", "stroke-linejoin": "round" }, svg);
+    const hot = K.el("path", { d: "M690 250 C 730 220, 760 130, 800 80", stroke: "var(--y)", "stroke-width": 10, fill: "none", "stroke-linecap": "round" }, svg);
+    const dot = K.el("circle", { cx: 800, cy: 80, r: 18, fill: "var(--y)", stroke: "var(--ink)", "stroke-width": 6 }, svg);
+    tl.to(back, { height: 860, top: deckTop + 75 - 430, duration: 0.55, ease: "expo.inOut" }, SA - 0.32);
+    tl.from(base, { drawSVG: "0%", duration: 0.35, ease: "power2.out" }, SA);
+    tl.from(drop, { drawSVG: "0%", duration: 0.3, ease: "power2.out" }, SA + 0.05);
+    tl.from(area, { opacity: 0, duration: 0.35, ease: "power1.out" }, SA + 0.62);
+    tl.from(line, { drawSVG: "0%", duration: 0.7, ease: "power2.inOut" }, SA + 0.05);
+    tl.from(hot, { drawSVG: "0%", duration: 0.3, ease: "power2.out" }, SA + 0.48);
+    tl.from(dot, { scale: 0, transformOrigin: "50% 50%", duration: 0.4, ease: "back.out(3)" }, SA + 0.7);
+    tl.from(svg.querySelector("text"), { opacity: 0, duration: 0.25 }, SA);
+  },
+  draw(t) {
+    // the plane: rises in from below (0.25–0.8), scrolls fast (1.0–3.7) and snaps, then flattens for the stack
+    const enter = seg(t, 0.22, 0.82, eBack);
+    const scroll = tt => {
+      const D = SNAP * ROW;
+      if (tt < 1.0) return 0;
+      if (tt < 3.68) return (D + 46) * seg(tt, 1.0, 3.68, eIO);
+      return D + 46 - 46 * seg(tt, 3.68, 3.98, eIO2);
+    };
+    const y = scroll(t), v = (scroll(t) - scroll(t - 1 / 60)) * 60;
+    const ty = (1 - enter) * 1500, vEnter = ((1 - seg(t - 1 / 60, 0.22, 0.82, eBack)) * 1500 - ty) * 60;
+    const blur = Math.min(26, Math.abs(v) * 0.0055 + Math.abs(vEnter) * 0.004);
+    feed.style.transform = `translateY(${-y}px)`;
+    const dof = 6 * seg(t, K.A("sdr,"), K.A("sdr,") + 0.4, eOut);
+    mb.setAttribute("stdDeviation", `${dof.toFixed(2)} ${(blur + dof).toFixed(2)}`);
+    feedwrap.style.filter = blur + dof > 0.25 ? "url(#mb)" : "none";
+    const flat = seg(t, K.A("so") - 0.1, K.A("so") + 0.55, eIO2);
+    const rx = (1 - flat) * (16 + Math.min(14, Math.abs(v) * 0.003));
+    const ry = (1 - flat) * -9;
+    plane.style.transform = `translateY(${ty}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${(1 - flat) * -1.5}deg)`;
+    // the other posts go quiet once the three are marked
+    const quiet = seg(t, K.A("an"), K.A("an") + 0.35, eOut);
+    feed.querySelectorAll(".row").forEach((r, i) => { if (!SDR.includes(i)) r.style.opacity = 1 - 0.55 * quiet; });
+  }
+});
+</script></body></html>

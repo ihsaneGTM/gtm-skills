@@ -1,0 +1,276 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body><div id="stage"></div>
+<script src="vendor/gsap/gsap.min.js"></script>
+<script src="kit.js"></script><script src="words.js"></script><script src="recap-lib.js"></script>
+<script>
+/* RECAP · B — « THE COUNT / THE BLADE ». One number tells the whole story. 1,000 leads, a dot-matrix of them; three
+   yellow scanners cross it, the dead dots shrink, and a mechanical odometer counts them down (1000 → 380 → 140 → 50).
+   The 50 survivors gather into « Your list », then fly into the counter, which spins UP and grows to the frame's width:
+   95 on « ninety-five », the % slams in on « percent ». The ink drains out of the glyphs along the slash's angle (his face
+   in the letters), then the % slash becomes a blade: a yellow cut runs through the whole page along it, and the two
+   halves of the sheet part, each with its edge and its shadow, onto his face. */
+const HANDOFF = 3.9;
+const W = 1080, H = 1920, Y = "#FFD90D", INK = "#1A1A1A", INK2 = "#6B6878", LINE = "#E4E2EA";
+const paper = L.img("paper.png");
+const CRIT = ["Lives the problem", "Can decide", "Right timing"];
+const PASS = [0.47, 0.81, 1.12], SWEEP = 0.36;
+const COUNTS = [1000, 380, 140, 50];
+// the grid: 40 × 25 = 1000 leads
+const COLS = 40, ROWS = 25, PITCH = 21, CELL = 13, GX = 540 - (COLS * PITCH) / 2 + PITCH / 2, GY = 965;
+const rnd = K.rand(77);
+const rank = [...Array(1000).keys()].sort(() => rnd() - 0.5);   // seeded shuffle: rank[i] = its place
+const cells = [...Array(1000).keys()].map(i => ({ x: GX + (i % COLS) * PITCH, y: GY + Math.floor(i / COLS) * PITCH, r: rank[i] }));
+cells.forEach(c => { c.dies = c.r >= 380 ? 0 : c.r >= 140 ? 1 : c.r >= 50 ? 2 : -1; });
+const surv = cells.filter(c => c.dies < 0); surv.sort((a, b) => a.y - b.y || a.x - b.x);
+surv.forEach((c, j) => { c.j = j; c.lx = 540 + ((j % 10) - 4.5) * 34; c.ly = 1130 + (Math.floor(j / 10) - 2) * 34; });
+const SX0 = GX - 30, SX1 = GX + COLS * PITCH + 10;
+const sweepX = (k, t) => L.lerp(SX0, SX1, L.E("power1.inOut")(L.seg(t, PASS[k], PASS[k] + SWEEP)));
+const passT = (k, x) => { let a = PASS[k], b = PASS[k] + SWEEP; for (let i = 0; i < 26; i++) { const m = (a + b) / 2; if (sweepX(k, m) < x) a = m; else b = m; } return (a + b) / 2; };
+cells.forEach(c => { c.kt = c.dies >= 0 ? passT(c.dies, c.x) : passT(2, c.x); });
+
+const S = { v: 1000, slot3: 1, label: 0, chip: [0, 0, 0], chipOut: [0, 0, 0], gather: 0, dead: 0, fly: 0, grow: 0, pct: 0, punch: 0, drain: [0, 0, 0], blade: 0, part: 0 };
+let G = null;
+function geo() {
+  if (G) return G;
+  const big = L.fit("95%", 800, W * 0.955, -0.05), ls = -0.05 * big;
+  const lay = L.layout("95%", 800, big, ls);
+  const bx0 = (W - (lay.left + lay.right)) / 2 + lay.left;
+  const base = 990 + (lay.asc) / 2;
+  const lay95 = L.layout("95", 800, big, ls);
+  const b95x0 = (W - (lay95.left + lay95.right)) / 2 + lay95.left;
+  const small = 240, c = L.off(8, 8).getContext("2d"); L.font(c, 800, small, "Title", -0.04 * small);
+  const dw = Math.max(...[..."0123456789"].map(d => c.measureText(d).width)) - 0.02 * small;
+  // the % slash: the blade's line (angle measured on the glyph: a point near its top and bottom)
+  const pg = lay.glyphs[2], pcx = bx0 + pg.x + pg.w * 0.5, pcy = base - lay.asc * 0.5;
+  G = { big, ls, lay, bx0, base, lay95, b95x0, small, dw, pcx, pcy, asc: lay.asc };
+  G.ang = slashAngle();
+  return G;
+}
+function slashAngle() {   // find the slash's direction: the ink centre of the % on two scan lines
+  const g = G, cv = L.off(W, H), c = cv.getContext("2d", { willReadFrequently: true });
+  L.font(c, 800, g.big, "Title", 0); c.fillStyle = "#000"; c.fillText("%", g.bx0 + g.lay.glyphs[2].x, g.base);
+  const x0 = Math.floor(g.bx0 + g.lay.glyphs[2].x), x1 = Math.min(W, Math.ceil(x0 + g.lay.glyphs[2].w + 40));
+  const mid = y => { // the slash run: the longest ink run nearest the glyph's middle
+    const d = c.getImageData(x0, Math.round(y), x1 - x0, 1).data; const runs = []; let s = -1;
+    for (let i = 0; i <= x1 - x0; i++) { const on = i < x1 - x0 && d[i * 4 + 3] > 128; if (on && s < 0) s = i; if (!on && s >= 0) { runs.push([s, i]); s = -1; } }
+    return runs;
+  };
+  // near the top the slash is the right-most run; near the bottom the left-most
+  const yT = g.base - g.lay.asc * 0.8, yB = g.base - g.lay.asc * 0.2;
+  const rT = mid(yT), rB = mid(yB);
+  const pT = rT.length ? rT[rT.length - 1] : [0, 0], pB = rB.length ? rB[0] : [0, 0];
+  const xT = x0 + (pT[0] + pT[1]) / 2, xB = x0 + (pB[0] + pB[1]) / 2;
+  G.sx = (xT + xB) / 2; G.sy = (yT + yB) / 2;
+  return Math.atan2(yB - yT, xB - xT);   // direction top → bottom of the slash
+}
+
+// a mechanical odometer: slot i's position for a value v
+const slotPos = (v, i) => { const p = Math.pow(10, i), q = Math.floor(v / p), r = v - q * p; return (q % 10) + (i === 0 ? r : Math.max(0, r - (p - 1))); };
+function digitStrip(c, pos, cx, base, px, asc) {   // the digits rolling in a slot window (clip set by caller)
+  const step = px * 0.86, f = Math.floor(pos), fr = pos - f;
+  for (let k = -1; k <= 1; k++) {
+    const d = ((f + k) % 10 + 10) % 10, y = base + (k - fr) * step;
+    c.fillText(String(d), cx, y);
+  }
+}
+
+const layer = L.off(), lc = layer.getContext("2d"), piece = L.off(W + 640, H), pc = piece.getContext("2d");
+function content(c, t) {
+  const g = geo();
+  // the chips: one at a time, each pushing the last out
+  for (let k = 0; k < 3; k++) {
+    const a = S.chip[k], o = S.chipOut[k]; if (a <= 0 || o >= 1) continue;
+    L.font(c, 600, 32, "Title", -0.4); const w = c.measureText(CRIT[k]).width + 100;
+    const x = 540 - w / 2 + (1 - L.E("expo.out")(a)) * -700 + L.E("expo.in")(o) * 900;
+    c.save(); L.shadow(c, 0.14, 24, 10); c.fillStyle = Y; L.rr(c, x, 878, w, 56, 18); c.fill(); L.noShadow(c);
+    c.fillStyle = INK; c.textBaseline = "middle"; L.font(c, 700, 22, "Mono", 0); c.fillText(`0${k + 1}`, x + 20, 907);
+    L.font(c, 600, 32, "Title", -0.4); c.fillText(CRIT[k], x + 70, 907); c.restore();
+  }
+  // the scanners
+  for (let k = 0; k < 3; k++) {
+    const u = L.seg(t, PASS[k], PASS[k] + SWEEP); if (u <= 0 || u >= 1) continue;
+    const x = sweepX(k, t), y0 = GY - 30, y1 = GY + ROWS * PITCH + 10;
+    c.save(); c.globalAlpha = 1 - L.seg(u, 0.88, 1);
+    c.fillStyle = "rgba(255,217,13,.25)"; c.fillRect(x - 60, y0, 56, y1 - y0);
+    c.shadowColor = "rgba(255,217,13,.9)"; c.shadowBlur = 22; c.fillStyle = Y; c.fillRect(x - 4, y0 - 20, 8, y1 - y0 + 40); L.noShadow(c);
+    c.fillStyle = INK; c.fillRect(x - 0.75, y0 - 20, 1.5, y1 - y0 + 40); c.restore();
+  }
+  // the grid
+  const ga = L.E("expo.inOut")(S.gather), fl = S.fly;
+  for (const cl of cells) {
+    let s = CELL, col = INK, x = cl.x, y = cl.y, a = 1;
+    const dt = t - cl.kt;
+    if (cl.dies >= 0) {
+      if (dt > 0) { const u = L.E("power2.out")(L.c01(dt / 0.22)); s = L.lerp(CELL, 4, u); col = u > 0.5 ? "#CFCCD8" : INK; }
+      const dd = L.c01(S.dead * 1.6 - (Math.abs(cl.x - 540) + Math.abs(cl.y - 1230)) / 900);   // the dead dots go
+      if (dd >= 1) continue; s *= 1 - dd;
+    } else {
+      if (dt > 0) { const u = L.c01(dt / 0.14); col = Y; s = CELL * (1 + 0.6 * Math.sin(Math.PI * u)); }
+      const big = L.lerp(CELL, 24, ga); s = dt > 0.14 ? big : s;
+      x = L.lerp(cl.x, cl.lx, L.E("expo.inOut")(L.c01(S.gather * 1.3 - cl.j * 0.006))); y = L.lerp(cl.y, cl.ly, L.E("expo.inOut")(L.c01(S.gather * 1.3 - cl.j * 0.006)));
+      if (fl > 0) {   // into the counter
+        const u = L.E("power3.in")(L.c01(fl * 1.6 - cl.j * 0.012)); if (u >= 1) continue;
+        x = L.lerp(x, 540 + ((cl.j % 10) - 4.5) * 14, u); y = L.lerp(y, 700, u); s = L.lerp(s, 8, u);
+      }
+    }
+    c.fillStyle = col; c.globalAlpha = a; L.rr(c, x - s / 2, y - s / 2, s, s, s * 0.22); c.fill(); c.globalAlpha = 1;
+  }
+  // the label over the count: LEADS → YOUR LIST (scrambled)
+  if (S.label < 2) {
+    const lb = labelText(S.label);
+    c.save(); c.globalAlpha = 1 - L.c01((S.label - 1) * 3);
+    L.font(c, 500, 28, "Mono", 5); c.fillStyle = INK2; c.textAlign = "center"; c.textBaseline = "alphabetic"; c.fillText(lb, 540, 520); c.restore();
+  }
+  counter(c, t);
+}
+function labelText(l) {
+  if (l <= 0.001) return "LEADS"; if (l >= 0.999) return "YOUR LIST";
+  const to = "YOUR LIST", from = "LEADS", n = Math.round(L.lerp(from.length, to.length, l)), r = K.rand(Math.floor(l * 30) + 3);
+  let s = ""; for (let i = 0; i < n; i++) s += i < Math.floor(l * n * 1.1) ? to[i] || "" : "#%/0123456789ABCDEFX"[Math.floor(r() * 20)];
+  return s;
+}
+function counter(c, t) {
+  const g = geo(), gr = L.E("expo.inOut")(S.grow), pu = S.punch;
+  const px = L.lerp(g.small, g.big, gr);
+  const pct = L.E("expo.out")(S.pct);
+  // slot centres: small layout (4 slots) → big layout (the 95, then the 95 %)
+  const v = S.v;
+  const a2 = S.grow > 0 ? 0 : L.c01((v - 95) / 10), a3 = S.grow > 0 ? 0 : S.slot3;
+  const smallC = i => { const w = g.dw * (2 + a2 + a3); return 540 + w / 2 - g.dw * (i + 0.5); };
+  const bigC = i => { // i = 0 units (the 5), 1 tens (the 9)
+    const gl = (pct > 0 ? g.lay : g.lay95).glyphs[1 - i], x0 = pct > 0 ? g.bx0 : g.b95x0;
+    const a95 = g.b95x0 + g.lay95.glyphs[1 - i].x + (g.lay95.glyphs[1 - i].w - g.ls) / 2, a = g.bx0 + g.lay.glyphs[1 - i].x + (g.lay.glyphs[1 - i].w - g.ls) / 2;
+    return L.lerp(a95, a, pct);
+  };
+  const baseS = 770, baseB = g.base;
+  const base = L.lerp(baseS, baseB, gr), asc = g.asc * px / g.big;
+  const sc = 1 + 0.06 * Math.sin(Math.PI * L.c01(pu)) * (1 - L.c01(pu));
+  c.save(); c.translate(540, base - asc / 2); c.scale(sc, sc); c.translate(-540, -(base - asc / 2));
+  L.font(c, 800, px, "Title", 0); c.textAlign = "center"; c.textBaseline = "alphabetic"; c.fillStyle = INK;
+  for (let i = 0; i < 4; i++) {
+    let alpha = 1;
+    if (i === 3) alpha = a3; else if (i === 2) alpha = a2;
+    if (t < 3 && i >= 2 && Math.round(VT) < Math.pow(10, i)) alpha = 0;   // no leading zeros on the ticking count
+    if (alpha <= 0) continue;
+    if (S.drain[1 - i] >= 1 && i < 2) continue;
+    const cx = L.lerp(smallC(i), i < 2 ? bigC(i) : smallC(i), gr);
+    c.save(); c.globalAlpha = alpha; c.beginPath(); c.rect(cx - px * 0.5, base - asc - px * 0.06, px, asc + px * 0.1); c.clip();
+    if (i < 2 && S.drain[1 - i] > 0) drainClip(c, 1 - i, S.drain[1 - i]);
+    digitStrip(c, slotPos(t < 3 ? Math.round(VT) : v, i), cx, base, px, asc);   // the countdown ticks (frame value, no blur); the climb to 95 rolls
+    c.restore();
+  }
+  if (pct > 0 && S.drain[2] < 1) {   // the % slams in from the right
+    const gl = g.lay.glyphs[2], x = g.bx0 + gl.x + (1 - pct) * 900;
+    c.save(); c.textAlign = "left"; L.font(c, 800, g.big, "Title", 0);
+    if (S.drain[2] > 0) drainClip(c, 2, S.drain[2]);
+    c.fillText("%", x, g.base); c.restore();
+  }
+  c.restore();
+  // the yellow edge of the draining ink
+  for (let i = 0; i < 3; i++) if (S.drain[i] > 0 && S.drain[i] < 1) drainEdge(c, i, S.drain[i]);
+}
+// the drain: a line at the slash's angle crossing the glyph's box from top to bottom; above it, no ink (a hole)
+function drainLine(i, u) {
+  const g = geo(), gl = g.lay.glyphs[i], x0 = g.bx0 + gl.x - 30, x1 = x0 + gl.w + 60, y0 = g.base - g.asc - 30, y1 = g.base + 30;
+  const dx = Math.cos(g.ang), dy = Math.sin(g.ang); let nx = dy, ny = -dx; if (nx < 0) { nx = -nx; ny = -ny; }   // n: to the lower right
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, R = Math.abs((x1 - x0) / 2 * nx) + Math.abs((y1 - y0) / 2 * ny);
+  const d = L.lerp(-R, R, L.E("power2.inOut")(u));
+  return { px: cx + nx * d, py: cy + ny * d, dx, dy, nx, ny };
+}
+function halfPlane(c, l, below, ext = 3000) {   // the path of the half-plane below (or above) the line
+  const ax = l.px - l.dx * ext, ay = l.py - l.dy * ext, bx = l.px + l.dx * ext, by = l.py + l.dy * ext, s = below ? 1 : -1;
+  c.beginPath(); c.moveTo(ax, ay); c.lineTo(bx, by); c.lineTo(bx + l.nx * ext * s, by + l.ny * ext * s); c.lineTo(ax + l.nx * ext * s, ay + l.ny * ext * s); c.closePath();
+}
+function drainClip(c, i, u) { halfPlane(c, drainLine(i, u), true); c.clip(); }
+function drainEdge(c, i, u) {
+  const g = geo(), l = drainLine(i, u), gl = g.lay.glyphs[i];
+  // the yellow edge: the glyph's ink in a thin band along the line
+  c.save(); c.beginPath(); const e = 9;
+  c.moveTo(l.px - l.dx * 3000, l.py - l.dy * 3000); c.lineTo(l.px + l.dx * 3000, l.py + l.dy * 3000);
+  c.lineTo(l.px + l.dx * 3000 + l.nx * e, l.py + l.dy * 3000 + l.ny * e); c.lineTo(l.px - l.dx * 3000 + l.nx * e, l.py - l.dy * 3000 + l.ny * e); c.closePath(); c.clip();
+  L.font(c, 800, g.big, "Title", 0); c.textAlign = "left"; c.fillStyle = Y; c.fillText(gl.ch, g.bx0 + gl.x, g.base); c.restore();
+}
+function holes(c) {   // the drained part of each glyph: cut in the paper
+  const g = geo();
+  for (let i = 0; i < 3; i++) {
+    const u = S.drain[i]; if (u <= 0) continue;
+    c.save(); if (u < 1) { halfPlane(c, drainLine(i, u), false); c.clip(); }
+    L.font(c, 800, g.big, "Title", 0); c.textAlign = "left"; c.fillText(g.lay.glyphs[i].ch, g.bx0 + g.lay.glyphs[i].x, g.base); c.restore();
+  }
+}
+
+function scene(ctx, t, T) {
+  if (T < HANDOFF) { content(ctx, t); return; }
+  L.reset(lc); lc.clearRect(0, 0, W, H); lc.drawImage(paper, 0, 0, W, H);
+  if (S.drain.some(u => u > 0)) {
+    lc.globalCompositeOperation = "destination-out"; lc.fillStyle = "#000"; holes(lc); lc.globalCompositeOperation = "source-over";
+    L.holeShadow(lc, holes, { a: 0.4, dx: 5, dy: 14, blur: 12 });
+  }
+  content(lc, t);
+  const g = geo();
+  // the blade: a yellow cut along the slash, drawn out to both edges
+  const bl = { px: g.sx, py: g.sy, dx: Math.cos(g.ang), dy: Math.sin(g.ang) };
+  const nx = -bl.dy, ny = bl.dx;   // normal; we call « left » the side where nx < 0
+  if (S.part <= 0) {
+    ctx.drawImage(layer, 0, 0);
+    if (S.blade > 0) {
+      const r = L.E("expo.out")(S.blade) * 2300;
+      ctx.save(); ctx.strokeStyle = Y; ctx.lineWidth = 7; ctx.shadowColor = "rgba(255,217,13,.8)"; ctx.shadowBlur = 16; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(bl.px - bl.dx * r, bl.py - bl.dy * r); ctx.lineTo(bl.px + bl.dx * r, bl.py + bl.dy * r); ctx.stroke(); ctx.restore();
+    }
+    return;
+  }
+  // the parting: two halves of the sheet, each with its edge and its shadow
+  const p = L.E("power2.in")(S.part);
+  const l = { px: bl.px, py: bl.py, dx: bl.dx, dy: bl.dy, nx: nx < 0 ? nx : -nx, ny: nx < 0 ? ny : -ny };   // n points to the left piece
+  for (const side of [1, -1]) {     // 1 = the left piece (the face side), -1 the right
+    const ox = (side > 0 ? -1520 : 940) * p, oy = 0;   // doors: each half slides straight out, its seam on the slash's angle
+    L.reset(pc); pc.clearRect(0, 0, W + 640, H); pc.save(); halfPlane(pc, l, side > 0); pc.clip(); pc.drawImage(layer, 0, 0);
+    if (side > 0) { pc.save(); pc.scale(-1, 1); pc.drawImage(paper, -2 * W, 0, W, H); pc.restore(); }   // the sheet goes on past the frame's edge
+    // the paper's edge: a thin bright rim and a fine line
+    pc.strokeStyle = "rgba(205,202,214,1)"; pc.lineWidth = 3; pc.beginPath(); pc.moveTo(l.px - l.dx * 3000, l.py - l.dy * 3000); pc.lineTo(l.px + l.dx * 3000, l.py + l.dy * 3000); pc.stroke();
+    const yw = 1 - L.c01(S.part * 5);   // the yellow cut still glowing on the edges at first
+    if (yw > 0) { pc.strokeStyle = `rgba(255,217,13,${yw})`; pc.lineWidth = 8; pc.stroke(); }
+    pc.restore();
+    ctx.save(); ctx.translate(ox, oy); L.shadow(ctx, 0.35 * L.c01(p * 6), 40, 14); ctx.drawImage(piece, 0, 0); ctx.restore();
+  }
+}
+
+let TL = null, VT = 1000;
+const draw = L.mount({ tl: () => TL, scene, samples: L.windows([[0.45, 1.55], [1.55, 2.45], [2.75, 4.0], [4.4, 4.62], [5.6, 6.8]], 16), shutter: 1 / 50 });
+PAGE({
+  dur: 7.43, handoff: HANDOFF,
+  camera: [[5.82, 1.3, 0.55, 0.5, "out"], [6.4, 1.0, 0.7, 0.5, "io"]],
+  cues: [
+    { t: PASS[0], name: "m:soft-gear", gain: -18 },
+    { t: 2.79, name: "m:data-whoosh", gain: -18 },
+    { t: 3.13, name: "m:fast-gear", gain: -19 },
+    { t: 4.43, name: "m:premium-pop-1", gain: -16 },
+    { t: 5.6, name: "p:mixkit-paper-quick-slice-2384", gain: -15 },
+    { t: 5.8, name: "p:mixkit-big-paper-page-turn-1105", gain: -18 },
+  ],
+  build(tl) {
+    TL = tl; L.preload();
+    PASS.forEach((p, k) => {
+      tl.to(S.chip, { [k]: 1, duration: 0.3, ease: "none" }, p - 0.06);
+      if (k > 0) tl.to(S.chipOut, { [k - 1]: 1, duration: 0.2, ease: "none" }, p - 0.16);
+      tl.to(S, { v: COUNTS[k + 1], duration: SWEEP, ease: "power1.inOut" }, p);
+    });
+    tl.to(S, { slot3: 0, duration: 0.06, ease: "none" }, PASS[0] + 0.03);
+    tl.to(S.chipOut, { 2: 1, duration: 0.3, ease: "none" }, 1.62);
+    tl.to(S, { dead: 1, duration: 0.6, ease: "none" }, 1.55);
+    tl.to(S, { gather: 1, duration: 0.7, ease: "none" }, 1.62);
+    tl.to(S, { label: 1, duration: 0.4, ease: "none" }, K.A("list") - 0.1);
+    tl.to(S, { fly: 1, duration: 0.42, ease: "none" }, K.A("already") - 0.03);
+    tl.to(S, { label: 2, duration: 0.3, ease: "none" }, K.A("already"));
+    tl.to(S, { v: 95, duration: 0.7, ease: "power3.out" }, K.A("better"));
+    tl.to(S, { grow: 1, duration: 0.66, ease: "none" }, K.A("better") + 0.08);
+    tl.to(S, { punch: 1, duration: 0.3, ease: "none" }, K.A("ninety-five") - 0.06);
+    tl.to(S, { pct: 1, duration: 0.42, ease: "none" }, K.A("percent") - 0.04);
+    [K.A("of"), K.A("what") + 0.06, K.A("you", 1, 5) + 0.08].forEach((a, i) => tl.to(S.drain, { [i]: 1, duration: 0.42, ease: "none" }, a));
+    tl.to(S, { blade: 1, duration: 0.2, ease: "none" }, 5.6);
+    tl.to(S, { part: 1, duration: 0.72, ease: "none" }, 5.8);
+    tl.set({}, {}, 7.43);
+  },
+  draw: t => { VT = S.v; draw(t); },
+});
+</script></body></html>

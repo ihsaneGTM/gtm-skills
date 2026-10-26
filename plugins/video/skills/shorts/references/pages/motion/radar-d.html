@@ -1,0 +1,271 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+svg text{font-family:Title}
+.seat{position:absolute;width:136px;height:136px;margin:-68px 0 0 -68px;border-radius:50%;overflow:hidden;border:6px solid #fff;
+  box-shadow:0 2px 3px rgba(26,26,26,.08),0 18px 32px -14px rgba(26,26,26,.38)}
+.seat img{width:100%;height:100%;object-fit:cover;display:block}
+.pill{position:absolute;height:56px;padding:0 22px;border-radius:28px;background:#1A1A1A;color:#fff;display:flex;align-items:center;
+  font:700 30px/1 Title;letter-spacing:-.02em;white-space:nowrap;box-shadow:0 2px 3px rgba(26,26,26,.1),0 16px 30px -12px rgba(26,26,26,.4)}
+.pill em{font-style:normal;color:#FFD90D;margin-left:8px}
+</style></head><body><div id="stage"></div>
+<script src="vendor/gsap/gsap.min.js"></script><script src="vendor/gsap/CustomEase.min.js"></script><script src="vendor/gsap/MorphSVGPlugin.min.js"></script><script src="vendor/gsap/DrawSVGPlugin.min.js"></script>
+<script src="kit.js"></script><script src="words.js"></script>
+<script>
+/* D · THE CITY, THEN THE TABLE (B, its stage pushed further). First half = B. Then the slab itself spins, flattens to a
+   top-down round table (the chosen building folds into it), the team sits around it like C; on « improvements … sales »
+   the rim unrolls into the sales line over full-width strata that fill the bottom of the frame.
+   B · THE CITY. Every company is a building of an isometric city. On « hiring » the windows of three of them light up
+   yellow, floor by floor; « Hiring · SDR » flags rise on them. The rest of the city sinks; the one we look at unfolds into
+   its own floor: its sales team, an empty desk that calls, filled on « improvements », and its sales climbing as columns. */
+gsap.registerPlugin(CustomEase, MorphSVGPlugin, DrawSVGPlugin);
+const NS = "http://www.w3.org/2000/svg";
+const A = 90, D = A * 0.5774, CX = 540, CY = 760;      // the grid: a cell's half width / half height, the back cell's centre
+const cell = (i, j) => [CX + (i - j) * A, CY + (i + j) * D];
+const HIRE = ["3,0", "0,3", "3,3"], HERO = "3,3";
+const R = K.rand(11);
+const B = [];   // the buildings
+for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) {
+  const [x, y] = cell(i, j), key = `${i},${j}`, hire = HIRE.includes(key);
+  let H = 70 + Math.round(R() * 190);
+  if (key === "3,0") H = 210; if (key === "0,3") H = 172; if (key === "3,3") H = 224;
+  H = Math.min(H, y - 500 - (hire ? 120 : 0));
+  B.push({ i, j, x, y, key, hire, H, w: A * 0.66, s: { h: 0, lit: 0, dim: 0, sink: 0 } });
+}
+B.sort((a, b) => (a.i + a.j) - (b.i + b.j) || (a.i - b.i));
+const FLOOR = 30;
+const ST = { slab: 0, fold: 0, morph: 0, disc: 1, push: 0, pushBack: 0 };
+const ease = n => gsap.parseEase(n), seg = (t, a, b, e = x => x) => e(K.clamp((t - a) / (b - a)));
+const pts = a => a.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+const mk = (tag, at, parent) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); parent && parent.appendChild(e); return e; };
+
+// one iso box: base centre (x,y), half width w (half depth w*.577), height h → its 3 faces' points
+function box(x, y, w, h) {
+  const d = w * 0.5774;
+  const N = [x, y - d], E = [x + w, y], S = [x, y + d], W = [x - w, y], up = p => [p[0], p[1] - h];
+  return { top: [up(N), up(E), up(S), up(W)], left: [W, S, up(S), up(W)], right: [S, E, up(E), up(S)], N, E, S, W, d };
+}
+
+let svg, cam, ground, city, flags = [], seats = [], yAt;
+PAGE({ dur: 9.64,
+  cues: [
+    { t: 0.40, name: "m:data-whoosh", gain: -19 },
+    { t: 1.25, name: "m:cinematic-data-collect", gain: -19 },
+    { t: 4.10, name: "m:ui-premium-open", gain: -16 },
+    { t: 4.80, name: "m:premium-pop-2", gain: -18 },
+    { t: 6.00, name: "m:cinematic-medium-whoosh", gain: -19 },
+    { t: 7.72, name: "m:premium-pop-1", gain: -16 },
+  ],
+  build(tl) {
+    const st = document.getElementById("stage");
+    svg = mk("svg", { width: 1080, height: 1920, viewBox: "0 0 1080 1920", style: "position:absolute;left:0;top:0;overflow:visible" }, st);
+    const defs = mk("defs", {}, svg);
+    defs.innerHTML = `
+      <filter id="soft" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="26" stdDeviation="26" flood-color="#1A1A1A" flood-opacity=".16"/></filter>
+      <filter id="bshadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>
+      <filter id="tagsh" x="-30%" y="-40%" width="160%" height="200%"><feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#1A1A1A" flood-opacity=".22"/></filter>
+      <clipPath id="clipc"><circle cx="0" cy="0" r="50"/></clipPath>`;
+    cam = mk("g", {}, svg);
+    // the ground slab
+    ground = mk("g", { filter: "url(#soft)" }, cam);
+    const g0 = box(CX, CY + 4 * D, A * 5.25, 0);
+    ground.slab = mk("polygon", { fill: "#FFFFFF" }, ground);
+    ground.edgeL = mk("polygon", { fill: "#ECEAF1" }, ground);
+    ground.edgeR = mk("polygon", { fill: "#DEDBE5" }, ground);
+    ground.insertBefore(ground.edgeL, ground.slab); ground.insertBefore(ground.edgeR, ground.slab);
+    ground.streets = mk("g", { stroke: "#EEECF2", "stroke-width": 2 }, ground);
+    for (let k = 1; k < 5; k++) {
+      const a = cell(k - 0.5, -0.5), b = cell(k - 0.5, 4.5), c = cell(-0.5, k - 0.5), d = cell(4.5, k - 0.5);
+      mk("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1] }, ground.streets);
+      mk("line", { x1: c[0], y1: c[1], x2: d[0], y2: d[1] }, ground.streets);
+    }
+    city = mk("g", {}, cam);
+    const shadows = mk("g", { filter: "url(#bshadow)", opacity: 0.55 }, city);
+    for (const b of B) {
+      b.shadow = mk("polygon", { fill: "rgba(26,26,26,.16)" }, shadows);
+    }
+    for (const b of B) {
+      const g = b.g = mk("g", {}, city);
+      b.left = mk("polygon", { fill: "#EFEDF4" }, g);
+      b.right = mk("polygon", { fill: "#DCD9E3" }, g);
+      b.top = mk("polygon", { fill: "#FFFFFF" }, g);
+      b.win = [];
+      const F = Math.floor((b.H - 16) / FLOOR);
+      b.F = F;
+      for (let f = 0; f < F; f++) for (const side of ["l", "r"]) for (const c of [0, 1]) {
+        b.win.push({ f, side, c, el: mk("polygon", {}, g) });
+      }
+      b.roofLine = mk("polyline", { fill: "none", stroke: "#FFFFFF", "stroke-width": 1.5, opacity: 0.9 }, g);
+    }
+    // ── the city: the slab lands, the buildings rise in a diagonal wave on « a whole list of companies »
+    tl.to(ST, { slab: 1, duration: 0.6, ease: "back.out(1.25)" }, 0.3);
+    const rise = K.A("whole") - 0.25;
+    B.forEach(b => tl.to(b.s, { h: 1, duration: 0.62, ease: "back.out(1.7)" }, rise + (b.i + b.j) * 0.15 + (b.i * 7 + b.j * 3) % 5 * 0.02));
+    // « hiring »: the windows of three light up floor by floor
+    const HI = K.A("hiring");
+    B.filter(b => b.hire).forEach((b, k) => tl.to(b.s, { lit: 1, duration: 0.55, ease: "power1.inOut" }, HI - 0.02 + k * 0.1));
+    B.filter(b => !b.hire).forEach(b => tl.to(b.s, { dim: 1, duration: 0.4, ease: "power2.out" }, HI + 0.25));
+    // « an SDR »: a flag rises on each of them
+    for (const b of B.filter(b => b.hire)) {
+      const bx = box(b.x, b.y, b.w, b.H);
+      const topY = bx.N[1] - b.H;
+      const g = mk("g", { transform: `translate(${b.x},${topY})` }, cam);
+      const stem = mk("line", { x1: 0, y1: 0, x2: 0, y2: -58, stroke: "#1A1A1A", "stroke-width": 4, "stroke-linecap": "round" }, g);
+      const pill = mk("g", { transform: "translate(0,-58)" }, g);
+      const inner = mk("g", {}, pill);
+      mk("rect", { x: -100, y: -54, width: 200, height: 54, rx: 27, fill: "#1A1A1A", filter: "url(#tagsh)" }, inner);
+      mk("circle", { cx: -74, cy: -27, r: 8, fill: "#FFD90D" }, inner);
+      const tx = mk("text", { x: -58, y: -17, fill: "#FFFFFF", "font-size": 27, "font-weight": 700, "letter-spacing": "-0.5" }, inner);
+      tx.innerHTML = `Hiring <tspan fill="#9C99A8">·</tspan> <tspan fill="#FFD90D">SDR</tspan>`;
+      flags.push({ b, g, stem, inner });
+    }
+    const SD = K.A("sdr,") - 0.12;
+    flags.forEach((f, k) => {
+      tl.fromTo(f.stem, { attr: { y2: 0 } }, { attr: { y2: -58 }, duration: 0.25, ease: "power3.out", immediateRender: true }, SD + k * 0.09);
+      tl.fromTo(f.inner, { scale: 0, rotation: -14, transformOrigin: "50% 100%" }, { scale: 1, rotation: 0, duration: 0.5, ease: "back.out(2.4)", immediateRender: true }, SD + 0.1 + k * 0.09);
+    });
+    // ── « so you know »: the city sinks; the other two flags fold
+    const S = K.A("so") - 0.05;
+    const hero = B.find(b => b.key === HERO);
+    B.filter(b => b !== hero).forEach(b => {
+      const dist = Math.hypot(b.i - hero.i, b.j - hero.j);
+      tl.to(b.s, { sink: 1, duration: 0.38, ease: "back.in(1.4)" }, S + (5.7 - dist) * 0.05 + (b.hire ? 0.1 : 0));
+    });
+    flags.filter(f => f.b !== hero).forEach((f, k) => {
+      tl.to(f.inner, { scale: 0, duration: 0.25, ease: "back.in(2)" }, S + 0.12 + k * 0.05);
+      tl.to(f.stem, { attr: { y2: 0 }, duration: 0.2, ease: "power2.in" }, S + 0.3 + k * 0.05);
+    });
+    // ── « this team »: the chosen building folds into the slab; the slab spins a quarter turn and flattens, top-down,
+    //    into a round table that fills the width (one continuous move)
+    const TEAM = K.A("team") - 0.1;
+    const heroFlag = flags.find(f => f.b === hero);
+    tl.to(heroFlag.inner, { scale: 0, duration: 0.22, ease: "back.in(2)" }, TEAM - 0.1);
+    tl.to(heroFlag.stem, { attr: { y2: 0 }, duration: 0.16, ease: "power2.in" }, TEAM + 0.02);
+    tl.to(ST, { fold: 1, duration: 0.36, ease: "back.in(1.2)" }, TEAM - 0.02);
+    tl.to(ST, { morph: 1, duration: 0.8, ease: "expo.inOut" }, TEAM + 0.08);
+    tl.to(ST, { pushBack: 1, duration: 0.8, ease: "expo.inOut" }, TEAM + 0.08);
+    const TC = [540, 930], TR = 350;
+    // the badge in the middle (the company), the rim, the seats
+    const top = document.getElementById("stage");
+    const badge = K.el("div", { style: { position: "absolute", left: TC[0] - 160 + "px", top: TC[1] - 110 + "px", width: "320px", height: "220px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "18px" } }, top);
+    badge.innerHTML = `<svg viewBox="0 0 46 46" width="104" height="104"><path d="M8 38V8l30 30V8" fill="none" stroke="#1A1A1A" stroke-width="7" stroke-linejoin="round"/></svg><div style="font:800 64px/1 Title;letter-spacing:-.045em;color:#1A1A1A">Fennick</div>`;
+    tl.fromTo(badge, { scale: 0, rotation: -25 }, { scale: 1, rotation: 0, duration: 0.5, ease: "back.out(2)", immediateRender: true }, TEAM + 0.62);
+    const chartG = mk("g", {}, svg);
+    const rim = mk("path", { d: `M${TC[0]},${TC[1] - TR} A${TR},${TR} 0 1,1 ${TC[0] - 0.1},${TC[1] - TR}`, fill: "none", stroke: "#1A1A1A", "stroke-width": 9, "stroke-linecap": "round" }, svg);
+    const rimP = MorphSVGPlugin.convertToPath(rim)[0];
+    tl.fromTo(rimP, { drawSVG: "0%" }, { drawSVG: "100%", duration: 0.6, ease: "power2.inOut", immediateRender: true }, TEAM + 0.66);
+    const names = ["marcus", "julia", "kenji", "sofia", "omar"];
+    const ang = [-150, -90, -30, 150, 90].map(a => a * Math.PI / 180), RS = TR + 6;
+    names.forEach((n, k) => {
+      const s = K.el("div", { class: "seat", style: { left: TC[0] + RS * Math.cos(ang[k]) + "px", top: TC[1] + RS * Math.sin(ang[k]) + "px" } }, top);
+      K.el("img", { src: K.img(`people/${n}.jpg`) }, s);
+      tl.fromTo(s, { scale: 0 }, { scale: 1, duration: 0.45, ease: "back.out(2.2)", immediateRender: true }, TEAM + 0.66 + k * 0.07);
+      seats.push(s);
+    });
+    const ea = 30 * Math.PI / 180, ex = TC[0] + RS * Math.cos(ea), ey = TC[1] + RS * Math.sin(ea);
+    const empty = K.el("div", { text: "SDR", style: { position: "absolute", left: ex - 68 + "px", top: ey - 68 + "px", width: "136px", height: "136px", borderRadius: "50%", border: "5px dashed #C3C0CC", background: "#fff", display: "grid", placeItems: "center", font: "700 36px/1 Title", color: "#A3A0AE", letterSpacing: "-.02em" } }, top);
+    const pulse = K.el("div", { style: { position: "absolute", left: ex - 82 + "px", top: ey - 82 + "px", width: "164px", height: "164px", borderRadius: "50%", border: "7px solid #FFD90D", opacity: 0 } }, top);
+    const hire = K.el("div", { class: "seat", style: { left: ex + "px", top: ey + "px", borderColor: "#FFD90D", opacity: 0 } }, top);
+    K.el("img", { src: K.img("people/nina.jpg") }, hire);
+    const tag = K.el("div", { text: "SDR", style: { position: "absolute", left: ex + 30 + "px", top: ey + 46 + "px", padding: "8px 16px", borderRadius: "16px", background: "#1A1A1A", color: "#FFD90D", font: "700 28px/1 Title", boxShadow: "var(--shadow)", opacity: 0 } }, top);
+    tl.fromTo(empty, { scale: 0, rotation: -60 }, { scale: 1, rotation: 0, duration: 0.45, ease: "back.out(2.2)", immediateRender: true }, TEAM + 0.98);
+    const L = K.A("looking") + 0.32;
+    [0, 0.5].forEach(d => tl.fromTo(pulse, { scale: 0.85, opacity: 1 }, { scale: 1.4, opacity: 0, duration: 0.5, ease: "power2.out", immediateRender: false }, L + d));
+    const I = K.A("improvements");
+    tl.to(empty, { scale: 0.4, opacity: 0, duration: 0.16, ease: "power2.in" }, I - 0.06);
+    tl.fromTo(hire, { scale: 2.2, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.42, ease: "back.out(1.6)", immediateRender: false }, I);
+    tl.fromTo(tag, { scale: 0, opacity: 1 }, { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(3)", immediateRender: false }, I + 0.25);
+
+    // ── « improvements … sales field »: the table goes, its rim unrolls into the sales line, full-width strata fill the
+    //    bottom of the frame from below; the team rides the line, the new SDR at the knee; the yellow stratum rises last
+    const U = I + 0.42;
+    const LINE = "M-40,1300 C 120,1292 260,1281 400,1264 S 620,1234 720,1200 C 800,1172 900,1000 1120,580";
+    const L3 = "M-40,1300 C 120,1292 260,1281 400,1264 S 620,1234 720,1200 C 800,1176 900,1150 1120,1124";
+    const L2 = "M-40,1420 C 200,1412 480,1394 700,1356 S 1000,1296 1120,1276";
+    const L1 = "M-40,1566 C 300,1556 600,1536 800,1508 S 1050,1470 1120,1458";
+    const close = p => p + " L1120,1960 L-40,1960 Z";
+    const L3b = L3.replace(/(-?\d+),(\d+)/g, (m, x, y) => `${x},${+y + 14}`);
+    const yel = mk("path", { d: close(L3b), fill: "#FFD90D" }, chartG);
+    const g3 = mk("path", { d: close(L3), fill: "#ECEAF1" }, chartG);
+    const g2 = mk("path", { d: close(L2), fill: "#BEBAC8" }, chartG);
+    const g1 = mk("path", { d: close(L1), fill: "#1A1A1A" }, chartG);
+    const probe = mk("path", { d: LINE, fill: "none", stroke: "none" }, svg);
+    const len = probe.getTotalLength(), samp = [];
+    for (let i = 0; i <= 400; i++) { const p = probe.getPointAtLength(len * i / 400); samp.push([p.x, p.y]); }
+    yAt = x => { let b = samp[0]; for (const p of samp) if (Math.abs(p[0] - x) < Math.abs(b[0] - x)) b = p; return b[1]; };
+    [g1, g2, g3].forEach((p, k) => tl.fromTo(p, { y: 760 + k * 60 }, { y: 0, duration: 0.75, ease: "expo.out", immediateRender: true }, U + 0.12 + k * 0.08));
+    gsap.set(yel, { opacity: 0 });
+    tl.set(yel, { opacity: 1 }, U + 0.78);
+    tl.to(yel, { morphSVG: close(LINE), duration: 0.5, ease: "power3.out" }, U + 0.8);
+    tl.to(ST, { disc: 0, duration: 0.4, ease: "power2.in" }, U);
+    tl.to(badge, { scale: 0, opacity: 0, duration: 0.3, ease: "back.in(1.8)" }, U);
+    tl.to(rimP, { morphSVG: { shape: LINE, type: "linear" }, duration: 0.8, ease: "expo.inOut" }, U);
+    const X = [100, 230, 360, 490, 620];
+    seats.forEach((s, k) => tl.to(s, { left: X[k], top: yAt(X[k]), scale: 0.8, duration: 0.8, ease: "expo.inOut" }, U + k * 0.03));
+    const KX = 752;
+    tl.to(hire, { left: KX, top: yAt(KX), duration: 0.8, ease: "expo.inOut" }, U + 0.1);
+    tl.to(tag, { left: KX + 30, top: yAt(KX) + 46, duration: 0.8, ease: "expo.inOut" }, U + 0.1);
+    const hot = mk("path", { d: "M720,1200 C 800,1172 900,1000 1120,580", fill: "none", stroke: "#FFD90D", "stroke-width": 9, "stroke-linecap": "round" }, svg);
+    tl.fromTo(hot, { drawSVG: "0%" }, { drawSVG: "100%", duration: 0.4, ease: "power2.out", immediateRender: true }, U + 0.72);
+    const DX = 990, DY = yAt(DX);
+    const dot = mk("circle", { cx: DX, cy: DY, r: 19, fill: "#1A1A1A", stroke: "#FFFFFF", "stroke-width": 7 }, svg);
+    tl.fromTo(dot, { scale: 0, transformOrigin: "50% 50%" }, { scale: 1, duration: 0.4, ease: "back.out(3)", immediateRender: true }, U + 0.9);
+    const sales = K.el("div", { class: "pill", html: `Sales<em>↗</em>`, style: { left: DX - 190 + "px", top: DY - 40 + "px" } }, top);
+    tl.fromTo(sales, { scale: 0, transformOrigin: "100% 50%" }, { scale: 1, duration: 0.4, ease: "back.out(2.4)", immediateRender: true }, U + 0.95);
+    // a slow push-in for life, while the city stands
+    tl.to(ST, { push: 1, duration: TEAM - 0.3, ease: "none" }, 0.3);
+  },
+  draw(t) {
+    const z = 1 + 0.03 * ST.push * (1 - ST.pushBack);
+    cam.setAttribute("transform", `translate(540 1000) scale(${z}) translate(-540 -1000)`);
+    // the slab: the same shape from the isometric diamond to the top-down round table
+    const m = ST.morph, sl = Math.max(0.001, ST.slab);
+    const cx = 540, cy = K.lerp(CY + 4 * D, 930, m);
+    const s = K.lerp(A * 5.25 / Math.SQRT2, 350, m) * sl;
+    const th = Math.PI / 4 + Math.PI / 2 * m, k = K.lerp(0.5774, 1, m);
+    const round = gsap.parseEase("power2.inOut")(K.clamp((m - 0.1) / 0.75));
+    const thick = 26 * sl * (1 - m);
+    const P = [];
+    for (let i = 0; i < 160; i++) {
+      const a = i / 160 * Math.PI * 2, a2 = a - th;
+      const rs = 1 / Math.max(Math.abs(Math.cos(a2)), Math.abs(Math.sin(a2)));
+      const r = s * K.lerp(rs, 1, round);
+      P.push([cx + r * Math.cos(a), cy + k * r * Math.sin(a)]);
+    }
+    ground.slab.setAttribute("points", pts(P));
+    ground.edgeL.setAttribute("points", pts(P.map(p => [p[0], p[1] + thick])));
+    ground.edgeR.setAttribute("points", "");
+    ground.streets.setAttribute("opacity", (K.clamp(ST.slab * 3 - 2) * (1 - K.clamp(m * 5)) * (1 - K.clamp(ST.fold * 2))).toFixed(3));
+    ground.setAttribute("opacity", ST.disc.toFixed(3));
+    ground.setAttribute("transform", `translate(${cx} ${cy}) scale(${(0.9 + 0.1 * ST.disc).toFixed(3)}) translate(${-cx} ${-cy})`);
+    // the buildings
+    for (const b of B) {
+      const hero = b.key === HERO;
+      let h = b.H * b.s.h * (1 - b.s.sink);
+      if (hero) h *= 1 - ST.fold;
+      const show = h > 0.5;
+      b.g.style.display = show ? "" : "none";
+      b.shadow.style.display = show ? "" : "none";
+      if (!show) continue;
+      const bx = box(b.x, b.y, b.w, h);
+      b.top.setAttribute("points", pts(bx.top));
+      b.left.setAttribute("points", pts(bx.left));
+      b.right.setAttribute("points", pts(bx.right));
+      b.roofLine.setAttribute("points", pts([bx.top[3], bx.top[2], bx.top[1]]));
+      const sh = Math.min(h, 160) * 0.55;
+      b.shadow.setAttribute("points", pts([bx.S, bx.E, [bx.E[0] + sh, bx.E[1] - sh * 0.15], [bx.S[0] + sh, bx.S[1] - sh * 0.15]]));
+      b.g.setAttribute("opacity", (1 - 0.42 * b.s.dim).toFixed(3));
+      for (const wi of b.win) {
+        const z0 = 14 + wi.f * FLOOR, z1 = z0 + 15;
+        if (z1 > h - 8) { wi.el.style.display = "none"; continue; }
+        wi.el.style.display = "";
+        const a = wi.side === "l" ? bx.W : bx.S, c = wi.side === "l" ? bx.S : bx.E;
+        const s0 = wi.c ? 0.56 : 0.16, s1 = s0 + 0.28;
+        const Q = (q, zz) => [a[0] + (c[0] - a[0]) * q, a[1] + (c[1] - a[1]) * q - zz];
+        wi.el.setAttribute("points", pts([Q(s0, z0), Q(s1, z0), Q(s1, z1), Q(s0, z1)]));
+        const lit = b.s.lit * (b.F + 1) - wi.f > 0.5;
+        wi.el.setAttribute("fill", lit ? (wi.side === "l" ? "#FFD90D" : "#F2C400") : (wi.side === "l" ? "#D6D2DE" : "#C6C2D0"));
+      }
+    }
+  }
+});
+</script></body></html>

@@ -1,0 +1,1036 @@
+{
+  "name": "Skills by Pipecorn",
+  "version": "0.2.2",
+  "categories": [
+    {
+      "id": "video",
+      "label": "Video",
+      "icon": "video",
+      "description": "Turn raw takes into finished, platform-ready videos."
+    },
+    {
+      "id": "linkedin",
+      "label": "LinkedIn content",
+      "icon": "linkedin",
+      "description": "Posts, visuals and a weekly publishing routine.",
+      "soon": true
+    },
+    {
+      "id": "newsletter",
+      "label": "Newsletter",
+      "icon": "mail",
+      "description": "Editions written in your voice, ready to send.",
+      "soon": true
+    },
+    {
+      "id": "seo",
+      "label": "SEO & blog",
+      "icon": "search",
+      "description": "Keyword clusters and articles that rank.",
+      "soon": true
+    },
+    {
+      "id": "youtube",
+      "label": "YouTube",
+      "icon": "play",
+      "description": "Scripts, thumbnails, descriptions and tags.",
+      "soon": true
+    }
+  ],
+  "skills": [
+    {
+      "id": "whiteboard-editor",
+      "command": "/video-whiteboard-editor",
+      "category": "video",
+      "path": "plugins/video/skills/whiteboard-editor",
+      "title": "Whiteboard editor",
+      "tagline": "One raw vertical take in, one finished short out, in the look of Long video to shorts: your face from the first frame, your words in Dynamic text, the pictures sliding out from behind you, white pages that draw the idea, one music, -14 LUFS.",
+      "cover": "short",
+      "channels": [
+        "linkedin",
+        "youtube",
+        "instagram",
+        "tiktok"
+      ],
+      "highlights": [
+        {
+          "icon": "sparkle",
+          "label": "White pages that draw it"
+        },
+        {
+          "icon": "type",
+          "label": "Dynamic text"
+        },
+        {
+          "icon": "video",
+          "label": "Pictures behind you"
+        },
+        {
+          "icon": "music",
+          "label": "One music, the packs"
+        },
+        {
+          "icon": "check",
+          "label": "-14 LUFS, measured"
+        }
+      ],
+      "diagram": {
+        "in": {
+          "title": "A raw vertical take",
+          "detail": "~/Downloads/take.mp4",
+          "says": "IT'S NOT YOUR MESSAGE. IT'S YOUR LIST.",
+          "flaws": [
+            "Retakes and dead air",
+            "No text on screen",
+            "Nothing shows the idea"
+          ]
+        },
+        "out": {
+          "title": "A finished short",
+          "detail": "workspace/videos/, with its numbers",
+          "video": "/media/whiteboard-reel.mp4",
+          "poster": "/media/whiteboard-reel.jpg",
+          "wins": [
+            "The idea drawn on white",
+            "Your words on screen",
+            "-14 LUFS"
+          ]
+        },
+        "steps": [
+          {
+            "icon": "type",
+            "label": "Hear every word"
+          },
+          {
+            "icon": "refresh",
+            "label": "Cut the retakes"
+          },
+          {
+            "icon": "sparkle",
+            "label": "The hook, the pictures"
+          },
+          {
+            "icon": "video",
+            "label": "White pages, words, sound"
+          },
+          {
+            "icon": "check",
+            "label": "Check -14 LUFS"
+          }
+        ],
+        "captions": [
+          [
+            "ONE",
+            "RAW",
+            "*TAKE",
+            "IN"
+          ],
+          [
+            "THE",
+            "*IDEA",
+            "DRAWN",
+            "ON",
+            "WHITE"
+          ],
+          [
+            "ONE",
+            "*FINISHED",
+            "SHORT"
+          ]
+        ]
+      },
+      "what": [
+        "Hears your take on your Mac, word by word, verbatim (no key needed)",
+        "Keeps your take in its own order: the retakes dropped, the dead air cut, graded like your long videos",
+        "Opens on your face from the first frame, with the problem as a title above your head and a few pictures of the subject",
+        "Puts your words in Dynamic text all along, slides the pictures out from behind you (stock shots as floating screens, GIFs as pinned prints), and sets the idea down on white pages, drawn as a moving schema",
+        "One music under the whole short, the sounds of the packs, -14 LUFS / -1 dBTP, the feed's safe zones, checked by measurement"
+      ],
+      "input": "A vertical video of you talking to the camera (9:16), e.g. ~/Downloads/take.mp4",
+      "output": "A finished .mp4 in workspace/videos/, plus the numbers that prove it",
+      "example": "/video-whiteboard-editor ~/Downloads/take.mp4, the pictures as cutaways",
+      "platforms": [
+        "macOS"
+      ],
+      "style": {
+        "id": "whiteboard",
+        "n": 1,
+        "fav": true,
+        "name": "Whiteboard",
+        "family": "Pipecorn",
+        "brief": "Pipecorn, the look of Long video to shorts on one take: your face from the first frame, Dynamic text, the pictures behind you, white pages that draw the idea",
+        "line": "Your words in Dynamic text, the pictures sliding out from behind you, and white pages that draw the idea as you say it.",
+        "reel": "/media/whiteboard-reel.mp4",
+        "poster": "/media/whiteboard-reel.jpg",
+        "features": [
+          [
+            "board",
+            "White pages"
+          ],
+          [
+            "emerge",
+            "Pictures behind you"
+          ],
+          [
+            "type",
+            "Dynamic text"
+          ],
+          [
+            "wave",
+            "One music, the packs"
+          ]
+        ],
+        "questions": [
+          "style",
+          "music",
+          "pace",
+          "generic",
+          "voice",
+          "notes"
+        ],
+        "for": "You, talking to the camera",
+        "stages": [
+          "read",
+          "setup",
+          "listen",
+          "rush",
+          "tighten",
+          "pictures",
+          "write",
+          "matte",
+          "look",
+          "render",
+          "verify"
+        ],
+        "drop": {
+          "title": "Drop your take.",
+          "lead": "A vertical video of you talking to the camera. Claude hears it, cuts the retakes and the dead air, opens on your face with the problem as a title, puts your words on screen, slides the pictures out from behind you, draws the idea on white pages, adds one music and the sounds, then checks it all by measurement.",
+          "hint": "MP4 or MOV, 9:16, you talking to the camera"
+        }
+      },
+      "since": "2026-10-15"
+    },
+    {
+      "id": "short-editor",
+      "command": "/video-short-editor",
+      "category": "video",
+      "path": "plugins/video/skills/short-editor",
+      "title": "Short editor",
+      "tagline": "One raw vertical take in, one finished short out: your words as big headlines passing behind you, paper plates, the SFX pack, -14 LUFS.",
+      "cover": "short",
+      "channels": [
+        "linkedin",
+        "youtube",
+        "instagram",
+        "tiktok"
+      ],
+      "highlights": [
+        {
+          "icon": "type",
+          "label": "Headlines behind you"
+        },
+        {
+          "icon": "refresh",
+          "label": "Retakes cut out"
+        },
+        {
+          "icon": "sparkle",
+          "label": "Paper plates, stop-motion"
+        },
+        {
+          "icon": "music",
+          "label": "SFX pack and music"
+        },
+        {
+          "icon": "check",
+          "label": "-14 LUFS, measured"
+        }
+      ],
+      "diagram": {
+        "in": {
+          "title": "A raw vertical take",
+          "detail": "~/Downloads/take.mp4",
+          "says": "UH... WAIT. LET ME START AGAIN.",
+          "flaws": [
+            "2 false starts",
+            "No text on screen",
+            "Flat framing"
+          ]
+        },
+        "out": {
+          "title": "A finished short",
+          "detail": "workspace/videos/, with its numbers",
+          "video": "/media/short-editor-v8.mp4",
+          "poster": "/media/short-editor-v8.jpg",
+          "wins": [
+            "Retakes cut",
+            "Headlines behind you",
+            "-14 LUFS"
+          ]
+        },
+        "steps": [
+          {
+            "icon": "type",
+            "label": "Transcribe every word"
+          },
+          {
+            "icon": "refresh",
+            "label": "Cut the retakes"
+          },
+          {
+            "icon": "sparkle",
+            "label": "Plan the pictures"
+          },
+          {
+            "icon": "video",
+            "label": "Headlines, plates, sound"
+          },
+          {
+            "icon": "check",
+            "label": "Check -14 LUFS"
+          }
+        ],
+        "captions": [
+          [
+            "ONE",
+            "RAW",
+            "*TAKE",
+            "IN"
+          ],
+          [
+            "YOUR",
+            "*WORDS,",
+            "BEHIND",
+            "YOU"
+          ],
+          [
+            "ONE",
+            "*FINISHED",
+            "SHORT"
+          ]
+        ]
+      },
+      "what": [
+        "Transcribes your take word by word, verbatim, in the language you speak",
+        "Assembles a rush with restarts into one clean take (you approve the cut)",
+        "Asks once: the music, the pace, and whether you want the old-radio hook bonus",
+        "Puts your words as big headlines at the top, passing behind you, with paper plates in stop-motion and your real logos",
+        "Sound design from the SFX pack, finished at the platform standard (-14 LUFS, -1 dBTP), verified numerically"
+      ],
+      "input": "A vertical video file (9:16), e.g. ~/Downloads/take.mp4",
+      "output": "A finished .mp4 in workspace/videos/, plus the numbers that prove it",
+      "example": "/video-short-editor ~/Downloads/take.mp4, show my product when I talk about it",
+      "platforms": [
+        "macOS"
+      ],
+      "style": {
+        "id": "pipecorn",
+        "n": 2,
+        "fav": true,
+        "matteAhead": true,
+        "name": "Dynamic text",
+        "family": "Pipecorn",
+        "brief": "Pipecorn, the vertical language",
+        "line": "Your words big at the top of the frame, passing behind you.",
+        "reel": "/montage/demo/v6.mp4",
+        "poster": "/montage/demo/frames/f_8.30.jpg",
+        "features": [
+          [
+            "type",
+            "Impact headlines"
+          ],
+          [
+            "emerge",
+            "Logos from behind you"
+          ],
+          [
+            "paper",
+            "Paper plates"
+          ],
+          [
+            "wave",
+            "SFX pack"
+          ]
+        ],
+        "questions": [
+          "style",
+          "hook",
+          "music",
+          "pace",
+          "generic",
+          "voice",
+          "notes"
+        ],
+        "for": "You, talking to the camera"
+      },
+      "since": "2026-10-05"
+    },
+    {
+      "id": "cold-call-editor",
+      "command": "/video-cold-call-editor",
+      "category": "video",
+      "path": "plugins/video/skills/cold-call-editor",
+      "title": "Cold call editor",
+      "tagline": "One recorded call in, one finished short out: its best line as a glitched hook, the call ringing on paper, then the conversation typed out as it is said.",
+      "cover": "short",
+      "channels": [
+        "linkedin",
+        "youtube",
+        "instagram",
+        "tiktok"
+      ],
+      "highlights": [
+        {
+          "icon": "users",
+          "label": "Two voices, measured"
+        },
+        {
+          "icon": "sparkle",
+          "label": "A glitched hook"
+        },
+        {
+          "icon": "type",
+          "label": "The call typed out"
+        },
+        {
+          "icon": "music",
+          "label": "SFX pack and music"
+        },
+        {
+          "icon": "check",
+          "label": "-14 LUFS, measured"
+        }
+      ],
+      "diagram": {
+        "in": {
+          "title": "A recorded call",
+          "detail": "~/Downloads/call.mp4",
+          "says": "WHERE DID YOU GET MY NUMBER?",
+          "flaws": [
+            "Two voices, one picture",
+            "No text on screen",
+            "Nothing says it is a call"
+          ]
+        },
+        "out": {
+          "title": "A finished short",
+          "detail": "workspace/videos/, with its numbers",
+          "video": "/media/cold-call-editor-v1.mp4",
+          "poster": "/media/cold-call-editor-v1.jpg",
+          "wins": [
+            "Hook up front",
+            "The call typed out",
+            "-14 LUFS"
+          ]
+        },
+        "steps": [
+          {
+            "icon": "type",
+            "label": "Transcribe the call"
+          },
+          {
+            "icon": "users",
+            "label": "Tell the voices apart"
+          },
+          {
+            "icon": "sparkle",
+            "label": "Pick the hook"
+          },
+          {
+            "icon": "video",
+            "label": "Glitch, ring, bam"
+          },
+          {
+            "icon": "check",
+            "label": "Check -14 LUFS"
+          }
+        ],
+        "captions": [
+          [
+            "ONE",
+            "*RECORDED",
+            "CALL"
+          ],
+          [
+            "ITS",
+            "*BEST",
+            "LINE",
+            "FIRST"
+          ],
+          [
+            "THEN",
+            "*TYPED",
+            "OUT"
+          ]
+        ]
+      },
+      "what": [
+        "Transcribes the call word by word, verbatim, in the language spoken",
+        "Tells the two voices apart by measuring them (a timbre model per voice), then reads the turns",
+        "Opens on the call's most suspenseful line, glitched on its stressed words, then places the call on a ringing paper sheet",
+        "Types the whole conversation out at the bottom of the frame as it is said, the voice as one thin line of wave",
+        "Sound design from the SFX pack and a synthesised ringback tone, finished at the platform standard (-14 LUFS, -1 dBTP), verified numerically"
+      ],
+      "input": "A vertical video (9:16) whose sound is the call, e.g. ~/Downloads/call.mp4",
+      "output": "A finished .mp4 in workspace/videos/, plus the numbers that prove it",
+      "example": "/video-cold-call-editor ~/Downloads/call.mp4, the hook is when she asks where I got her number",
+      "platforms": [
+        "macOS"
+      ],
+      "style": {
+        "id": "cold-call",
+        "n": 3,
+        "name": "Cold call transcript",
+        "family": "Pipecorn",
+        "brief": "Pipecorn, the call language: a recorded cold call, typed out",
+        "line": "A recorded call: its best line first, glitched, then the conversation typed out as it is said.",
+        "reel": "/media/cold-call-reel.mp4",
+        "poster": "/media/cold-call-reel.jpg",
+        "features": [
+          [
+            "glitch",
+            "Glitched hook"
+          ],
+          [
+            "ring",
+            "Ringing call"
+          ],
+          [
+            "record",
+            "Typed transcript"
+          ],
+          [
+            "voice",
+            "Voice line"
+          ]
+        ],
+        "questions": [
+          "style",
+          "music",
+          "pace",
+          "generic",
+          "voice",
+          "notes"
+        ],
+        "for": "A recorded phone call",
+        "stages": [
+          "read",
+          "setup",
+          "listen",
+          "voices",
+          "write",
+          "matte",
+          "look",
+          "render",
+          "verify"
+        ],
+        "drop": {
+          "title": "Drop your call.",
+          "lead": "A vertical video whose sound is a recorded phone call. Claude tells the two voices apart, opens on the call's best line, types the whole call out as it is said, adds the sound and the music, then checks it all by measurement.",
+          "hint": "MP4 or MOV, 9:16, the call as its sound"
+        }
+      },
+      "since": "2026-10-05"
+    },
+    {
+      "id": "scrapbook-editor",
+      "command": "/video-scrapbook-editor",
+      "category": "video",
+      "path": "plugins/video/skills/scrapbook-editor",
+      "title": "Scrapbook editor",
+      "tagline": "One raw take in, one finished short out: every pause cut, your words low and word by word, memes dropped on your face as polaroids, titles handwritten on little notebook scraps with real shadows, the key word in a beautiful serif in your colour, stickers, a red marker drawing as you speak, a music bed and a sound for each thing that lands.",
+      "cover": "short",
+      "channels": [
+        "linkedin",
+        "youtube",
+        "instagram",
+        "tiktok"
+      ],
+      "highlights": [
+        {
+          "icon": "refresh",
+          "label": "Every pause cut"
+        },
+        {
+          "icon": "type",
+          "label": "Words, low, one by one"
+        },
+        {
+          "icon": "sparkle",
+          "label": "Memes on your face"
+        },
+        {
+          "icon": "music",
+          "label": "Music, paper sounds"
+        },
+        {
+          "icon": "check",
+          "label": "-14 LUFS, measured"
+        }
+      ],
+      "diagram": {
+        "in": {
+          "title": "A raw vertical take",
+          "detail": "~/Downloads/take.mp4",
+          "says": "SO... UM... NUMBER ONE IS...",
+          "flaws": [
+            "Pauses everywhere",
+            "No text on screen",
+            "Nothing to look at"
+          ]
+        },
+        "out": {
+          "title": "A finished short",
+          "detail": "workspace/videos/, with its numbers",
+          "video": "/media/scrapbook-editor-v1.mp4",
+          "poster": "/media/scrapbook-editor-v1.jpg",
+          "wins": [
+            "Pauses cut",
+            "Memes and paper",
+            "-14 LUFS"
+          ]
+        },
+        "steps": [
+          {
+            "icon": "type",
+            "label": "Transcribe every word"
+          },
+          {
+            "icon": "refresh",
+            "label": "Cut every pause"
+          },
+          {
+            "icon": "sparkle",
+            "label": "Find the pictures"
+          },
+          {
+            "icon": "video",
+            "label": "Paper, memes, sound"
+          },
+          {
+            "icon": "check",
+            "label": "Check -14 LUFS"
+          }
+        ],
+        "captions": [
+          [
+            "ONE",
+            "RAW",
+            "*TAKE",
+            "IN"
+          ],
+          [
+            "EVERY",
+            "*PAUSE",
+            "CUT"
+          ],
+          [
+            "MEMES",
+            "ON",
+            "*PAPER"
+          ]
+        ]
+      },
+      "what": [
+        "Transcribes your take word by word, verbatim, in the language you speak",
+        "Cuts every pause, measured on the sound and never into a word: the joins are jump cuts, as in the reference edit",
+        "Opens on a title as in the reference: white words, the key word in a beautiful serif in your colour, a handwritten line on paper, stickers popping in around your head",
+        "Drops reaction memes on your face as polaroids, always in the same place; writes your titles and your few key phrases by hand on a collage of little notebook scraps that lands, breathes and folds away, a red marker drawing on it, and what you list on stickers; swings each section in; punches the camera on every cut; writes your words low and one by one",
+        "A music bed under your voice (Convergence by default), a real paper sound each time a paper lands, the Motionix pack for the stickers, the polaroids and the whooshes, finished at -14 LUFS, verified numerically"
+      ],
+      "input": "A vertical video file (9:16) of you talking, e.g. ~/Downloads/take.mp4",
+      "output": "A finished .mp4 in workspace/videos/, plus the numbers that prove it",
+      "example": "/video-scrapbook-editor ~/Downloads/take.mp4, my brand colour is #FF5A1F, show my repo on GitHub",
+      "platforms": [
+        "macOS"
+      ],
+      "style": {
+        "id": "scrapbook",
+        "n": 4,
+        "name": "Scrapbook",
+        "family": "Pipecorn",
+        "brief": "Pipecorn, the scrapbook language as validated: every pause cut, real GIFs as big polaroids in the middle of the screen, titles on notebook scraps in a marker hand, the key word in colour, stickers, the red marker, Hip Hop 02 under it, captions low and word by word",
+        "line": "Every pause cut; real GIFs dropped in the middle of the screen, your titles on notebook scraps, the key word in colour, a red marker, your words low and one by one.",
+        "reel": "/media/scrapbook-reel.mp4",
+        "poster": "/media/scrapbook-reel.jpg",
+        "features": [
+          [
+            "scrap",
+            "Paper scraps, real shadows"
+          ],
+          [
+            "meme",
+            "Real GIFs as polaroids"
+          ],
+          [
+            "jump",
+            "A punch on every cut"
+          ],
+          [
+            "wave",
+            "Music, paper, Motionix"
+          ]
+        ],
+        "questions": [
+          "style",
+          "music",
+          "pace",
+          "generic",
+          "voice",
+          "notes"
+        ],
+        "defaults": {
+          "music": "hiphop"
+        },
+        "for": "You, going through a list",
+        "stages": [
+          "read",
+          "setup",
+          "listen",
+          "rush",
+          "tighten",
+          "pictures",
+          "write",
+          "look",
+          "render",
+          "verify"
+        ],
+        "drop": {
+          "title": "Drop your take.",
+          "lead": "A vertical video of you talking to the camera. Claude cuts every pause, drops real GIFs in as polaroids, puts your titles on notebook scraps and the key word in colour, draws on them in red marker, writes your words low and one by one, announces each section, adds a sound for each thing that lands, then checks it all by measurement.",
+          "hint": "MP4 or MOV, 9:16, you talking to the camera"
+        }
+      },
+      "since": "2026-10-05"
+    },
+    {
+      "id": "explainer-editor",
+      "command": "/video-explainer-editor",
+      "category": "video",
+      "path": "plugins/video/skills/explainer-editor",
+      "title": "Explainer editor",
+      "tagline": "One take of you talking in, one explained short out: you in a frame at the bottom, what you explain drawn above you as you say it, with the motion and the light of an After Effects edit and a sound on everything that moves.",
+      "cover": "short",
+      "channels": [
+        "linkedin",
+        "youtube",
+        "instagram",
+        "tiktok"
+      ],
+      "highlights": [
+        {
+          "icon": "video",
+          "label": "You at the bottom, head out"
+        },
+        {
+          "icon": "sparkle",
+          "label": "Camera moves, motion blur"
+        },
+        {
+          "icon": "type",
+          "label": "A figure on every idea"
+        },
+        {
+          "icon": "music",
+          "label": "A sound on every move"
+        },
+        {
+          "icon": "check",
+          "label": "-14 LUFS, measured"
+        }
+      ],
+      "diagram": {
+        "in": {
+          "title": "A take of you talking",
+          "detail": "~/Downloads/take.mp4",
+          "says": "THERE ARE FIVE THINGS TO GET RIGHT.",
+          "flaws": [
+            "Nothing shows what you explain",
+            "No text on screen",
+            "The same shot all along"
+          ]
+        },
+        "out": {
+          "title": "An explained short",
+          "detail": "workspace/videos/, with its numbers",
+          "video": "/media/explainer-editor-v1.mp4",
+          "poster": "/media/explainer-editor-v1.jpg",
+          "wins": [
+            "The idea drawn above you",
+            "Your words on screen",
+            "-14 LUFS"
+          ]
+        },
+        "steps": [
+          {
+            "icon": "type",
+            "label": "Transcribe every word"
+          },
+          {
+            "icon": "video",
+            "label": "Cut you out"
+          },
+          {
+            "icon": "sparkle",
+            "label": "Plan the sections"
+          },
+          {
+            "icon": "video",
+            "label": "Stage, captions, sound"
+          },
+          {
+            "icon": "check",
+            "label": "Check -14 LUFS"
+          }
+        ],
+        "captions": [
+          [
+            "ONE",
+            "*TAKE",
+            "OF",
+            "YOU"
+          ],
+          [
+            "THE",
+            "*IDEA",
+            "ABOVE",
+            "YOU"
+          ],
+          [
+            "ONE",
+            "*WORD",
+            "AT",
+            "A",
+            "TIME"
+          ]
+        ]
+      },
+      "what": [
+        "Transcribes your take word by word, verbatim, in the language you speak",
+        "Cuts you out of the picture and sets you in a frame at the bottom of a dark stage lit like a set (a light on each scene, a vignette, dust floating), your head rising out of it",
+        "Turns what you say into scenes joined by camera moves (whip pans, rises, push-throughs) and draws each idea on the word that names it: titles, numbered bars, pills, trees, logos, your own screenshots, each with its shadow and its glow, with motion blur and springs, never still",
+        "Puts your words between the stage and you, one at a time, and cuts to you full screen with a camera flash a few times a minute",
+        "The base skills' sound kit on the big moves (whooshes, a glitch, a riser, the flash) and a light sound on everything that appears (pops, swishes, clicks, shutters, typing: the Motionix pack), each measured as heard, a music bed, finished at -14 LUFS / -1 dBTP and verified numerically",
+        "Works from any take: a close one gets a narrower frame, a take of several shots is framed shot by shot; in the dark stage of the reference or its light version"
+      ],
+      "input": "A vertical video of you talking to the camera (9:16), e.g. ~/Downloads/take.mp4",
+      "output": "A finished .mp4 in workspace/videos/, plus the numbers that prove it",
+      "example": "/video-explainer-editor ~/Downloads/take.mp4, the five steps as a list, my logo when I name the product",
+      "platforms": [
+        "macOS"
+      ],
+      "style": {
+        "id": "explainer",
+        "n": 5,
+        "matteAhead": true,
+        "name": "Split explainer",
+        "family": "Pipecorn",
+        "brief": "Pipecorn, the explainer language: you in a frame at the bottom, the idea drawn above you",
+        "line": "You in a frame at the bottom, your head out of it; above you, what you explain, drawn as you say it, with the motion and the light of an After Effects edit.",
+        "reel": "/media/explainer-reel.mp4",
+        "poster": "/media/explainer-reel.jpg",
+        "features": [
+          [
+            "split",
+            "You at the bottom"
+          ],
+          [
+            "stack",
+            "Numbered bars"
+          ],
+          [
+            "tree",
+            "Camera moves"
+          ],
+          [
+            "word",
+            "One word at a time"
+          ]
+        ],
+        "questions": [
+          "style",
+          "music",
+          "pace",
+          "generic",
+          "voice",
+          "notes"
+        ],
+        "for": "You, explaining something",
+        "stages": [
+          "read",
+          "setup",
+          "listen",
+          "rush",
+          "write",
+          "matte",
+          "look",
+          "render",
+          "verify"
+        ],
+        "drop": {
+          "title": "Drop your take.",
+          "lead": "A vertical video of you talking to the camera. Claude cuts you out, sets you in a frame at the bottom, draws what you explain above you as you say it, puts your words on screen one at a time, adds the sound and the music, then checks it all by measurement.",
+          "hint": "MP4 or MOV, 9:16, you talking to the camera"
+        }
+      },
+      "since": "2026-10-05"
+    },
+    {
+      "id": "memo",
+      "command": "/video-memo",
+      "category": "video",
+      "path": "plugins/video/skills/memo",
+      "title": "Voice memo to short scripts",
+      "tagline": "One voice memo in, the short scripts it holds out: three versions of each in the language of your videos, read aloud, two or three feedbacks, the lead magnet in every one.",
+      "cover": "memo",
+      "channels": [
+        "linkedin",
+        "youtube",
+        "instagram",
+        "tiktok"
+      ],
+      "highlights": [
+        {
+          "icon": "mic",
+          "label": "Your memo, any language"
+        },
+        {
+          "icon": "layers",
+          "label": "Several shorts in one memo"
+        },
+        {
+          "icon": "type",
+          "label": "3 versions each"
+        },
+        {
+          "icon": "volume",
+          "label": "Read aloud"
+        },
+        {
+          "icon": "check",
+          "label": "2 or 3 feedbacks, no more"
+        }
+      ],
+      "what": [
+        "Transcribes your memo word by word, in the language you spoke it",
+        "Finds the videos inside it: one point each, 1 to 3 minutes, the big picture and its parts",
+        "Writes three versions of each in the language of your videos: Straight, Hook first, and a Story, Contrarian or List",
+        "Reads each version aloud with ElevenLabs, so you hear it instead of reading it",
+        "Gives two or three feedbacks at most (an idea to add, a big inconsistency, a link to another of your videos) and checks your lead magnet is in every version"
+      ],
+      "input": "A voice memo (M4A from Voice Memos, MP3, WAV, or a video)",
+      "output": "The shorts in workspace/memos/<slug>/memo.json, for the Studio: pick a version, read it on the teleprompter",
+      "example": "/video-memo ~/Downloads/idea.m4a",
+      "platforms": [
+        "macOS"
+      ],
+      "icon": "mic",
+      "since": "2026-10-15"
+    },
+    {
+      "id": "voiceover-video",
+      "command": "/video-youtube-editor",
+      "aliases": [
+        "/video-voiceover"
+      ],
+      "category": "video",
+      "path": "plugins/video/skills/voiceover-video",
+      "title": "YouTube video editor",
+      "tagline": "A complete edit of your horizontal YouTube videos, long ones too, in three versions: Facecam + Motion design (you filmed it all, your real voice), Motion design + AI voice (nothing to film), or Facecam + Motion design + AI voice (you film the intro and a few shots, an AI voice says the rest). Real pages, stock shots and GIFs; one music; checked before you see it; the 4K when you say so.",
+      "cover": "motion",
+      "channels": [
+        "youtube-video",
+        "linkedin"
+      ],
+      "highlights": [
+        {
+          "icon": "video",
+          "label": "3 versions, filmed or not"
+        },
+        {
+          "icon": "mic",
+          "label": "Your voice, real or cloned"
+        },
+        {
+          "icon": "doc",
+          "label": "Real pages, stock shots, GIFs"
+        },
+        {
+          "icon": "check",
+          "label": "Checked before you see it"
+        }
+      ],
+      "what": [
+        "Three versions, the same edit: Facecam + Motion design (you filmed the whole video, your real voice), Motion design + AI voice (no filming), or Facecam + Motion design + AI voice (a filmed intro and a few shots, an AI voice for the rest)",
+        "Facecam + Motion design: hears your take on your Mac (Whisper, no key), cuts out the retakes, the fillers and the dead air, keeps your real voice all along and your face shots in between",
+        "Dresses every face shot: graded, at your speed, you cut out, your words as lockups behind your head, punches, the music from the hook",
+        "The two versions with an AI voice: says the script with the voice you pick (an ElevenLabs key), your own cloned once from a take and kept, or a voice of ElevenLabs",
+        "Writes from your own words, your idea or your article, with you where it needs a fact: every fact is asked, never invented",
+        "Illustrates every sentence in motion design: real homepages and logos, LinkedIn-style cards of made-up people, charts, editorial lines, chapter pages",
+        "Adds free stock shots and a few GIFs on their words, credited",
+        "Joins it all with one music, renders a 1080p draft and a preview to send, and checks it: -14 LUFS, no black frame, every join; the 4K when you ask"
+      ],
+      "input": "Your filmed take (the two Facecam versions), or your script, idea or article (Motion design + AI voice)",
+      "output": "The video in workspace/videos/ (a 1080p draft and a 720p preview; the 4K on request), and its project in workspace/projects/ to change later",
+      "example": "/video-youtube-editor ~/Movies/my-take.mp4, facecam",
+      "platforms": [
+        "macOS"
+      ],
+      "icon": "video",
+      "since": "2026-10-15"
+    },
+    {
+      "id": "shorts",
+      "command": "/video-long-to-shorts",
+      "aliases": [
+        "/video-shorts"
+      ],
+      "category": "video",
+      "path": "plugins/video/skills/shorts",
+      "title": "Long video to shorts",
+      "tagline": "Your long video in, several vertical shorts out: its best moments found and put in a new order, the strongest line first as the hook, your real voice, in about 30 s, 1 min and 1 min 30, each ending on a card to the long video if you like.",
+      "cover": "motion",
+      "channels": [
+        "youtube",
+        "tiktok",
+        "instagram",
+        "linkedin"
+      ],
+      "highlights": [
+        {
+          "icon": "video",
+          "label": "One long video, several shorts"
+        },
+        {
+          "icon": "sparkle",
+          "label": "The best moments, hook first"
+        },
+        {
+          "icon": "type",
+          "label": "Your words on screen"
+        },
+        {
+          "icon": "check",
+          "label": "-14 LUFS, measured"
+        }
+      ],
+      "what": [
+        "Takes your long video, filmed talking to the camera (16:9 or vertical, derushed or not): the same file the YouTube video editor edits",
+        "Hears it once on your Mac, no key needed (or reuses the YouTube video editor's transcript of the same file)",
+        "Finds the moments that stand alone, and puts the strongest line first as the hook; each subject in about 30 s, 1 min and 1 min 30",
+        "Cuts the retakes and the dead air, at your speed, reframed to 9:16 on your face, graded like the long video",
+        "With an ElevenLabs key, says a missing line (a hook, a bridge) in your cloned voice, in your words, never a new fact; without one, only the lines you said",
+        "Edits each short in Dynamic text from your first frame, with pictures behind you, white pages that draw the idea, and an end card to your long video on YouTube if you want one",
+        "One music, -14 LUFS, checked; the captions for each feed written"
+      ],
+      "input": "Your long video, of you talking to the camera, e.g. ~/Movies/my-youtube-video.mp4 (derushed or not)",
+      "output": "Several finished vertical shorts (1080 × 1920) in workspace/videos/, with their checks and their captions",
+      "example": "/video-long-to-shorts ~/Movies/my-youtube-video.mp4, 3 shorts",
+      "platforms": [
+        "macOS"
+      ],
+      "icon": "video",
+      "since": "2026-10-15"
+    }
+  ]
+}

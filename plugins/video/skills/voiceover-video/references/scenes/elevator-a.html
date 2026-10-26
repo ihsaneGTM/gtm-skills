@@ -1,0 +1,316 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+#world{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+.num{position:absolute;left:0;top:0;width:900px;height:640px;text-align:right;font:800 640px/1 Title;letter-spacing:-.07em;color:#EDEBF1;white-space:nowrap;transform-origin:100% 50%}
+.fl{position:absolute;left:0;top:0;font:500 24px/1 Mono;letter-spacing:.1em;color:var(--ink2);white-space:nowrap;display:flex;align-items:center;gap:14px}
+.fl b{display:block;width:40px;height:3px;background:var(--ink);border-radius:2px}
+.card{position:absolute;left:0;top:0;background:#fff;border-radius:40px;overflow:hidden;transform-origin:0 0;
+  box-shadow:0 0 0 1.5px rgba(26,26,26,.06),0 3px 5px rgba(26,26,26,.06),0 40px 70px -28px rgba(26,26,26,.38)}
+.ring{position:absolute;left:0;top:0;border-radius:52px;border:12px solid var(--y);transform-origin:0 0;opacity:0}
+.tile{position:absolute;left:34px;top:34px;width:112px;height:112px;border-radius:30px;display:flex;align-items:center;justify-content:center;
+  font:800 66px/1 Title;color:#fff;letter-spacing:-.04em}
+.nm{position:absolute;left:178px;top:44px;font:680 54px/1 Title;letter-spacing:-.035em;color:var(--ink);white-space:nowrap}
+.sub{position:absolute;left:180px;top:112px;font:500 22px/1 Mono;letter-spacing:.1em;color:var(--ink2);white-space:nowrap}
+.slot{position:absolute;left:640px;top:16px;right:16px;bottom:16px;border-radius:26px;background:#F4F3F7;overflow:hidden}
+.slot .idle{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:14px}
+.slot .idle i{display:block;width:12px;height:12px;border-radius:50%;background:#CFCCD8}
+.slot .no{position:absolute;inset:0;display:flex;align-items:center;gap:18px;padding-left:34px;font:640 42px/1 Title;letter-spacing:-.03em;color:var(--ink2)}
+.slot .yes{position:absolute;inset:0;background:var(--y);padding:26px 32px 0}
+.slot .yl{display:flex;align-items:center;gap:10px;font:760 24px/1 Title;letter-spacing:.07em;color:var(--ink)}
+.slot .yv{margin-top:20px;font:600 38px/1 Mono;letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+.pc .mk{position:absolute;left:36px;top:36px;width:168px;height:168px;border-radius:42px;overflow:hidden}
+.pc .mk img{width:100%;height:100%;display:block}
+.pc .pn{position:absolute;left:238px;top:50px;font:790 92px/1 Title;letter-spacing:-.045em;color:var(--ink)}
+.pc .ps{position:absolute;left:242px;top:160px;font:500 24px/1 Mono;letter-spacing:.1em;color:var(--ink2);white-space:nowrap}
+.pc .band{position:absolute;left:0;right:0;top:240px;height:90px;background:var(--y);display:flex;align-items:center;justify-content:center;gap:14px;
+  font:780 46px/1 Title;letter-spacing:-.04em;color:var(--ink)}
+.ind{position:absolute;left:96px;top:64px;display:flex;align-items:center;gap:14px;background:var(--ink);color:#fff;border-radius:999px;
+  padding:0 30px 0 22px;height:84px;font:760 50px/1 Title;letter-spacing:-.03em;transform-origin:0 50%;z-index:40;
+  box-shadow:0 3px 4px rgba(26,26,26,.12),0 22px 40px -16px rgba(26,26,26,.45)}
+.ind .win{height:56px;overflow:hidden}.ind .col{display:flex;flex-direction:column}.ind .col span{height:56px;line-height:56px;display:block}
+.pill{position:absolute;left:0;top:0;z-index:41;white-space:nowrap;background:var(--ink);color:#fff;font:720 42px/1 Title;letter-spacing:-.035em;
+  padding:9px 28px 9px 9px;border-radius:999px;display:flex;align-items:center;gap:14px;transform-origin:50% 50%;
+  box-shadow:0 3px 4px rgba(26,26,26,.1),0 22px 40px -16px rgba(26,26,26,.45)}
+.pill img{width:62px;height:62px;border-radius:50%;object-fit:cover;display:block;box-shadow:0 0 0 3px #FFD90D}
+.pill .win{height:50px;overflow:hidden}.pill .col{display:flex;flex-direction:column}.pill .col span{height:50px;line-height:50px;display:block}
+</style></head><body><div id="stage"></div>
+<script src="vendor/gsap/gsap.min.js"></script><script src="vendor/gsap/CustomEase.min.js"></script>
+<script src="kit.js"></script><script src="words.js"></script>
+<script>
+/* Elevator A · "The waterfall": Pipecorn is the top floor of a tower, each data provider a floor below it; the frame is
+   the elevator shaft going DOWN. The elevator drops floor by floor (A, B, C, D land as we pass), the tower folds into one
+   frame, then a yellow cable runs down from Pipecorn carrying the lead's request; the camera rides it: A no match, B no
+   match, C finds the phone, D the email. The camera pulls back: the whole cascade, settled. */
+gsap.registerPlugin(CustomEase);
+const A = K.A;
+K.el("svg", { width: 0, height: 0, style: { position: "absolute" }, html: `<filter id="mb" x="-10%" y="-40%" width="120%" height="180%"><feGaussianBlur id="mbs" stdDeviation="0 0"/></filter>` });
+const world = K.el("div", { id: "world" });
+const cam = { fx: 1040, fy: 540, s: 1.18, mb: 0, follow: 0 };
+const FO = { f: 0, rail: 0, nv: 1 };   // the fold (0: the open tower, one floor per frame; 1: the whole tower in one frame)
+const G = 1080, LEFT0 = 580, LEFT1 = 680, CX = 540;
+// floors: 0 = Pipecorn, 1..4 = providers
+const FLOORS = [
+  { n: "P", lab: "LEVEL P", h: 240, w: 960, fs1: .62, top1: 85 },
+  { n: "01", lab: "LEVEL 01", L: "A", col: "#2F6FED", h: 180, w: 1200, fs1: .8, top1: 343, res: "no" },
+  { n: "02", lab: "LEVEL 02", L: "B", col: "#16A34A", h: 180, w: 1200, fs1: .8, top1: 513, res: "no" },
+  { n: "03", lab: "LEVEL 03", L: "C", col: "#F59E0B", h: 180, w: 1200, fs1: .8, top1: 683, res: "yes", k: "PHONE", v: "+44 20 7946 0958" },
+  { n: "04", lab: "LEVEL 04", L: "D", col: "#7C3AED", h: 180, w: 1200, fs1: .8, top1: 853, res: "yes", k: "EMAIL", v: "sarah.whitfield@halvorn.io" },
+];
+const CHECK = `<svg width="30" height="30" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#1A1A1A"/><path d="M7 12.3l3.2 3.2L17 8.7" fill="none" stroke="#FFD90D" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const CROSS = `<svg width="40" height="40" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="none" stroke="#6B6878" stroke-width="1.8"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="#6B6878" stroke-width="1.9" stroke-linecap="round"/></svg>`;
+FLOORS.forEach((o, i) => {
+  o.i = i;
+  o.top0 = (i === 0 ? 420 : 450) + i * G;   // the open tower: floor i is centred on y = 540 + i·G
+  o.st = { in: 0, num: 0, lab: 0, pun: 1, jx: 0, band: 0, flash: 0, q: 0, no: 0, yes: 0, rev: 0 };
+  o.num = K.el("div", { class: "num", text: o.n }, world);
+  o.fl = K.el("div", { class: "fl", html: `<b></b><span>${o.lab}</span>` }, world);
+});
+// the shaft's rail and the cable (under the cards)
+const svg = K.el("svg", { width: 1920, height: 1080, style: { position: "absolute", left: 0, top: 0, overflow: "visible" } }, world);
+K.el("defs", { html: `<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10"/></filter>` }, svg);
+const rail = K.el("path", { fill: "none", stroke: "#1A1A1A", "stroke-opacity": .16, "stroke-width": 4, "stroke-linecap": "round", "stroke-linejoin": "round" }, svg);
+const stubs = FLOORS.slice(1).map(() => K.el("line", { stroke: "#1A1A1A", "stroke-width": 4, "stroke-linecap": "round" }, svg));
+const cabG = K.el("path", { fill: "none", stroke: "#FFD90D", "stroke-width": 40, "stroke-linecap": "round", "stroke-linejoin": "round", filter: "url(#glow)" }, svg);
+const cab = K.el("path", { fill: "none", stroke: "#FFD90D", "stroke-width": 14, "stroke-linecap": "round", "stroke-linejoin": "round" }, svg);
+const brs = [3, 4].map(() => K.el("line", { stroke: "#FFD90D", "stroke-width": 14, "stroke-linecap": "round" }, svg));
+const headC = K.el("circle", { r: 13, fill: "#fff", stroke: "#FFD90D", "stroke-width": 7 }, svg);
+const trail = { l: 0, glow: 0 };
+let TL = null, busy = false;
+// cards
+FLOORS.forEach((o, i) => {
+  o.ring = K.el("div", { class: "ring" }, world);
+  o.el = K.el("div", { class: "card" + (i ? "" : " pc"), style: { width: o.w + "px", height: o.h + "px" } }, world);
+  if (!i) {
+    o.el.innerHTML = `<div class="mk"><img src="${K.img("brand-mark.png")}"></div><div class="pn">Pipecorn</div><div class="ps">WATERFALL ENRICHMENT</div>
+      <div class="band">${CHECK.replace(/30/g, "40")}One subscription</div>`;
+    o.bandEl = o.el.querySelector(".band");
+  } else {
+    o.el.innerHTML = `<div class="tile" style="background:${o.col}">${o.L}</div><div class="nm">Provider ${o.L}</div><div class="sub">DATA PROVIDER</div>
+      <div class="slot"><div class="idle"><i></i><i></i><i></i></div><div class="no">${CROSS}No match</div>
+      <div class="yes"><div class="yl">${CHECK}${o.k || ""}</div><div class="yv"${o.k === "EMAIL" ? ' style="font-size:31px;margin-top:24px"' : ""}></div></div></div>`;
+    o.idle = o.el.querySelector(".idle"); o.no = o.el.querySelector(".no"); o.yes = o.el.querySelector(".yes"); o.yv = o.el.querySelector(".yv");
+  }
+});
+// the request riding the cable (screen space, sharp)
+const pill = K.el("div", { class: "pill", html: `<img src="${K.img("people/sarah.jpg")}"><div class="win"><div class="col"><span>Phone?</span><span>Email?</span></div></div>` });
+const pCol = pill.querySelector(".col"), pd = { in: 0, out: 0, sw: 0, jx: 0 };
+// the floor indicator
+const ind = K.el("div", { class: "ind", html: `<svg width="34" height="40" viewBox="0 0 24 28"><path d="M12 3l7 8H5z" fill="#FFFFFF" opacity=".35"/><path d="M12 25l7-8H5z" fill="#FFD90D"/></svg><div class="win"><div class="col">${FLOORS.map(o => `<span>${o.n}</span>`).join("")}</div></div>` });
+const indCol = ind.querySelector(".col"), ix = { in: 0, mode: 0 };
+
+const fz = o => K.lerp(1, o.fs1, FO.f);
+const topOf = o => K.lerp(o.top0, o.top1, FO.f);
+const leftOf = () => K.lerp(LEFT0, LEFT1, FO.f);
+const midOf = o => topOf(o) + o.h * fz(o) / 2;              // the centre of a card's base (without the band)
+const portY = () => midOf(FLOORS[0]);
+const ROWS = () => FLOORS.map((o, i) => (i ? midOf(o) : portY()));
+// the cable's route: Pipecorn's left side → the shaft → down to D
+const route = () => { const r = ROWS(); return [[leftOf(), r[0]], [CX, r[0]], [CX, r[4]]]; };
+const at = (pts, l) => {
+  let acc = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (acc + L >= l) { const f = (l - acc) / L; return { pts: [...pts.slice(0, i), [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]] }; }
+    acc += L;
+  }
+  return { pts };
+};
+const rp = (pts, r = 40) => {
+  let d = `M${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i], [cx, cy] = pts[i + 1];
+    const l1 = Math.hypot(bx - ax, by - ay), l2 = Math.hypot(cx - bx, cy - by), rr = Math.min(r, l1 / 2, l2 / 2);
+    if (rr < .5) { d += `L${bx} ${by}`; continue; }
+    d += `L${bx + (ax - bx) * rr / l1} ${by + (ay - by) * rr / l1}Q${bx} ${by} ${bx + (cx - bx) * rr / l2} ${by + (cy - by) * rr / l2}`;
+  }
+  return d + `L${pts[pts.length - 1][0]} ${pts[pts.length - 1][1]}`;
+};
+const headOf = () => { const pts = route(), tot = (pts[0][0] - pts[1][0]) + (pts[2][1] - pts[1][1]); const hp = at(pts, Math.max(Math.min(trail.l, tot), .01)).pts; return hp[hp.length - 1]; };
+const fyOf = h => (cam.follow > 0 ? K.lerp(cam.fy, K.clamp(h[1] + 50, 260, 760), cam.follow) : cam.fy);
+// the folded tower's stops (world lengths along the route)
+const R1 = FLOORS.map((o, i) => (i ? o.top1 + o.h * o.fs1 / 2 : o.top1 + o.h * o.fs1 / 2));
+const STOP = R1.map(y => (LEFT1 - CX) + (y - R1[0]));
+// a deterministic scramble: the revealed part is the value, the rest flickers
+const scr = (v, p, t) => {
+  const n = v.length, k = Math.floor(p * n), fr = Math.floor(t * 30), cs = "0123456789abcdefghkmnprstwxz";
+  let s = "";
+  for (let i = 0; i < n; i++) {
+    const c = v[i];
+    if (i < k || /[ .+@]/.test(c)) s += c;
+    else if (i < k + 6) s += cs[(fr * 31 + i * 17 + ((fr * i) % 7)) % (/\d/.test(c) ? 10 : cs.length)];
+    else s += " ";
+  }
+  return s;
+};
+
+PAGE({
+  dur: 10.4,
+  cues: [
+    { t: 3.5, name: "m:cinematic-fast-whoosh", gain: -22 },
+    { t: 7.0, name: "m:cinematic-medium-whoosh", gain: -23 },
+    { t: 8.42, name: "m:premium-pop-3", gain: -23 },
+  ],
+  build(tl) {
+    TL = tl;
+    const FT = (o, a, b, pos) => tl.fromTo(o, a, Object.assign({ immediateRender: false }, b), pos);
+    const P = FLOORS[0].st;
+    // 1 · the top floor: Pipecorn's card flips up into place, its numeral slides in behind, the indicator
+    FT(P, { in: 0 }, { in: 1, duration: .7, ease: "back.out(1.5)" }, .12);
+    FT(P, { num: 0 }, { num: 1, duration: .9, ease: "expo.out" }, .18);
+    FT(P, { lab: 0 }, { lab: 1, duration: .5, ease: "power2.out" }, .55);
+    FT(ix, { in: 0 }, { in: 1, duration: .5, ease: "back.out(2.2)" }, .6);
+    FT(cam, { s: 1.18 }, { s: 1.21, duration: 2.0, ease: "sine.inOut" }, .3);
+    // « one subscription »: the yellow band slides up under the card
+    tl.to(P, { band: 1, duration: .45, ease: "expo.out" }, A("one") - .04);
+    FT(P, { pun: 1.07 }, { pun: 1, duration: .6, ease: "elastic.out(1,.45)" }, A("one"));
+    tl.to(cam, { s: 1.27, duration: .3, ease: "expo.out" }, A("one") - .04).to(cam, { s: 1.18, duration: .8, ease: "power2.inOut" }, A("one") + .35);
+
+    // 2 · « access to all the best data provider »: the elevator drops floor by floor, a provider lands on each
+    const drop = CustomEase.create("drop", "M0,0 C0.45,0 0.55,0.2 0.66,0.55 0.76,0.88 0.84,1 1,1");
+    const D = [[3.5, .56], [4.3, .5], [4.82, .46], [5.3, .46]];
+    D.forEach(([t0, d], j) => {
+      const o = FLOORS[j + 1];
+      tl.to(cam, { fy: 540 + (j + 1) * G, duration: d, ease: drop }, t0);
+      FT(o.st, { num: 0 }, { num: 1, duration: .6, ease: "expo.out" }, t0 + d * .35);
+      FT(o.st, { lab: 0 }, { lab: 1, duration: .4, ease: "power2.out" }, t0 + d * .6);
+      FT(o.st, { in: 0 }, { in: 1, duration: .55, ease: "back.out(1.6)" }, t0 + d * .42);
+    });
+    // « on the market »: the tower folds into one frame
+    const fe = { duration: .62, ease: "expo.inOut" };
+    tl.to(FLOORS.map(o => o.st), { lab: 0, duration: .25, ease: "power2.in" }, 5.92);
+    tl.to(FO, Object.assign({ f: 1 }, fe), 6.0);
+    tl.to(cam, Object.assign({ fy: 540, fx: 960, s: 1 }, fe), 6.0);
+    tl.to(ix, { mode: 1, duration: .5, ease: "power2.inOut" }, 6.05);
+    FT(FO, { rail: 0 }, { rail: 1, duration: .4, ease: "power2.out" }, 6.5);
+
+    // 3 · « so you can get almost every phone and every email »: the cable runs down, the camera rides it
+    const ride = { fx: 1007, s: 1.35, duration: .5, ease: "power3.inOut" };
+    tl.to(cam, ride, 6.92);
+    tl.to(FO, { nv: 0, duration: .3, ease: "power2.out" }, 6.92);
+    FT(cam, { follow: 0 }, { follow: 1, duration: .5, ease: "power3.inOut" }, 6.92);
+    const hop = (to, t0, d, ease = "power2.inOut") => {
+      tl.to(trail, { l: to, duration: d, ease }, t0);
+    };
+    hop(STOP[1], 7.0, .5, CustomEase.create("cab", "M0,0 C0.3,0 0.42,0.35 0.55,0.62 0.68,0.88 0.78,1 1,1"));
+    FT(pd, { in: 0 }, { in: 1, duration: .35, ease: "back.out(2.2)" }, 7.12);
+    const nope = (o, t0) => {
+      FT(o.st, { q: 1 }, { q: 0, duration: .6, ease: "power2.out" }, t0);
+      tl.to(o.st, { no: 1, duration: .2, ease: "power2.out" }, t0 + .04);
+      tl.to(o.st, { keyframes: [{ jx: -16, duration: .05 }, { jx: 11, duration: .06 }, { jx: -6, duration: .06 }, { jx: 0, duration: .08 }] }, t0 + .04);
+      tl.to(pd, { keyframes: [{ jx: -9, duration: .05 }, { jx: 6, duration: .06 }, { jx: 0, duration: .08 }] }, t0 + .04);
+    };
+    nope(FLOORS[1], 7.5);
+    hop(STOP[2], 7.68, .3);
+    nope(FLOORS[2], 7.98);
+    hop(STOP[3], 8.14, .3);
+    const found = (o, t0, dv) => {
+      FT(o.st, { q: 0 }, { q: 1, duration: .16, ease: "power2.out" }, t0);
+      tl.to(o.st, { yes: 1, duration: .32, ease: "expo.out" }, t0 + .12);
+      FT(o.st, { flash: 1 }, { flash: 0, duration: .8, ease: "power2.out" }, t0 + .12);
+      FT(o.st, { pun: 1.07 }, { pun: 1, duration: .6, ease: "elastic.out(1,.42)" }, t0 + .12);
+      FT(o.st, { rev: 0 }, { rev: 1, duration: dv, ease: "none" }, t0 + .2);
+    };
+    found(FLOORS[3], 8.44, .45);
+    tl.to(pd, { sw: 1, duration: .3, ease: "back.out(1.6)" }, 8.86);
+    hop(STOP[4], 8.98, .3);
+    found(FLOORS[4], 9.3, .36);
+    // « every time »: the request leaves, the camera pulls back to the whole cascade, the cable glows once
+    FT(pd, { out: 0 }, { out: 1, duration: .22, ease: "power2.in" }, 9.68);
+    tl.to(cam, { fx: 960, s: 1, follow: 0, duration: .52, ease: "expo.inOut" }, 9.72);
+    tl.to(FO, { nv: 1, duration: .35, ease: "power2.out" }, 9.9);
+    FT(trail, { glow: 1 }, { glow: 0, duration: .45, ease: "power2.out" }, 9.98);
+    tl.set({}, {}, 10.4);
+  },
+  draw(t) {
+    // the cable first: the camera follows its head
+    const pts = route(), tot = (pts[1][0] - pts[0][0]) * -1 + (pts[2][1] - pts[1][1]);
+    const L = Math.min(trail.l, tot), hp = at(pts, Math.max(L, .01)).pts, h = hp[hp.length - 1];
+    const d = rp(hp, 36);
+    cab.setAttribute("d", d); cabG.setAttribute("d", d);
+    cab.style.opacity = cabG.style.opacity = trail.l > 0 ? 1 : 0;
+    cabG.setAttribute("opacity", (.35 + .3 * trail.glow).toFixed(2)); cabG.setAttribute("stroke-width", (34 + 14 * trail.glow).toFixed(1));
+    headC.setAttribute("cx", h[0].toFixed(1)); headC.setAttribute("cy", h[1].toFixed(1));
+    headC.setAttribute("opacity", trail.l > 0 && pd.in < .5 ? 1 : 0);
+    const fy = fyOf(h);
+    // motion blur from the real speed on screen: the card nearest the frame's centre, one frame earlier
+    if (!busy && t > .04) {
+      busy = true;
+      const ys = () => { const f = fyOf(headOf()); return FLOORS.map(o => 540 + (midOf(o) - f) * cam.s); };
+      const now = ys(); TL.seek(t - 1 / 30, false); const prev = ys(); TL.seek(t, false);
+      busy = false;
+      let k = 0; now.forEach((y, i) => { if (Math.abs(y - 540) < Math.abs(now[k] - 540)) k = i; });
+      cam.mb = K.clamp((Math.abs(now[k] - prev[k]) - 10) / 140, 0, 1.1);
+    }
+    world.style.transform = `translate(${(960 - cam.fx * cam.s).toFixed(2)}px,${(540 - fy * cam.s).toFixed(2)}px) scale(${cam.s.toFixed(4)})`;
+    document.getElementById("mbs").setAttribute("stdDeviation", `0 ${(cam.mb * 24).toFixed(2)}`);
+    world.style.filter = cam.mb > .02 ? "url(#mb)" : "none";
+    // the rail of the shaft and the stubs into each provider
+    const r = ROWS(), lf = leftOf();
+    const rr = rp(pts, 36);
+    rail.setAttribute("d", rr);
+    const RL = rail.getTotalLength();
+    rail.setAttribute("stroke-dasharray", `${(RL * FO.rail).toFixed(1)} ${RL + 50}`);
+    rail.style.opacity = FO.rail > 0 ? 1 : 0;
+    stubs.forEach((e, j) => {
+      const o = FLOORS[j + 1], y = r[j + 1];
+      e.setAttribute("x1", CX); e.setAttribute("x2", (CX + (lf - CX) * K.clamp(FO.rail * 1.6 - .3 - j * .1)).toFixed(1));
+      e.setAttribute("y1", y.toFixed(1)); e.setAttribute("y2", y.toFixed(1));
+      e.setAttribute("stroke-opacity", (FO.rail > 0 ? .16 + .7 * o.st.q : 0).toFixed(3));
+    });
+    // the last stub (D) is the rail's own end: drawn as a branch
+    brs.forEach((e, j) => {
+      const o = FLOORS[j + 3], y = r[j + 3], p = K.clamp(o.st.q);
+      e.setAttribute("x1", CX); e.setAttribute("x2", (CX + (lf - CX) * p).toFixed(1));
+      e.setAttribute("y1", y.toFixed(1)); e.setAttribute("y2", y.toFixed(1));
+      e.style.opacity = p > .01 ? 1 : 0;
+    });
+    // the D stub of the rail (grey) once the rail is drawn
+    // the request pill rides the head
+    const hx = 960 + (h[0] - cam.fx) * cam.s, hy = 540 + (h[1] - fy) * cam.s;
+    pill.style.transform = `translate(${(hx + pd.jx).toFixed(1)}px,${hy.toFixed(1)}px) translate(-50%,-50%) scale(${(pd.in * (1 - .7 * pd.out)).toFixed(3)})`;
+    pill.style.opacity = (K.clamp(pd.in * 3) * (1 - pd.out)).toFixed(3);
+    pCol.style.transform = `translateY(${(-50 * pd.sw).toFixed(2)}px)`;
+    // the indicator: the camera's floor while the elevator drops, then the floor the request is at
+    const vCam = K.clamp((fy - 540) / G, 0, 4);
+    let vHead = 0;
+    for (let i = 1; i < 5; i++) if (h[1] >= r[i - 1]) vHead = i - 1 + K.clamp((h[1] - r[i - 1]) / (r[i] - r[i - 1]));
+    if (trail.l <= 0) vHead = 0;
+    const v = K.lerp(vCam, vHead, ix.mode);
+    indCol.style.transform = `translateY(${(-v * 56).toFixed(2)}px)`;
+    ind.style.transform = `scale(${ix.in.toFixed(3)})`; ind.style.opacity = K.clamp(ix.in * 3).toFixed(3);
+    ind.style.filter = cam.mb > .05 ? `blur(${(cam.mb * 2).toFixed(2)}px)` : "none";
+    // floors: numerals (parallax, then they become the tower's floor numbers), labels, cards
+    FLOORS.forEach((o, i) => {
+      const s = o.st, f = FO.f, iy = 540 + i * G;
+      const nyOpen = fy + (iy - fy) * .55, ny = K.lerp(nyOpen, r[i], f);
+      const nx = K.lerp(640, 470, f) - 240 * (1 - s.num), ns = K.lerp(1, .24, f);
+      o.num.style.transform = `translate(${(nx - 900).toFixed(1)}px,${(ny - 320).toFixed(1)}px) scale(${ns.toFixed(4)})`;
+      o.num.style.opacity = (s.num * K.lerp(1, FO.nv, f)).toFixed(3);
+      const c = Math.round(K.lerp(237, 200, f)), c2 = Math.round(K.lerp(235, 197, f)), c3 = Math.round(K.lerp(241, 210, f));
+      o.num.style.color = `rgb(${c},${c2},${c3})`;
+      const fs = fz(o), top = topOf(o), left = leftOf() + s.jx, He = o.h + (o.bandEl ? 90 * s.band : 0);
+      o.fl.style.transform = `translate(${left.toFixed(1)}px,${(top - 52).toFixed(1)}px)`;
+      o.fl.style.opacity = s.lab.toFixed(3);
+      o.fl.style.clipPath = `inset(-10px ${((1 - s.lab) * 100).toFixed(1)}% -10px 0)`;
+      const sc = fs, w = o.w, hh = He;
+      o.el.style.height = He.toFixed(1) + "px";
+      o.el.style.transform = `translate(${left.toFixed(1)}px,${(top + 140 * (1 - s.in)).toFixed(1)}px) scale(${sc.toFixed(4)}) translate(${w / 2}px,${(hh / 2).toFixed(1)}px) perspective(1400px) rotateX(${(-70 * (1 - s.in)).toFixed(2)}deg) scale(${s.pun.toFixed(4)}) translate(${-w / 2}px,${(-hh / 2).toFixed(1)}px)`;
+      o.el.style.opacity = K.clamp(s.in * 2.5).toFixed(3);
+      o.el.style.filter = s.in < .98 ? `blur(${(12 * (1 - s.in)).toFixed(2)}px)` : "none";
+      if (o.bandEl) o.bandEl.style.transform = `translateY(${(100 * (1 - Math.min(1, s.band))).toFixed(2)}%)`;
+      // the yellow ring when a provider finds it
+      o.ring.style.width = (w + 36) + "px"; o.ring.style.height = (hh + 36).toFixed(1) + "px";
+      o.ring.style.transform = `translate(${left.toFixed(1)}px,${top.toFixed(1)}px) scale(${sc.toFixed(4)}) translate(${w / 2}px,${(hh / 2).toFixed(1)}px) scale(${(s.pun * (1 + .05 * (1 - s.flash))).toFixed(4)}) translate(${-(w + 36) / 2}px,${(-(hh + 36) / 2).toFixed(1)}px)`;
+      o.ring.style.opacity = s.flash.toFixed(3);
+      if (i) {
+        o.idle.style.opacity = (1 - Math.max(K.clamp(s.no * 12), s.yes > .01 ? 1 : 0)).toFixed(3);
+        o.no.style.opacity = s.no.toFixed(3);
+        o.no.style.transform = `translateX(${(-24 * (1 - s.no)).toFixed(1)}px)`;
+        o.yes.style.clipPath = `inset(${((1 - s.yes) * 100).toFixed(2)}% 0 0 0)`;
+        o.yes.style.opacity = s.yes > 0 ? 1 : 0;
+        if (o.v) o.yv.textContent = s.rev >= 1 ? o.v : scr(o.v, s.rev, t);
+      }
+    });
+  },
+});
+</script></body></html>

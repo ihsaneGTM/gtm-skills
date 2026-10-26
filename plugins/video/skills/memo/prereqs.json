@@ -1,0 +1,60 @@
+{
+  "skill": "memo",
+  "summary": "Voice memo to short scripts: a recording in, the shorts it holds out, three versions each, read aloud, two or three feedbacks, the lead magnet checked.",
+  "prerequisites": [
+    {
+      "id": "ffmpeg",
+      "label": "ffmpeg (reads the recording)",
+      "type": "bin",
+      "required": true,
+      "bin": "ffmpeg",
+      "hint": "brew install ffmpeg"
+    },
+    {
+      "id": "ffprobe",
+      "label": "ffprobe (measures it)",
+      "type": "bin",
+      "required": true,
+      "bin": "ffprobe",
+      "hint": "Ships with ffmpeg."
+    },
+    {
+      "id": "python3",
+      "label": "Python 3 (speech-to-text runtime)",
+      "type": "bin",
+      "required": true,
+      "bin": "python3",
+      "hint": "xcode-select --install"
+    },
+    {
+      "id": "node",
+      "label": "Node.js (the skill's scripts)",
+      "type": "bin",
+      "required": true,
+      "bin": "node",
+      "hint": "brew install node"
+    },
+    {
+      "id": "whisper",
+      "label": "Speech-to-text (Whisper, on your Mac's GPU)",
+      "type": "file",
+      "required": false,
+      "auto": true,
+      "path": "${WHISPER_PY:-~/.venv/whisper/bin/python}",
+      "hint": "Installed on first run by the video engine's bootstrap."
+    },
+    {
+      "id": "elevenlabs",
+      "label": "ELEVENLABS_API_KEY (each version read aloud)",
+      "type": "env",
+      "required": false,
+      "hint": "elevenlabs.io › Developers › API keys. Billed by ElevenLabs per character read. Without it, the versions are there to read.",
+      "vars": [
+        "ELEVENLABS_API_KEY"
+      ],
+      "does": "Reads each version of your scripts aloud, so you hear it instead of reading it.",
+      "without": "You get the same scripts, to read: nothing is read aloud. Your memo is transcribed on your Mac either way.",
+      "cost": "Billed by ElevenLabs per character read: a version is about 600 characters. Any plan."
+    }
+  ]
+}

@@ -1,0 +1,197 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body><div id="stage"></div>
+<script src="vendor/gsap/gsap.min.js"></script>
+<script src="kit.js"></script><script src="words.js"></script><script src="recap-lib.js"></script>
+<script>
+/* RECAP · C — « THREE RINGS, THREE HOLES ». A cloud of leads (faces). Three yellow rings close in like an iris, one per
+   criterion, each flicking the wrong leads out of the frame; three are left: « Your list ». Then the three rings fly
+   to their places and become the three counters of the giant 95 % (the 9's bowl, the two rings of the %): the ink
+   blooms out of them on « ninety-five », three yellow discs in a black number. One by one the discs are punched out of
+   the paper — three portholes onto his face — and the page dives through the 9's porthole, which lands on his face. */
+const HANDOFF = 3.9;
+const W = 1080, H = 1920, Y = "#FFD90D", INK = "#1A1A1A", INK2 = "#6B6878";
+const CX = 540, CY = 985;
+const paper = L.img("paper.png");
+const NAMES = ["aisha", "ben", "chloe", "david", "emma", "julia", "kenji", "lucas", "marcus", "nina", "omar", "sarah", "sofia", "tom"];
+const imgs = NAMES.map(n => L.img(`img/people/${n}.jpg`));
+const CRIT = ["LIVES THE PROBLEM", "CAN DECIDE", "RIGHT TIMING"];
+const R = [372, 268, 172];
+const PASS = [0.47, 0.81, 1.12], CLOSE = 0.34, RFAR = [980, 760, 560];
+// the leads: ring 0 flicks 6, ring 1 flicks 3, ring 2 flicks 2, 3 stay
+const PLAN = [
+  [0, 430, -118], [0, 470, -64], [0, 445, -20 + 180 + 22], [0, 455, 62], [0, 470, 118], [0, 430, 205],
+  [1, 305, -150], [1, 310, 25], [1, 300, 130],
+  [2, 200, -40], [2, 198, 200],
+  [-1, 70, -90], [-1, 80, 30], [-1, 80, 150],
+];
+const leads = PLAN.map(([k, d, a], i) => ({ k, d, a: a * Math.PI / 180, img: imgs[i], s: k < 0 ? 112 : 108 }));
+leads.forEach(l => { l.x = CX + Math.cos(l.a) * l.d; l.y = CY + Math.sin(l.a) * l.d; });
+const ringR = (k, t) => L.lerp(RFAR[k], R[k], L.E("expo.out")(L.seg(t, PASS[k], PASS[k] + CLOSE)));
+const hitT = (k, d) => { let a = PASS[k], b = PASS[k] + CLOSE; for (let i = 0; i < 26; i++) { const m = (a + b) / 2; if (ringR(k, m) > d + 40) a = m; else b = m; } return (a + b) / 2; };
+leads.forEach(l => { if (l.k >= 0) l.ht = hitT(l.k, l.d); });
+const surv = leads.filter(l => l.k < 0);
+
+const S = { push: 0, ring: [0, 0, 0], lab: [0, 0, 0], labOut: 0, pile: 0, list: 0, listOut: 0, fly: [0, 0, 0], bloom: 0, fill: 0, punch: 0, ping: 0, pop: [0, 0, 0], dive: 0, move: 0 };
+let G = null;
+function geo() {
+  if (G) return G;
+  const px = L.fit("95%", 800, W * 0.955, -0.05), ls = -0.05 * px;
+  const c = L.off(8, 8).getContext("2d"); L.font(c, 800, px, "Title", ls);
+  const m = c.measureText("95%"), x0 = (W - (m.actualBoundingBoxLeft + m.actualBoundingBoxRight)) / 2 + m.actualBoundingBoxLeft;
+  const base = 985 + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+  const holes = L.counters("95%", 800, px, ls, x0, base);   // [9's bowl, % top, % bottom] (sorted by x)
+  const tgt = [holes[0], ...holes.slice(1).sort((a, b) => a.cy - b.cy)];
+  G = { px, ls, x0, base, tgt, asc: m.actualBoundingBoxAscent };
+  return G;
+}
+const ringOf = k => {   // where ring k is drawn, and its radius
+  const g = geo(), f = L.E("power3.inOut")(S.fly[k]), tg = g.tgt[k];
+  return { x: L.lerp(CX, tg.bx, f), y: L.lerp(CY, tg.by, f), r: L.lerp(R[k], Math.min(tg.bw, tg.bh) / 2 - 2, f), f };
+};
+
+function avatar(c, l, x, y, s, a = 1) {
+  c.save(); c.globalAlpha = a; L.shadow(c, 0.22, 26, 10); c.fillStyle = "#fff"; c.beginPath(); c.arc(x, y, s / 2 + 5, 0, 7); c.fill(); L.noShadow(c);
+  c.beginPath(); c.arc(x, y, s / 2, 0, 7); c.clip(); c.drawImage(l.img, x - s / 2, y - s / 2, s, s); c.restore();
+}
+function arcText(c, text, x, y, r, a0) {   // letters along the top of a circle, centred on angle a0
+  L.font(c, 600, 24, "Mono", 0); const sp = 4.2;
+  const ws = [...text].map(ch => c.measureText(ch).width + sp), tot = ws.reduce((p, q) => p + q, 0) - sp;
+  let a = a0 - tot / 2 / r;
+  c.textAlign = "center"; c.textBaseline = "alphabetic";
+  for (let i = 0; i < text.length; i++) { const w = ws[i], aa = a + (w - sp) / 2 / r; c.save(); c.translate(x + Math.cos(aa) * r, y + Math.sin(aa) * r); c.rotate(aa + Math.PI / 2); c.fillText(text[i], 0, 0); c.restore(); a += w / r; }
+}
+
+function content(c, t) {
+  const g = geo();
+  // the leads
+  for (const l of leads) {
+    if (l.k >= 0) {
+      const dt = t - l.ht;
+      if (dt > 0) {   // flicked out radially, with a little spin of the eye: straight out of the frame
+        const u = L.c01(dt / 0.42); if (u >= 1) continue;
+        const e = Math.pow(u, 1.5) * 1200 + L.E("expo.out")(L.c01(dt / 0.1)) * 50;
+        avatar(c, l, l.x + Math.cos(l.a) * e, l.y + Math.sin(l.a) * e, l.s); continue;
+      }
+      // a ring closing on them pushes them a hair before
+      avatar(c, l, l.x, l.y, l.s); continue;
+    }
+    // survivors: into the facepile
+    const j = surv.indexOf(l), pu = L.E("expo.inOut")(S.list), out = L.E("power2.in")(S.listOut);
+    const fx = CX + (j - 1) * 80, fy = CY - 18, x = L.lerp(l.x, fx, pu), y = L.lerp(l.y, fy, pu), s = L.lerp(l.s, 118, pu) * (1 - out);
+    if (s > 1) avatar(c, l, L.lerp(x, CX, out), L.lerp(y, CY, out), s);
+  }
+  // « Your list »
+  if (S.list > 0.3 && S.listOut < 1) {
+    const a = L.E("expo.out")(L.c01((S.list - 0.3) / 0.7)), o = L.E("power2.in")(S.listOut);
+    c.save(); c.beginPath(); c.rect(CX - 150, CY + 52, 300, 64); c.clip();
+    c.fillStyle = INK; L.font(c, 700, 42, "Title", -1.2); c.textAlign = "center"; c.textBaseline = "alphabetic";
+    c.fillText("Your list", CX, CY + 100 + (1 - a) * 60 + o * 60); c.restore();
+  }
+  // the rings (behind them nothing; the number comes later)
+  if (S.bloom < 1) for (let k = 0; k < 3; k++) {
+    if (S.ring[k] <= 0) continue;
+    const rr = ringOf(k), r = rr.f > 0 ? rr.r : ringR(k, t);
+    c.save(); c.strokeStyle = Y; c.lineWidth = L.lerp(9, 8, rr.f); L.shadow(c, 0.12, 16, 6);
+    c.beginPath(); c.arc(rr.x, rr.y, r, 0, 7); c.stroke(); c.restore();
+    const la = S.lab[k] * (1 - L.c01(S.labOut * 2.5 - k * 0.3));
+    if (la > 0 && rr.f <= 0.001) { c.save(); c.globalAlpha = la; c.fillStyle = INK; arcText(c, `0${k + 1} · ${CRIT[k]}`, rr.x, rr.y, r + 22, -Math.PI / 2); c.restore(); }
+  }
+  if (S.bloom > 0) number(c, t);
+}
+const SC = t => 1 + 0.018 * L.seg(t, 3.9, 5.6);
+function ellipse(c, tg, grow = 1, pad = 5) { c.moveTo(tg.bx + (tg.bw / 2 + pad) * grow, tg.by); c.ellipse(tg.bx, tg.by, (tg.bw / 2 + pad) * grow, (tg.bh / 2 + pad) * grow, 0, 0, 7); }
+function number(c, t) {
+  const g = geo(), b = S.bloom;
+  const sc = 1 + 0.05 * Math.sin(Math.PI * L.c01(S.punch)) * (1 - L.c01(S.punch)) + (SC(t) - 1);
+  c.save(); c.translate(CX, CY); c.scale(sc, sc); c.translate(-CX, -CY);
+  // the yellow counters (under the ink: the ink trims them to the counters' shapes)
+  const fi = L.E("expo.out")(S.fill);
+  for (let k = 0; k < 3; k++) {
+    const tg = g.tgt[k]; if (S.pop[k] > 0 || fi <= 0) continue;
+    const ping = Math.sin(Math.PI * L.c01(S.ping * 1.4 - k * 0.2)) * 0.1;
+    c.save(); c.translate(tg.bx, tg.by); c.scale(1 + ping, 1 + ping); c.translate(-tg.bx, -tg.by);
+    c.fillStyle = Y; c.beginPath(); ellipse(c, tg, L.lerp(0.55, 1, fi)); c.fill(); c.restore();
+  }
+  // the ink blooms out of the three rings
+  c.save();
+  if (b < 1) { c.beginPath(); for (let k = 0; k < 3; k++) { const tg = g.tgt[k], rr = L.lerp(tg.r, 1300, L.E("power3.in")(L.c01(b * 1.25 - k * 0.12))); c.moveTo(tg.cx + rr, tg.cy); c.arc(tg.cx, tg.cy, rr, 0, 7); } c.clip(); }
+  c.fillStyle = INK; L.font(c, 800, g.px, "Title", g.ls); c.textAlign = "left"; c.textBaseline = "alphabetic"; c.fillText("95%", g.x0, g.base);
+  c.restore();
+  c.restore();
+}
+// the counters being punched out: drawn ABOVE the paper (they leave toward the camera)
+function discs(c, t) {
+  const g = geo(), sc = SC(t);
+  for (let k = 0; k < 3; k++) {
+    const p = S.pop[k]; if (p <= 0 || p >= 1) continue;
+    const tg = g.tgt[k], e = L.E("power2.in")(p), x = CX + (tg.bx - CX) * sc, y = CY + (tg.by - CY) * sc;
+    c.save(); c.globalAlpha = 1 - L.c01((p - 0.55) / 0.45); L.shadow(c, 0.3, 20 + 70 * e, 10 + 60 * e);
+    c.translate(x, y - e * 140); c.scale(sc * (1 + e * 1.8), sc * (1 + e * 1.8)); c.rotate(e * 0.5 * (k % 2 ? 1 : -1)); c.translate(-tg.bx, -tg.by);
+    c.fillStyle = Y; c.beginPath(); ellipse(c, tg, 1, -1); c.fill(); c.restore();
+  }
+}
+function holes(c) {
+  const g = geo(), sc = SC(T_);
+  c.save(); c.translate(CX, CY); c.scale(sc, sc); c.translate(-CX, -CY); c.beginPath();
+  for (let k = 0; k < 3; k++) if (S.pop[k] > 0.04) ellipse(c, g.tgt[k], 1, 4);
+  c.fill(); c.restore();
+}
+
+const layer = L.off(), lc = layer.getContext("2d");
+let T_ = 0, TL = null;
+function scene(ctx, t, T) {
+  T_ = t;
+  if (T < HANDOFF) { content(ctx, t); return; }
+  L.reset(lc); lc.clearRect(0, 0, W, H); lc.drawImage(paper, 0, 0, W, H);
+  if (S.pop.some(p => p > 0.04)) {
+    lc.globalCompositeOperation = "destination-out"; lc.fillStyle = "#000"; holes(lc); lc.globalCompositeOperation = "source-over";
+    const sa = 0.45 * (1 - L.c01((Math.exp(Math.log(50) * S.push * S.push) - 1.4) / 2.5));   // the rim's shadow fades as we dive (it would scale up)
+    if (sa > 0.005) L.holeShadow(lc, holes, { a: sa, dx: 4, dy: 12, blur: 10 });
+  }
+  content(lc, t);
+  // the push, then the dive, through the %'s top porthole: it slides onto his eye and opens to the whole frame
+  const g = geo(), tg = g.tgt[1], sc0 = SC(t);
+  const hx = CX + (tg.bx - CX) * sc0, hy = CY + (tg.by - CY) * sc0;
+  const mv = L.E("power2.inOut")(S.move), pu = S.push, dv = 0;
+  const s = Math.exp(Math.log(50) * pu * pu);   // one accelerating push: constant growth in log-scale, squared
+  const tx = L.lerp(hx, EYE[0], mv), ty = L.lerp(hy, EYE[1], mv);
+  ctx.save(); ctx.translate(tx, ty); ctx.scale(s, s); ctx.translate(-hx, -hy);
+  if (mv > 0 || pu > 0 || dv > 0)   // the sheet goes on past the frame (mirrored paper around it)
+    for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      ctx.save(); ctx.translate(W / 2 + ox * W, H / 2 + oy * H); ctx.scale(ox ? -1 : 1, oy ? -1 : 1); ctx.drawImage(paper, -W / 2, -H / 2, W, H); ctx.restore();
+    }
+  ctx.drawImage(layer, 0, 0);
+  discs(ctx, t);
+  ctx.restore();
+}
+const EYE = [640, 858];
+
+const draw = L.mount({ tl: () => TL, scene, samples: L.windows([[0.45, 1.75], [1.55, 2.3], [2.75, 3.5], [3.82, 4.2], [4.9, 5.85], [5.5, 6.6]], 16), shutter: 1 / 50 });
+PAGE({
+  dur: 7.43, handoff: HANDOFF,
+  camera: [[5.1, 1.5, 0.9, 0.5, "io"], [6.15, 1.0, 0.8, 0.5, "io"]],
+  cues: [
+    { t: PASS[0], name: "m:deep-short-whoosh", gain: -19 },
+    { t: 1.58, name: "m:premium-pop-2", gain: -19 },
+    { t: 2.85, name: "m:cinematic-medium-whoosh", gain: -19 },
+    { t: 4.92, name: "m:premium-pop-3", gain: -17 },
+    { t: 5.62, name: "m:cinematic-long-whoosh-1", gain: -16 },
+  ],
+  build(tl) {
+    TL = tl; L.preload();
+    PASS.forEach((p, k) => { tl.to(S.ring, { [k]: 1, duration: 0.05, ease: "none" }, p); tl.to(S.lab, { [k]: 1, duration: 0.2, ease: "none" }, p + 0.12); });
+    tl.to(S, { list: 1, duration: 0.6, ease: "none" }, 1.55);
+    tl.to(S, { labOut: 1, duration: 0.4, ease: "none" }, K.A("already") - 0.05);
+    tl.to(S, { listOut: 1, duration: 0.3, ease: "none" }, K.A("already"));
+    [0, 1, 2].forEach(k => tl.to(S.fly, { [k]: 1, duration: 0.6, ease: "none" }, 3.1 + k * 0.05));
+    tl.to(S, { bloom: 1, duration: 0.32, ease: "none" }, K.A("ninety-five") - 0.12);
+    tl.to(S, { fill: 1, duration: 0.3, ease: "none" }, K.A("ninety-five") - 0.04);
+    tl.to(S, { punch: 1, duration: 0.32, ease: "none" }, K.A("ninety-five") + 0.06);
+    tl.to(S, { ping: 1, duration: 0.5, ease: "none" }, K.A("percent"));
+    [K.A("of"), 5.1, 5.28].forEach((a, i) => tl.to(S.pop, { [[0, 2, 1][i]]: 1, duration: 0.4, ease: "none" }, a));
+    tl.to(S, { push: 1, duration: 1.6, ease: "none" }, 4.9);
+    tl.to(S, { move: 1, duration: 0.9, ease: "none" }, 5.0);
+    tl.set({}, {}, 7.43);
+  },
+  draw: t => draw(t),
+});
+</script></body></html>

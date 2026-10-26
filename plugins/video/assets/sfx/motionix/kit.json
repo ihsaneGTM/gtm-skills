@@ -1,0 +1,842 @@
+{
+ "normal-pop-1": {
+  "file": "normal-pop-1.wav",
+  "role": "pop",
+  "from": "Pop/Normal Pop.wav",
+  "dur": 0.694,
+  "align": 0.014,
+  "lm": -20.0,
+  "peak": -1.2,
+  "ch": 2
+ },
+ "normal-pop-2": {
+  "file": "normal-pop-2.wav",
+  "role": "pop",
+  "from": "Pop/Normal Pop.wav",
+  "dur": 0.75,
+  "align": 0.012,
+  "lm": -21.4,
+  "peak": -1.0,
+  "ch": 2
+ },
+ "normal-pop-3": {
+  "file": "normal-pop-3.wav",
+  "role": "pop",
+  "from": "Pop/Normal Pop.wav",
+  "dur": 0.505,
+  "align": 0.013,
+  "lm": -21.1,
+  "peak": -1.0,
+  "ch": 2
+ },
+ "normal-pop-4": {
+  "file": "normal-pop-4.wav",
+  "role": "pop",
+  "from": "Pop/Normal Pop.wav",
+  "dur": 0.736,
+  "align": 0.013,
+  "lm": -20.1,
+  "peak": -1.0,
+  "ch": 2
+ },
+ "normal-pop-5": {
+  "file": "normal-pop-5.wav",
+  "role": "pop",
+  "from": "Pop/Normal Pop.wav",
+  "dur": 0.334,
+  "align": 0.013,
+  "lm": -20.8,
+  "peak": -1.0,
+  "ch": 2
+ },
+ "premium-pop-1": {
+  "file": "premium-pop-1.wav",
+  "role": "pop",
+  "from": "Pop/Premium And Smooth Pop.wav",
+  "dur": 0.408,
+  "align": 0.01,
+  "lm": -20.0,
+  "peak": -1.8,
+  "ch": 2
+ },
+ "premium-pop-2": {
+  "file": "premium-pop-2.wav",
+  "role": "pop",
+  "from": "Pop/Premium And Smooth Pop.wav",
+  "dur": 0.399,
+  "align": 0.013,
+  "lm": -20.0,
+  "peak": -1.0,
+  "ch": 2
+ },
+ "premium-pop-3": {
+  "file": "premium-pop-3.wav",
+  "role": "pop",
+  "from": "Pop/Premium And Smooth Pop.wav",
+  "dur": 0.523,
+  "align": 0.013,
+  "lm": -20.3,
+  "peak": -1.0,
+  "ch": 2
+ },
+ "premium-pop-4": {
+  "file": "premium-pop-4.wav",
+  "role": "pop",
+  "from": "Pop/Premium And Smooth Pop.wav",
+  "dur": 0.431,
+  "align": 0.012,
+  "lm": -20.0,
+  "peak": -1.1,
+  "ch": 2
+ },
+ "media-pop": {
+  "file": "media-pop.wav",
+  "role": "pop",
+  "from": "Pop/Meadia Pop.wav",
+  "dur": 0.493,
+  "align": 0.017,
+  "lm": -20.0,
+  "peak": -5.8,
+  "ch": 2
+ },
+ "slow-pop": {
+  "file": "slow-pop.wav",
+  "role": "pop",
+  "from": "Pop/Slow And Smooth Pop.wav",
+  "dur": 0.364,
+  "align": 0.091,
+  "lm": -20.0,
+  "peak": -1.9,
+  "ch": 1
+ },
+ "smooth-pop": {
+  "file": "smooth-pop.wav",
+  "role": "pop",
+  "from": "Pop/Smooth Pop.wav",
+  "dur": 0.06,
+  "align": 0.012,
+  "lm": -20.0,
+  "peak": -2.0,
+  "ch": 2
+ },
+ "sweet-ui-open": {
+  "file": "sweet-ui-open.wav",
+  "role": "pop",
+  "from": "Pop/Sweet UI Open.wav",
+  "dur": 0.118,
+  "align": 0.014,
+  "lm": -20.0,
+  "peak": -3.7,
+  "ch": 2
+ },
+ "cinematic-click": {
+  "file": "cinematic-click.wav",
+  "role": "click",
+  "from": "Clicks/Cinematic Click.wav",
+  "dur": 0.092,
+  "align": 0.0,
+  "lm": -27.7,
+  "peak": -1.0,
+  "ch": 1
+ },
+ "thump-click": {
+  "file": "thump-click.wav",
+  "role": "click",
+  "from": "Clicks/Click  (1).wav",
+  "dur": 0.455,
+  "align": 0.045,
+  "lm": -20.0,
+  "peak": -4.5,
+  "ch": 2
+ },
+ "double-click": {
+  "file": "double-click.wav",
+  "role": "click",
+  "from": "Clicks/Click 2.wav",
+  "dur": 0.191,
+  "align": 0.024,
+  "lm": -22.8,
+  "peak": -1.0,
+  "ch": 1
+ },
+ "high-click": {
+  "file": "high-click.wav",
+  "role": "click",
+  "from": "Clicks/High Click.wav",
+  "dur": 0.087,
+  "align": 0.019,
+  "lm": -23.1,
+  "peak": -1.0,
+  "ch": 1
+ },
+ "mouse-click-1": {
+  "file": "mouse-click-1.wav",
+  "role": "click",
+  "from": "Clicks/mouse-click-198485.wav",
+  "dur": 0.338,
+  "align": 0.012,
+  "lm": -25.0,
+  "peak": -1.0,
+  "ch": 1
+ },
+ "mouse-click-2": {
+  "file": "mouse-click-2.wav",
+  "role": "click",
+  "from": "Clicks/mouse-click-198485.wav",
+  "dur": 0.63,
+  "align": 0.016,
+  "lm": -26.0,
+  "peak": -1.0,
+  "ch": 1
+ },
+ "mouse-click-3": {
+  "file": "mouse-click-3.wav",
+  "role": "click",
+  "from": "Clicks/mouse-click-198485.wav",
+  "dur": 0.354,
+  "align": 0.012,
+  "lm": -24.0,
+  "peak": -1.0,
+  "ch": 1
+ },
+ "camera-shutter": {
+  "file": "camera-shutter.wav",
+  "role": "shutter",
+  "from": "Camera Shutters/Camera Shutter.wav",
+  "dur": 0.198,
+  "align": 0.099,
+  "lm": -20.0,
+  "peak": -1.3,
+  "ch": 2
+ },
+ "hard-camera-shutter": {
+  "file": "hard-camera-shutter.wav",
+  "role": "shutter",
+  "from": "Camera Shutters/Little Bit Hard Cammera Shutter.wav",
+  "dur": 0.405,
+  "align": 0.02,
+  "lm": -20.0,
+  "peak": -6.0,
+  "ch": 2
+ },
+ "smooth-camera-shutter": {
+  "file": "smooth-camera-shutter.wav",
+  "role": "shutter",
+  "from": "Camera Shutters/Smooth Cammera Shutter.wav",
+  "dur": 0.486,
+  "align": 0.03,
+  "lm": -20.0,
+  "peak": -1.3,
+  "ch": 2
+ },
+ "data-collect": {
+  "file": "data-collect.wav",
+  "role": "data",
+  "from": "Data Collect/Data Collect.wav",
+  "dur": 0.964,
+  "align": 0.017,
+  "lm": -20.0,
+  "peak": -2.4,
+  "ch": 2
+ },
+ "data-collect-2": {
+  "file": "data-collect-2.wav",
+  "role": "data",
+  "from": "Data Collect/Data Collect.mp3",
+  "dur": 0.999,
+  "align": 0.003,
+  "lm": -20.0,
+  "peak": -19.6,
+  "ch": 1
+ },
+ "cinematic-data-collect": {
+  "file": "cinematic-data-collect.wav",
+  "role": "data",
+  "from": "Data Collect/Cinematic Data Collect 2.wav",
+  "dur": 3.463,
+  "align": 0.015,
+  "lm": -20.0,
+  "peak": -11.3,
+  "ch": 2
+ },
+ "cinematic-data": {
+  "file": "cinematic-data.wav",
+  "role": "data",
+  "from": "Data Collect/ Cinematic data.wav",
+  "dur": 2.228,
+  "align": 0.01,
+  "lm": -20.0,
+  "peak": -11.5,
+  "ch": 2
+ },
+ "stopwatch": {
+  "file": "stopwatch.wav",
+  "role": "data",
+  "from": "Data Collect/MA_Tuttkile_Stopwatch_3.wav",
+  "dur": 5.619,
+  "align": 0.005,
+  "lm": -20.9,
+  "peak": -1.0,
+  "ch": 2
+ },
+ "fast-gear": {
+  "file": "fast-gear.wav",
+  "role": "gear",
+  "from": "Gear/Fast Gear.wav",
+  "dur": 2.834,
+  "align": 0.015,
+  "lm": -20.0,
+  "peak": -5.5,
+  "ch": 2
+ },
+ "fast-gear-2": {
+  "file": "fast-gear-2.wav",
+  "role": "gear",
+  "from": "Gear/Fast Gear 2.mp3",
+  "dur": 2.162,
+  "align": 0.0,
+  "lm": -20.0,
+  "peak": -6.8,
+  "ch": 1
+ },
+ "premium-gear": {
+  "file": "premium-gear.wav",
+  "role": "gear",
+  "from": "Gear/Smooth And Premium Gear.wav",
+  "dur": 1.33,
+  "align": 0.101,
+  "lm": -20.0,
+  "peak": -1.9,
+  "ch": 2
+ },
+ "soft-gear": {
+  "file": "soft-gear.wav",
+  "role": "gear",
+  "from": "Gear/Soft Gear 1.wav",
+  "dur": 0.618,
+  "align": 0.015,
+  "lm": -22.7,
+  "peak": -1.0,
+  "ch": 1
+ },
+ "soft-gear-2": {
+  "file": "soft-gear-2.wav",
+  "role": "gear",
+  "from": "Gear/Soft Gear 2.wav",
+  "dur": 1.442,
+  "align": 0.032,
+  "lm": -27.9,
+  "peak": -1.0,
+  "ch": 2
+ },
+ "speed-gear": {
+  "file": "speed-gear.wav",
+  "role": "gear",
+  "from": "Gear/long speed gear.wav",
+  "dur": 0.455,
+  "align": 0.017,
+  "lm": -20.0,
+  "peak": -3.0,
+  "ch": 2
+ },
+ "middle-gear": {
+  "file": "middle-gear.wav",
+  "role": "gear",
+  "from": "Gear/middle gear.wav",
+  "dur": 0.677,
+  "align": 0.031,
+  "lm": -20.5,
+  "peak": -1.0,
+  "ch": 2
+ },
+ "cinematic-money": {
+  "file": "cinematic-money.wav",
+  "role": "money",
+  "from": "Money/Cinematic Money 1.wav",
+  "dur": 1.703,
+  "align": 0.097,
+  "lm": -20.0,
+  "peak": -7.0,
+  "ch": 2
+ },
+ "cinematic-money-2": {
+  "file": "cinematic-money-2.wav",
+  "role": "money",
+  "from": "Money/Cinematic Money 2.wav",
+  "dur": 1.257,
+  "align": 0.088,
+  "lm": -20.0,
+  "peak": -6.4,
+  "ch": 2
+ },
+ "money": {
+  "file": "money.wav",
+  "role": "money",
+  "from": "Money/High Volume Money.wav",
+  "dur": 1.615,
+  "align": 0.232,
+  "lm": -20.0,
+  "peak": -9.9,
+  "ch": 2
+ },
+ "money-2": {
+  "file": "money-2.wav",
+  "role": "money",
+  "from": "Money/Mediam Volume Mone.wav",
+  "dur": 3.071,
+  "align": 0.089,
+  "lm": -20.0,
+  "peak": -4.9,
+  "ch": 1
+ },
+ "riser": {
+  "file": "riser.wav",
+  "role": "riser",
+  "from": "Risers/Riser.wav",
+  "dur": 0.819,
+  "align": 0.465,
+  "lm": -20.0,
+  "peak": -1.8,
+  "ch": 2
+ },
+ "riser-2": {
+  "file": "riser-2.wav",
+  "role": "riser",
+  "from": "Risers/Riser 2.wav",
+  "dur": 4.754,
+  "align": 2.955,
+  "lm": -20.0,
+  "peak": -12.2,
+  "ch": 2
+ },
+ "premium-riser": {
+  "file": "premium-riser.wav",
+  "role": "riser",
+  "from": "Risers/Premium Riser.wav",
+  "dur": 2.458,
+  "align": 0.075,
+  "lm": -20.0,
+  "peak": -5.1,
+  "ch": 1
+ },
+ "rjd-riser": {
+  "file": "rjd-riser.wav",
+  "role": "riser",
+  "from": "Risers/RJD Riser.wav",
+  "dur": 0.669,
+  "align": 0.032,
+  "lm": -20.0,
+  "peak": -5.3,
+  "ch": 2
+ },
+ "smooth-riser": {
+  "file": "smooth-riser.wav",
+  "role": "riser",
+  "from": "Risers/Smooth Riser.wav",
+  "dur": 2.342,
+  "align": 1.905,
+  "lm": -20.0,
+  "peak": -12.7,
+  "ch": 2
+ },
+ "ui-open": {
+  "file": "ui-open.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Ui Open.wav",
+  "dur": 1.535,
+  "align": 0.03,
+  "lm": -20.0,
+  "peak": -6.2,
+  "ch": 2
+ },
+ "ui-premium-open": {
+  "file": "ui-premium-open.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/UI Premium Open.wav",
+  "dur": 3.825,
+  "align": 0.075,
+  "lm": -20.0,
+  "peak": -10.0,
+  "ch": 2
+ },
+ "ui-beatbox-click": {
+  "file": "ui-beatbox-click.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/UI Beatbox Click 01.wav",
+  "dur": 0.176,
+  "align": 0.017,
+  "lm": -20.0,
+  "peak": -5.3,
+  "ch": 2
+ },
+ "ui-digital-click-1": {
+  "file": "ui-digital-click-1.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Uu Click Digital 01.wav",
+  "dur": 0.466,
+  "align": 0.14,
+  "lm": -20.0,
+  "peak": -6.2,
+  "ch": 2
+ },
+ "ui-digital-click-3": {
+  "file": "ui-digital-click-3.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Ui Click Digital 03.wav",
+  "dur": 0.211,
+  "align": 0.059,
+  "lm": -20.3,
+  "peak": -1.0,
+  "ch": 2
+ },
+ "ui-digital-click-4": {
+  "file": "ui-digital-click-4.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Ui Click Digital 04.wav",
+  "dur": 0.169,
+  "align": 0.014,
+  "lm": -20.1,
+  "peak": -1.0,
+  "ch": 2
+ },
+ "ui-digital-click": {
+  "file": "ui-digital-click.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Ui Digital Click.wav",
+  "dur": 0.53,
+  "align": 0.039,
+  "lm": -20.0,
+  "peak": -6.1,
+  "ch": 2
+ },
+ "ui-click": {
+  "file": "ui-click.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Ui Click.wma",
+  "dur": 1.308,
+  "align": 0.18,
+  "lm": -20.0,
+  "peak": -5.4,
+  "ch": 2
+ },
+ "ui-stretch": {
+  "file": "ui-stretch.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Ui stretch.wav",
+  "dur": 1.275,
+  "align": 0.179,
+  "lm": -20.0,
+  "peak": -7.3,
+  "ch": 2
+ },
+ "ui-enter": {
+  "file": "ui-enter.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Ui Enter.wav",
+  "dur": 0.43,
+  "align": 0.021,
+  "lm": -20.0,
+  "peak": -1.1,
+  "ch": 2
+ },
+ "ui-glitch-click": {
+  "file": "ui-glitch-click.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Ui Glitch Click.wav",
+  "dur": 0.268,
+  "align": 0.043,
+  "lm": -20.0,
+  "peak": -2.2,
+  "ch": 1
+ },
+ "ui-button": {
+  "file": "ui-button.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Ui button.wav",
+  "dur": 0.245,
+  "align": 0.021,
+  "lm": -20.0,
+  "peak": -8.2,
+  "ch": 1
+ },
+ "ui": {
+  "file": "ui.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Ui.wav",
+  "dur": 0.731,
+  "align": 0.008,
+  "lm": -20.0,
+  "peak": -2.9,
+  "ch": 1
+ },
+ "ui-glitch-flicker": {
+  "file": "ui-glitch-flicker.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Ui Glitch, Flicker, Text  (2).wav",
+  "dur": 0.373,
+  "align": 0.141,
+  "lm": -20.0,
+  "peak": -9.9,
+  "ch": 2
+ },
+ "ui-select-2": {
+  "file": "ui-select-2.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Ui Granular, Button, Select   (9).wav",
+  "dur": 0.192,
+  "align": 0.032,
+  "lm": -20.2,
+  "peak": -1.0,
+  "ch": 1
+ },
+ "ui-select": {
+  "file": "ui-select.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Ui Granular, Button, Select.wav",
+  "dur": 0.167,
+  "align": 0.002,
+  "lm": -20.0,
+  "peak": -5.3,
+  "ch": 2
+ },
+ "ui-backspace": {
+  "file": "ui-backspace.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/Ui BackSpace.wav",
+  "dur": 0.31,
+  "align": 0.017,
+  "lm": -21.2,
+  "peak": -1.0,
+  "ch": 2
+ },
+ "ui-key": {
+  "file": "ui-key.wav",
+  "role": "ui",
+  "from": "Ui Sound Effects/v4) type & delete (2).wav",
+  "dur": 0.086,
+  "align": 0.007,
+  "lm": -23.6,
+  "peak": -1.0,
+  "ch": 1
+ },
+ "ui-typing-short": {
+  "file": "ui-typing-short.wav",
+  "role": "typing",
+  "from": "Ui Sound Effects/Ui Typing.wma",
+  "dur": 2.052,
+  "align": 0.04,
+  "lm": -20.0,
+  "peak": -10.2,
+  "ch": 2
+ },
+ "ui-typing": {
+  "file": "ui-typing.wav",
+  "role": "typing",
+  "from": "Ui Sound Effects/ Ui Typing.wma",
+  "dur": 11.18,
+  "align": 0.01,
+  "lm": -20.0,
+  "peak": -3.0,
+  "ch": 1
+ },
+ "cinematic-low-whoosh-2": {
+  "file": "cinematic-low-whoosh-2.wav",
+  "role": "whoosh",
+  "from": "Whooshes/ Cinematic Low Whoosh.wav",
+  "dur": 1.138,
+  "align": 0.765,
+  "lm": -20.0,
+  "peak": -8.2,
+  "ch": 2
+ },
+ "cinematic-low-whoosh": {
+  "file": "cinematic-low-whoosh.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Cinematic Low Whoosh.wav",
+  "dur": 1.88,
+  "align": 0.555,
+  "lm": -20.0,
+  "peak": -7.5,
+  "ch": 2
+ },
+ "cinematic-fast-normal-whoosh": {
+  "file": "cinematic-fast-normal-whoosh.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Cinematic Fast Normal Whoosh.wav",
+  "dur": 0.841,
+  "align": 0.285,
+  "lm": -20.0,
+  "peak": -5.4,
+  "ch": 2
+ },
+ "cinematic-fast-whoosh": {
+  "file": "cinematic-fast-whoosh.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Cinematic Fast Whoosh.wav",
+  "dur": 1.235,
+  "align": 0.375,
+  "lm": -20.0,
+  "peak": -5.9,
+  "ch": 2
+ },
+ "cinematic-long-whoosh-1": {
+  "file": "cinematic-long-whoosh-1.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Cinematic Long Whoosh.wav",
+  "dur": 2.535,
+  "align": 0.735,
+  "lm": -20.0,
+  "peak": -9.1,
+  "ch": 2
+ },
+ "cinematic-long-whoosh-2": {
+  "file": "cinematic-long-whoosh-2.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Cinematic Long Whoosh.wav",
+  "dur": 3.315,
+  "align": 1.515,
+  "lm": -20.0,
+  "peak": -10.1,
+  "ch": 2
+ },
+ "cinematic-medium-whoosh": {
+  "file": "cinematic-medium-whoosh.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Cinematic Mediam Whoosh.wav",
+  "dur": 1.517,
+  "align": 0.615,
+  "lm": -20.0,
+  "peak": -5.6,
+  "ch": 2
+ },
+ "data-whoosh": {
+  "file": "data-whoosh.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Data_Whoosh.wav",
+  "dur": 1.427,
+  "align": 0.495,
+  "lm": -20.0,
+  "peak": -7.6,
+  "ch": 2
+ },
+ "fast-whoosh-2": {
+  "file": "fast-whoosh-2.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Fast Whoosh .wav",
+  "dur": 0.908,
+  "align": 0.585,
+  "lm": -20.0,
+  "peak": -6.7,
+  "ch": 2
+ },
+ "fast-whoosh": {
+  "file": "fast-whoosh.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Fast Whoosh.wav",
+  "dur": 1.673,
+  "align": 0.705,
+  "lm": -20.0,
+  "peak": -8.8,
+  "ch": 2
+ },
+ "high-fast-whoosh": {
+  "file": "high-fast-whoosh.wav",
+  "role": "whoosh",
+  "from": "Whooshes/High And Fast Whoosh.wav",
+  "dur": 1.177,
+  "align": 0.405,
+  "lm": -20.0,
+  "peak": -7.8,
+  "ch": 2
+ },
+ "high-fast-whoosh-2": {
+  "file": "high-fast-whoosh-2.wav",
+  "role": "whoosh",
+  "from": "Whooshes/High And Fast Woosh.wav",
+  "dur": 2.157,
+  "align": 0.825,
+  "lm": -20.0,
+  "peak": -10.2,
+  "ch": 2
+ },
+ "long-whoosh": {
+  "file": "long-whoosh.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Long Whoosh.wav",
+  "dur": 2.505,
+  "align": 0.705,
+  "lm": -20.0,
+  "peak": -9.1,
+  "ch": 2
+ },
+ "simple-whoosh-2": {
+  "file": "simple-whoosh-2.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Simple Whoosh 2.wav",
+  "dur": 1.0,
+  "align": 0.435,
+  "lm": -20.0,
+  "peak": -8.6,
+  "ch": 1
+ },
+ "simple-whoosh": {
+  "file": "simple-whoosh.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Simple Whoosh.wav",
+  "dur": 1.271,
+  "align": 0.585,
+  "lm": -20.0,
+  "peak": -8.8,
+  "ch": 2
+ },
+ "smooth-whoosh": {
+  "file": "smooth-whoosh.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Slow And Smooth Whoosh .wav",
+  "dur": 2.444,
+  "align": 0.705,
+  "lm": -20.0,
+  "peak": -5.4,
+  "ch": 2
+ },
+ "smooth-fast-whoosh": {
+  "file": "smooth-fast-whoosh.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Smooth And Fast Whoosh.wav",
+  "dur": 1.032,
+  "align": 0.525,
+  "lm": -20.0,
+  "peak": -7.6,
+  "ch": 2
+ },
+ "deep-light-whoosh": {
+  "file": "deep-light-whoosh.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Whoosh Deep Light 2.wav",
+  "dur": 2.745,
+  "align": 0.945,
+  "lm": -20.0,
+  "peak": -7.6,
+  "ch": 2
+ },
+ "deep-short-whoosh": {
+  "file": "deep-short-whoosh.wav",
+  "role": "whoosh",
+  "from": "Whooshes/Whoosh Deep Short.wav",
+  "dur": 1.477,
+  "align": 0.165,
+  "lm": -20.0,
+  "peak": -5.2,
+  "ch": 2
+ },
+ "epic-fast-whoosh": {
+  "file": "epic-fast-whoosh.wav",
+  "role": "whoosh",
+  "from": "Whooshes/epic-fast-whoosh-345469.mp3",
+  "dur": 0.456,
+  "align": 0.195,
+  "lm": -20.0,
+  "peak": -3.9,
+  "ch": 1
+ }
+}

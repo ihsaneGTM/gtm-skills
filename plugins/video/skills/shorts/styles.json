@@ -1,0 +1,21 @@
+{
+  "about": "The looks of /video-long-to-shorts. Round 2 (2026-10-14): Dynamic text (/video-short-editor's vertical language: Impact capitals, the payoff in yellow, one Sacramento accent, two-layer shadows, the glitch, the opening de-zoom, the SFX pack and the flash) with your face from the first frame, plus the long video's pictures dressed with its effects (soft shadows in two layers, the screen grid, grain, vignette, motion blur). Three ways of placing those pictures. Round 1 (Document Headline / Captions / Desk) was refused: references/look.md › Decisions.",
+  "default": "behind",
+  "styles": {
+    "prints": {
+      "name": "Dynamic · Prints",
+      "line": "Dynamic text, and the pictures pinned over the top of the frame: stock shots as floating screens, GIFs as pinned prints, with the long video's shadows and screen effect.",
+      "layout": "full"
+    },
+    "behind": {
+      "name": "Dynamic · Behind you",
+      "line": "Dynamic text, and the pictures sliding out from behind your head and shoulders: the screens and prints live behind you, you stay in front.",
+      "layout": "full"
+    },
+    "cuts": {
+      "name": "Dynamic · Cutaways",
+      "line": "Dynamic text, and the stock shots over the whole frame for a beat or two, with the screen effect and the pack's flash on the cut; the GIFs dropped on your face as big prints.",
+      "layout": "full"
+    }
+  }
+}

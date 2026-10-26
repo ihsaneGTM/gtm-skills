@@ -1,0 +1,322 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+#world{position:absolute;left:0;top:0;width:1920px;height:1080px}
+.n{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0}
+.n .rise{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0}
+.n .face{position:absolute;left:-120px;top:-312px;width:240px;height:240px;border-radius:64px;overflow:hidden;backface-visibility:hidden;
+  box-shadow:0 0 0 9px #fff,0 3px 4px rgba(26,26,26,.08),0 34px 60px -22px rgba(26,26,26,.42)}
+.n .face img{width:100%;height:100%;object-fit:cover;display:block}
+.n .veil{position:absolute;inset:0;background:#fff;opacity:0}
+.n .back{background:var(--y);display:flex;align-items:center;justify-content:center}
+.n .ring{position:absolute;left:-146px;top:-338px;width:292px;height:292px;border-radius:86px;border:12px solid var(--y);opacity:0}
+.n .lab{position:absolute;left:0;bottom:0;transform:translateX(-50%);white-space:nowrap;background:#fff;color:var(--ink);
+  font:620 40px/1 Title;letter-spacing:-.035em;padding:14px 26px 16px;border-radius:999px;transform-origin:50% 100%;
+  box-shadow:0 2px 3px rgba(26,26,26,.07),0 18px 34px -14px rgba(26,26,26,.32)}
+.n .lab .sen{display:inline-block;overflow:hidden;padding-bottom:6px;margin-bottom:-6px;vertical-align:bottom;max-width:0;font-weight:800;white-space:nowrap}
+.n .lab .sen b{display:inline-block;font-weight:800;transform-origin:100% 100%;opacity:0}
+.n.big .lab{font-weight:760;font-size:46px;padding:15px 30px 18px}
+.badge{position:absolute;left:58px;top:-318px;white-space:nowrap;background:#fff;color:var(--ink);font:760 40px/1 Title;
+  letter-spacing:-.04em;padding:12px 14px 12px 12px;border-radius:999px;display:flex;align-items:center;transform-origin:30px 50%;
+  box-shadow:0 3px 4px rgba(26,26,26,.08),0 22px 40px -16px rgba(26,26,26,.38)}
+.badge .bt{display:inline-block;overflow:hidden;max-width:0;padding-bottom:4px}
+.badge .bt span{display:inline-block;padding:0 12px 0 11px}
+.cnt{position:absolute;left:0;top:0;height:64px;min-width:64px;padding:0 16px;border-radius:999px;background:var(--red);color:#fff;
+  font:800 38px/64px Title;letter-spacing:-.03em;text-align:center;white-space:nowrap;
+  box-shadow:0 0 0 6px #fff,0 3px 4px rgba(26,26,26,.1),0 18px 30px -12px rgba(26,26,26,.4)}
+.chip{position:absolute;left:84px;top:-160px;white-space:nowrap;background:var(--ink);color:#fff;font:720 40px/1 Title;letter-spacing:-.035em;
+  padding:14px 24px 17px 18px;border-radius:999px;display:flex;align-items:center;gap:11px;transform-origin:20% 90%;
+  box-shadow:0 3px 4px rgba(26,26,26,.1),0 22px 40px -16px rgba(26,26,26,.45)}
+.ret{position:absolute;left:-180px;top:-372px;width:360px;height:360px;overflow:visible}
+.pill{position:absolute;left:0;top:0;transform-origin:0 0;white-space:nowrap;background:var(--ink);color:#fff;font:700 42px/1 Title;letter-spacing:-.035em;
+  padding:16px 28px 19px 22px;border-radius:999px;display:flex;align-items:center;gap:12px;
+  box-shadow:0 3px 4px rgba(26,26,26,.1),0 22px 40px -16px rgba(26,26,26,.45)}
+.pill i{display:block;width:16px;height:16px;border-radius:50%;background:var(--y)}
+</style></head><body><div id="stage"></div>
+<script src="vendor/gsap/gsap.min.js"></script><script src="vendor/gsap/CustomEase.min.js"></script>
+<script src="kit.js"></script><script src="words.js"></script>
+<script>
+/* floor-a · "The floor", 16:9: tree-a's org chart as an After Effects 3D scene, re-lensed for landscape. The people are
+   photo standees on a floor seen from high up (a shifted lens: the horizon sits far above the frame, so the floor fills
+   it and the three rows read top to bottom); the branches are drawn ON the floor. The CMO is the obvious first call
+   (he can buy: yellow back), but he is drowning in notifications; the camera falls back to a Senior SDR, 10 years in,
+   and a yellow road races from him through the Head of Sales to the CMO, knocking the noise away. */
+gsap.registerPlugin(CustomEase);
+const A = K.A, F = 1300, HY = -300, CX = 960;
+// a camera that frames a standee: its world spot (X, Z, size k) at screen x `sx`, its base at `baseY`, `h` px tall
+const camAt = (X, Z, k, sx, baseY, h) => { const s = h / (312 * k); return { x: X - (sx - CX) / s, y: -(baseY - HY) / s, z: Z - F / s }; };
+const WIDE = { x: 0, y: -1033, z: -66 };
+const cam = Object.assign(camAt(0, 1851, 1.6, 960, 760, 520), { mbx: 0, mby: 0 });
+const NODES = [
+  { id: "cmo", who: "david", role: "CMO", x: 0, z: 1851, k: 1.6 },
+  { id: "sales", who: "tom", role: "Head of Sales", x: -352, z: 1363, p: "cmo" },
+  { id: "mkt", who: "emma", role: "Marketing Lead", x: 396, z: 1363, p: "cmo" },
+  { id: "sdr", who: "kenji", role: "SDR", x: -549, z: 1000, p: "sales" },
+  { id: "senior", who: "marcus", role: "SDR", x: 33, z: 1000, p: "sales" },
+  { id: "growth", who: "lucas", role: "Growth", x: 557, z: 1000, p: "mkt" },
+];
+const by = {}; NODES.forEach(n => (by[n.id] = n));
+const P = (X, Y, Z) => { const d = Z - cam.z, s = F / Math.max(d, 1); return { x: CX + (X - cam.x) * s, y: HY + (Y - cam.y) * s, s, d }; };
+const FT = (tl, o, a, b, pos) => tl.fromTo(o, a, Object.assign({ immediateRender: false }, b), pos);
+
+// motion blur: one directional gaussian on the whole world, its axes driven by the camera moves
+K.el("svg", { width: 0, height: 0, style: { position: "absolute" }, html: `<filter id="mb" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur id="mbs" stdDeviation="0 0"/></filter>` });
+const mbs = document.getElementById("mbs");
+const world = K.el("div", { id: "world" });
+
+// ── the floor (svg): dots, shadows, branches, the road
+const svg = K.el("svg", { width: 1920, height: 1080, style: { position: "absolute", left: 0, top: 0 } }, world);
+K.el("defs", { html: `<filter id="sh" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10"/></filter>
+<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="16"/></filter>` }, svg);
+const gD = K.el("g", {}, svg), gS = K.el("g", {}, svg), gL = K.el("g", {}, svg), gT = K.el("g", {}, svg);
+const DOTS = [];
+for (let X = -2280; X <= 2280; X += 120) for (let Z = -120; Z <= 2760; Z += 120) DOTS.push({ X, Z, r0: Math.hypot(X, Z - 1851), el: K.el("circle", { r: 1, fill: "#B9B6C2" }, gD) });
+const floor = { a: 0 };
+// a ribbon on the floor along a world polyline [[X,Z],…] with rounded corners: exact perspective, drawn up to `p`
+const sample = (pts, R) => {
+  const out = [];
+  const push = (x, z) => { const l = out.length ? out[out.length - 1] : null; if (!l || Math.hypot(x - l[0], z - l[1]) > .5) out.push([x, z]); };
+  push(...pts[0]);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const a = pts[i - 1], b = pts[i], c = pts[i + 1];
+    const l1 = Math.hypot(b[0] - a[0], b[1] - a[1]), l2 = Math.hypot(c[0] - b[0], c[1] - b[1]), r = Math.min(R, l1 / 2, l2 / 2);
+    const u = [(b[0] - a[0]) / l1, (b[1] - a[1]) / l1], v = [(c[0] - b[0]) / l2, (c[1] - b[1]) / l2];
+    const p0 = [b[0] - u[0] * r, b[1] - u[1] * r], p2 = [b[0] + v[0] * r, b[1] + v[1] * r];
+    for (let j = 0; j <= 10; j++) { const t = j / 10, m = 1 - t; push(m * m * p0[0] + 2 * m * t * b[0] + t * t * p2[0], m * m * p0[1] + 2 * m * t * b[1] + t * t * p2[1]); }
+  }
+  push(...pts[pts.length - 1]);
+  const d = [out[0]];
+  for (let i = 1; i < out.length; i++) { const a = out[i - 1], b = out[i], L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.ceil(L / 30); for (let j = 1; j <= n; j++) d.push([a[0] + (b[0] - a[0]) * j / n, a[1] + (b[1] - a[1]) * j / n]); }
+  return d;
+};
+const ribbon = (pts, w, p) => {
+  const c = [0]; for (let i = 1; i < pts.length; i++) c.push(c[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const L = c[c.length - 1] * p, q = [];
+  for (let i = 0; i < pts.length; i++) {
+    if (c[i] <= L) q.push(pts[i]);
+    else { const a = pts[i - 1], b = pts[i], f = (L - c[i - 1]) / (c[i] - c[i - 1]); q.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]); break; }
+  }
+  const vis = q.filter(v => v[1] - cam.z > 200);
+  if (vis.length < 2) return { d: "", head: null };
+  const L1 = [], R1 = [];
+  vis.forEach((v, i) => {
+    const a = vis[Math.max(0, i - 1)], b = vis[Math.min(vis.length - 1, i + 1)];
+    let tx = b[0] - a[0], tz = b[1] - a[1]; const l = Math.hypot(tx, tz) || 1; tx /= l; tz /= l;
+    const nx = -tz * w / 2, nz = tx * w / 2;
+    L1.push(P(v[0] + nx, 0, v[1] + nz)); R1.push(P(v[0] - nx, 0, v[1] - nz));
+  });
+  const all = [...L1, ...R1.reverse()];
+  return { d: "M" + all.map(o => `${o.x.toFixed(1)} ${o.y.toFixed(1)}`).join("L") + "Z", head: vis[vis.length - 1] };
+};
+const disc = (X, Z, r) => { let d = ""; for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2, o = P(X + Math.cos(a) * r, 0, Z + Math.sin(a) * r * .8); d += (i ? "L" : "M") + o.x.toFixed(1) + " " + o.y.toFixed(1); } return d + "Z"; };
+const route = (Pn, C) => { const zm = (Pn.z + C.z) / 2 + 30; return sample([[Pn.x, Pn.z], [Pn.x, zm], [C.x, zm], [C.x, C.z]], 70); };
+
+// ── the standees
+const CHECK = (c1, c2, sz) => `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="${c1}"/><path d="M7 12.3l3.2 3.2L17 8.7" fill="none" stroke="${c2}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+NODES.forEach(n => {
+  n.k = n.k || 1;
+  n.st = { in: 0, punch: 1, rot: 0, flip: 0, ring: 0, dim: 0, line: 0, sel: 0, ret: 0, busy: 0, sen: 0, senT: 0, chip: 0, lpun: 1 };
+  n.sh = K.el("path", { fill: "rgba(26,26,26,.14)", filter: "url(#sh)" }, gS);
+  if (n.p) n.path = K.el("path", { fill: "#1A1A1A" }, gL);
+  n.el = K.el("div", { class: "n" + (n.k > 1 ? " big" : "") }, world);
+  n.rise = K.el("div", { class: "rise" }, n.el);
+  if (n.id === "cmo") n.ring = K.el("div", { class: "ring" }, n.rise);
+  n.front = K.el("div", { class: "face", html: `<img src="${K.img("people/" + n.who + ".jpg")}"><div class="veil"></div>` }, n.rise);
+  n.veil = n.front.querySelector(".veil"); n.imgE = n.front.querySelector("img");
+  n.lab = K.el("div", { class: "lab", html: n.id === "senior" ? `<span class="sen"><b>Senior&nbsp;</b></span>SDR` : n.role }, n.rise);
+});
+// the CMO: a yellow back, a badge that grows from a ✓ into « Can buy », the notification counters
+const C = by.cmo;
+C.back = K.el("div", { class: "face back", html: `<svg width="140" height="140" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#1A1A1A" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>` }, C.rise);
+C.rise.insertBefore(C.back, C.lab);
+C.badge = K.el("div", { class: "badge", html: CHECK("#1A1A1A", "#FFD90D", 40) + `<span class="bt"><span>Can buy</span></span>` }, C.rise);
+C.bt = C.badge.querySelector(".bt");
+const bd = { in: 0, open: 0, pun: 1 };
+const CNT = [
+  { v: "3", x: -142, y: -240, r: -8, k: .9 }, { v: "12", x: -136, y: -326, r: 6, k: 1 },
+  { v: "24", x: -146, y: -150, r: -4, k: 1.05 }, { v: "99+", x: 2, y: -356, r: -6, k: 1.15 },
+].map((c, i) => Object.assign(c, { el: K.el("div", { class: "cnt", text: c.v }, C.rise), in: 0, off: 0, dir: [[-1.2, .5], [-1, -1], [-1.3, 1], [.2, -1.4]][i] }));
+// the Senior SDR: reticle, « 10 yrs » chip, the « Senior » that stamps into his label
+const S = by.senior;
+S.ret = K.el("svg", { class: "ret", viewBox: "-180 -180 360 360" }, S.rise);
+S.ret.innerHTML = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => `<path d="M${a * 172} ${b * 104}V${b * 172}H${a * 104}" fill="none" stroke="#1A1A1A" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>`).join("");
+S.chipE = K.el("div", { class: "chip", html: `<svg width="30" height="30" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="#fff" stroke-width="2.6"/><path d="M12 7v5.2l3.4 2" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>10 yrs` }, S.rise);
+S.senE = S.lab.querySelector(".sen"); S.senB = S.senE.querySelector("b");
+// the road: senior → sales → cmo, along the branches
+const ROAD = (() => { const a = route(by.sales, S).slice().reverse(), b = route(C, by.sales).slice().reverse(); return a.concat(b.slice(1)); })();
+const roadG = K.el("path", { fill: "#FFD90D", filter: "url(#glow)", opacity: .7 }, gT);
+const road = K.el("path", { fill: "#FFD90D" }, gT);
+const headE = K.el("path", { fill: "#fff", stroke: "#FFD90D", "stroke-width": 6 }, gT);
+const trail = { p: 0, glow: 0 };
+const pill = K.el("div", { class: "pill", html: `<i></i>Influence` }, world);
+const pl = { in: 0 };
+const PILL = { x: -120, z: 1637 };
+let senW = 0, btW = 0;
+
+PAGE({
+  dur: 24.36,
+  cues: [
+    { t: 14.34, name: "m:cinematic-fast-whoosh", gain: -22 },
+    { t: 21.6, name: "m:data-whoosh", gain: -22 },
+    { t: 22.62, name: "m:premium-pop-3", gain: -24 },
+  ],
+  build(tl) {
+    const st = id => by[id].st;
+    // 1 · « for example… selling a sales tool… first idea » : the floor spreads from the CMO, the org rises one by one,
+    //     the camera slowly pulls back into the wide shot
+    FT(tl, floor, { a: 0 }, { a: 1, duration: 1.6, ease: "power2.out" }, .2);
+    FT(tl, C.st, { in: 0 }, { in: 1, duration: .6, ease: "back.out(1.8)" }, .26);
+    tl.to(cam, { x: WIDE.x, y: WIDE.y, z: WIDE.z, duration: 2.7, ease: "power2.out" }, .6);
+    tl.to(cam, { x: -18, duration: 1.6, ease: "sine.inOut" }, 3.3);
+    const ORDER = [["sales", 1.5], ["mkt", 1.82], ["sdr", 2.3], ["senior", 2.6], ["growth", 2.9]];
+    ORDER.forEach(([id, t0]) => {
+      tl.to(st(id), { line: 1, duration: .4, ease: "power3.inOut" }, t0);
+      tl.to(st(id), { in: 1, duration: .55, ease: "back.out(1.7)" }, t0 + .3);
+    });
+    // « first idea » : the CMO gets the ✓ chip of the obvious choice
+    FT(tl, bd, { in: 0 }, { in: 1, duration: .45, ease: "back.out(2.6)" }, A("idea") - .05);
+    FT(tl, C.st, { punch: 1.1 }, { punch: 1, duration: .6, ease: "elastic.out(1,.45)" }, A("idea") - .05);
+    // 2 · « contact the CMO » : push in on him; « that's right » : a confirming punch
+    tl.to(cam, { ...camAt(0, 1851, 1.6, 960, 870, 600), duration: .95, ease: "expo.inOut" }, A("contact") - .15);
+    FT(tl, bd, { pun: 1.3 }, { pun: 1, duration: .5, ease: "back.out(3)" }, A("that's"));
+    FT(tl, C.st, { punch: 1.08 }, { punch: 1, duration: .55, ease: "elastic.out(1,.45)" }, A("that's"));
+    tl.to(cam, { ...camAt(0, 1851, 1.6, 920, 880, 630), duration: 4.6, ease: "sine.inOut" }, 6.2);   // slow orbit while he talks about the CMO
+    // 3 · « power to decide to buy… instantly » : he flips to the yellow back, the ring lands, the ✓ grows into « Can buy »
+    tl.to(C.st, { flip: 1, duration: .6, ease: "power3.inOut" }, A("power") - .05);
+    tl.to(C.st, { ring: 1, duration: .5, ease: "back.out(2.2)" }, A("decide") + .1);
+    tl.to(bd, { open: 1, duration: .5, ease: "expo.out" }, A("buy") - .04);
+    FT(tl, bd, { pun: 1.2 }, { pun: 1, duration: .5, ease: "back.out(3)" }, A("buy") - .04);
+    FT(tl, C.st, { punch: 1.14 }, { punch: 1, duration: .6, ease: "elastic.out(1,.4)" }, A("instantly"));
+    // 4 · « but… overwhelmed with a lot of things » : back to his face, the ring goes, the counters pile on
+    tl.to(C.st, { flip: 2, duration: .6, ease: "power3.inOut" }, A("but") - .05);
+    tl.to(C.st, { ring: 0, duration: .35, ease: "power2.in" }, A("but") - .05);
+    tl.to(cam, { ...camAt(0, 1851, 1.6, 1010, 900, 660), duration: 2.6, ease: "sine.inOut" }, 11.3);
+    const CT = [A("overwhelmed"), A("overwhelmed") + .38, A("lot") - .02, A("things") + .02];
+    CNT.forEach((c, i) => {
+      FT(tl, c, { in: 0 }, { in: 1, duration: .42, ease: "back.out(2.8)" }, CT[i]);
+      FT(tl, C.st, { rot: (i % 2 ? 3.2 : -3.2) }, { rot: 0, duration: .5, ease: "elastic.out(1,.35)" }, CT[i] + .05);
+      tl.to(C.st, { busy: (i + 1) / 4, duration: .3, ease: "power2.out" }, CT[i] + .05);
+    });
+    // 5 · « so maybe… contact an SDR » : the camera falls back down the org and dives to the Senior SDR
+    const D0 = A("So") + .02;
+    const SC = camAt(33, 1000, 1, 900, 900, 470);
+    tl.to(cam, { x: SC.x, z: SC.z, duration: 1.05, ease: "expo.inOut" }, D0);
+    tl.to(cam, { y: WIDE.y * 1.25, duration: .5, ease: "power2.in" }, D0).to(cam, { y: SC.y, duration: .55, ease: "power2.out" }, D0 + .5);
+    tl.to(cam, { mby: 1, mbx: .4, duration: .45, ease: "power2.in" }, D0).to(cam, { mby: 0, mbx: 0, duration: .5, ease: "power2.out" }, D0 + .5);
+    tl.to(S.st, { ret: 1, duration: .45, ease: "back.out(2)" }, D0 + .95);
+    tl.to(S.st, { sel: 1, duration: .3, ease: "power2.out" }, D0 + 1.0);
+    tl.to([st("sdr"), st("growth"), st("mkt")], { dim: 1, duration: .45, ease: "power2.out" }, D0 + 1.0);
+    tl.to(cam, { ...camAt(33, 1000, 1, 910, 905, 490), duration: 1.6, ease: "sine.out" }, D0 + 1.05);
+    FT(tl, S.st, { punch: 1.12 }, { punch: 1, duration: .6, ease: "elastic.out(1,.45)" }, A("SDR"));
+    // 6 · « here for ten years » : the 10 yrs chip pins on him; « senior » stamps into his label
+    tl.to(cam, { ...camAt(33, 1000, 1, 860, 910, 500), duration: 2.6, ease: "sine.inOut" }, 17.2);
+    FT(tl, S.st, { chip: 0 }, { chip: 1, duration: .5, ease: "back.out(2.2)" }, A("ten") - .05);
+    FT(tl, S.st, { punch: 1.08 }, { punch: 1, duration: .5, ease: "elastic.out(1,.45)" }, A("ten") + .12);
+    tl.to(S.st, { ret: 0, duration: .4, ease: "power2.in" }, A("who"));
+    tl.to(S.st, { sen: 1, duration: .2, ease: "power2.inOut" }, A("senior") - .14);
+    tl.to(S.st, { senT: 1, duration: .32, ease: "back.out(1.6)" }, A("senior") + .04);
+    FT(tl, S.st, { lpun: 1.18 }, { lpun: 1, duration: .5, ease: "back.out(3)" }, A("senior") + .2);
+    // 7 · « influence the CMO to adopt » : the yellow road races along the branches; the camera rides it; the noise is knocked off
+    const R0 = A("can") - .04;
+    tl.to(trail, { p: 1, duration: 1.05, ease: CustomEase.create("tr", "M0,0 C0.26,0 0.38,0.4 0.5,0.5 0.62,0.6 0.7,1 1,1") }, R0);
+    tl.to(cam, { ...camAt(0, 1851, 1.6, 1080, 600, 420), duration: 1.1, ease: "expo.inOut" }, R0);
+    tl.to(cam, { mbx: .7, mby: .5, duration: .45, ease: "power2.in" }, R0).to(cam, { mbx: 0, mby: 0, duration: .5, ease: "power2.out" }, R0 + .5);
+    FT(tl, by.sales.st, { punch: 1.2 }, { punch: 1, duration: .55, ease: "elastic.out(1,.4)" }, R0 + .5);
+    FT(tl, pl, { in: 0 }, { in: 1, duration: .45, ease: "back.out(2.4)" }, R0 + .62);
+    const HIT = R0 + 1.0;
+    CNT.forEach((c, i) => tl.to(c, { off: 1, duration: .5, ease: "power3.in" }, HIT + i * .025));
+    tl.to(C.st, { busy: 0, duration: .3, ease: "power2.out" }, HIT);
+    tl.to(C.st, { flip: 3, duration: .55, ease: "power3.inOut" }, HIT + .04);
+    FT(tl, C.st, { ring: 1.45 }, { ring: 1, duration: .55, ease: "expo.out" }, HIT + .36);
+    FT(tl, C.st, { punch: 1.22 }, { punch: 1, duration: .7, ease: "elastic.out(1,.38)" }, HIT + .36);
+    FT(tl, trail, { glow: 1 }, { glow: 0, duration: .8, ease: "power2.out" }, HIT);
+    FT(tl, bd, { pun: 1.28 }, { pun: 1, duration: .5, ease: "back.out(3)" }, A("adopt"));
+    // a slow crane back to hold the whole path
+    tl.to(cam, { x: 0, y: -1090, z: -150, duration: .95, ease: "power3.inOut" }, 23.12);
+    tl.set({}, {}, 24.36);
+  },
+  draw(t) {
+    if (!senW) { S.senE.style.maxWidth = "none"; senW = S.senE.scrollWidth; C.bt.style.maxWidth = "none"; btW = C.bt.scrollWidth; }
+    // motion blur on the world
+    const bx = cam.mbx * 14, by_ = cam.mby * 16;
+    if (bx + by_ > .3) { mbs.setAttribute("stdDeviation", `${bx.toFixed(2)} ${by_.toFixed(2)}`); world.style.filter = "url(#mb)"; } else world.style.filter = "none";
+    // floor dots, spreading out from the CMO
+    DOTS.forEach(o => {
+      const q = P(o.X, 0, o.Z);
+      const spread = K.clamp((floor.a * 3000 - o.r0) / 500);
+      const a = q.d < 60 ? 0 : spread * K.clamp((q.d - 60) / 300) * .7;
+      o.el.setAttribute("cx", q.x.toFixed(1)); o.el.setAttribute("cy", q.y.toFixed(1));
+      o.el.setAttribute("r", Math.min(9, 2.8 * q.s * (.4 + .6 * spread)).toFixed(2)); o.el.setAttribute("opacity", a.toFixed(3));
+    });
+    // depth order (far → near), the sign included
+    const items = NODES.map(n => ({ n, z: n.z })).concat([{ pill: 1, z: PILL.z }]).sort((a, b) => b.z - a.z);
+    items.forEach((it, i) => {
+      if (it.pill) {
+        const h = P(PILL.x, 0, PILL.z), pv = h.d < 200 ? 0 : 1;
+        pill.style.zIndex = 10 + i * 2;
+        pill.style.transform = `translate(${h.x.toFixed(1)}px,${h.y.toFixed(1)}px) scale(${(Math.min(h.s * 1.05, 1.15) * (.4 + .6 * pl.in)).toFixed(3)}) translate(-50%,-100%) translate(0,-10px)`;
+        pill.style.opacity = (K.clamp(pl.in * 2) * pv).toFixed(3);
+        return;
+      }
+      const n = it.n, s = n.st, q = P(n.x, 0, n.z);
+      const vis = q.d < 120 ? 0 : K.clamp((q.d - 120) / 200);
+      n.el.style.zIndex = 10 + i * 2;
+      n.el.style.transform = `translate(${q.x.toFixed(1)}px,${q.y.toFixed(1)}px) scale(${(q.s * n.k * (1 - .1 * s.dim)).toFixed(4)})`;
+      n.rise.style.transform = `scale(${(.6 + .4 * Math.min(1, s.in)).toFixed(3)},${s.in.toFixed(3)}) translate(0,-192px) rotate(${s.rot.toFixed(2)}deg) scale(${s.punch.toFixed(3)}) translate(0,192px)`;
+      n.el.style.opacity = (K.clamp(s.in * 3) * vis).toFixed(3);
+      if (n.id !== "cmo") {
+        n.veil.style.opacity = (.5 * s.dim).toFixed(3);
+        n.imgE.style.filter = s.dim > .01 ? `saturate(${(1 - .7 * s.dim).toFixed(3)})` : "none";
+        if (n.id !== "senior") n.lab.style.color = s.dim > .01 ? `rgb(${[26, 26, 26].map((c, j) => Math.round(c + ([160, 157, 170][j] - c) * s.dim)).join(",")})` : "";
+      }
+      n.sh.setAttribute("d", vis > 0 ? disc(n.x, n.z + 14, 120 * n.k) : "");
+      n.sh.setAttribute("opacity", (K.clamp(s.in) * vis * (1 - .4 * s.dim)).toFixed(3));
+      if (n.path) {
+        n.route = n.route || route(by[n.p], n);
+        n.path.setAttribute("d", s.line > 0 ? ribbon(n.route, 14, s.line).d : "");
+        n.path.setAttribute("opacity", (1 - .65 * s.dim).toFixed(3));
+      }
+    });
+    // the CMO
+    {
+      const s = C.st, a = s.flip * 180;
+      C.front.style.transform = `perspective(900px) rotateY(${a.toFixed(2)}deg)`;
+      C.back.style.transform = `perspective(900px) rotateY(${(a + 180).toFixed(2)}deg)`;
+      C.front.querySelector("img").style.filter = s.busy > .01 ? `saturate(${(1 - .75 * s.busy).toFixed(3)}) brightness(${(1 - .16 * s.busy).toFixed(3)})` : "none";
+      C.ring.style.opacity = K.clamp(s.ring * 2).toFixed(3);
+      C.ring.style.transform = `scale(${(1.25 - .25 * s.ring).toFixed(3)})`;
+      C.badge.style.opacity = K.clamp(bd.in * 3).toFixed(3);
+      C.badge.style.transform = `rotate(-6deg) scale(${(bd.in * bd.pun).toFixed(3)})`;
+      C.bt.style.maxWidth = (btW * bd.open).toFixed(1) + "px";
+      C.badge.style.background = bd.open > .02 ? "#FFD90D" : "#fff";
+      C.badge.style.paddingRight = (14 + 6 * bd.open).toFixed(1) + "px";
+      CNT.forEach(c => {
+        const o = c.off, fx = c.dir[0] * 520 * o, fy = c.dir[1] * 420 * o + 260 * o * o;
+        c.el.style.opacity = (K.clamp(c.in * 3) * (1 - K.clamp((o - .55) / .45))).toFixed(3);
+        c.el.style.transform = `translate(${(c.x + fx).toFixed(1)}px,${(c.y + fy).toFixed(1)}px) translate(-50%,-50%) rotate(${(c.r + o * 160 * Math.sign(c.dir[0] || 1)).toFixed(1)}deg) scale(${(c.k * c.in).toFixed(3)})`;
+        c.el.style.filter = o > .05 ? `blur(${(o * 7).toFixed(2)}px)` : "none";
+      });
+    }
+    // the Senior SDR
+    {
+      const s = S.st;
+      S.ret.style.opacity = K.clamp(s.ret * 2).toFixed(3);
+      S.ret.style.transform = `scale(${(1.5 - .5 * s.ret).toFixed(3)})`;
+      S.lab.style.background = s.sel > .5 ? "#1A1A1A" : "#fff";
+      S.lab.style.color = s.sel > .5 ? "#fff" : "#1A1A1A";
+      S.senE.style.maxWidth = (senW * Math.min(1, s.sen)).toFixed(1) + "px";
+      S.senB.style.opacity = s.senT > 0 ? 1 : 0;
+      S.senB.style.transform = `translate(0,${(-105 * (1 - s.senT)).toFixed(1)}%)`;
+      S.lab.style.transform = `translateX(-50%) scale(${((1 + .14 * Math.sin(Math.PI * s.sel)) * (s.lpun || 1)).toFixed(3)})`;
+      S.chipE.style.opacity = K.clamp(s.chip * 3).toFixed(3);
+      S.chipE.style.transform = `translate(0,${((1 - Math.min(1, s.chip)) * -70).toFixed(1)}px) rotate(${(-5 - 8 * (1 - s.chip)).toFixed(2)}deg) scale(${(1.25 - .25 * s.chip).toFixed(3)})`;
+    }
+    // the road
+    const r = trail.p > 0 ? ribbon(ROAD, 34, trail.p) : { d: "", head: null };
+    road.setAttribute("d", r.d);
+    const rg = trail.p > 0 ? ribbon(ROAD, 64 + 90 * trail.glow, trail.p) : { d: "" };
+    roadG.setAttribute("d", rg.d); roadG.setAttribute("opacity", (.4 + .4 * trail.glow).toFixed(2));
+    if (r.head && trail.p < .995) { headE.setAttribute("d", disc(r.head[0], r.head[1], 30)); headE.setAttribute("opacity", 1); }
+    else headE.setAttribute("opacity", 0);
+  },
+});
+</script></body></html>

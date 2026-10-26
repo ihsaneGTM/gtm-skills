@@ -1,0 +1,356 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body><div id="stage"></div>
+<script src="vendor/gsap/gsap.min.js"></script>
+<script src="kit.js"></script><script src="words.js"></script><script src="recap-lib.js"></script>
+<script>
+/* CTA · C — « THE SHORT WAS A CLIP OF THE LONG ONE ». The last frame of the short glitches (RGB split, slices, a signal
+   drop), then collapses like an old screen into a white line, the line into a dot. The dot turns into YouTube's red
+   scrubber: a progress bar unrolls out of it, and the yellow stretch it was sitting at the end of is « the part you just
+   watched ». The scrubber hops back to 0:00, and the bar opens like a laptop lid: the bar is the hinge, the player
+   swings up out of the depth around the thumbnail, overshoots, settles slightly turned in 3D. The YouTube logo lands
+   on top, leaning; « Watch the entire video » rises letter by letter; a finger taps the play button (ripple), the video
+   starts (the red runs from 0:00), a light sweep, the button breathing to the end. */
+const W = 1080, H = 1920, Y = "#FFD90D", INK = "#1A1A1A", RED = "#FF0000", D2R = Math.PI / 180;
+const last = L.img("img/last.png"), thumb = L.img("img/thumb.jpg");
+// ── the player in 3D: a card hinged on its bottom edge (the bar) ─────────────────────────────────────────
+const CW = 720, CH = 405, HX = 540, HY = 958, F = 1900, VX = 540, VY = 940;
+const BAR_Y = -16, BAR_IN = 20, SEG = [0.42, 0.72];
+const PB = { x: CW / 2, y: 292, w: 118, h: 83 };          // the play button, in card px (on the black t-shirt, never on the face)
+const S = {
+  a: 90, b: 0, c: 0, z: 0,                                 // the card's angles (a = 90: edge-on, only the bar)
+  line: 0, dot: 0, red: 0, track: 0, seg: 0, pos: SEG[1], hop: 0, play: 0,
+  glow: 0, logo: 0, l1: 0, mk: 0, l2: 0, fin: 0, press: 0, rip: 0, out: 0, sw1: 0, sw2: 0,
+};
+const idle = t => Math.max(0, Math.min(1, (t - 2.45) / 0.6));
+function geom(t) {
+  const k = idle(t), ph = (t - 2.45) * 2 * Math.PI / 3.2;
+  return { a: S.a + k * 1.2 * Math.sin(ph), b: S.b + k * 1.6 * Math.sin(ph * 0.8 + 1), c: S.c, z: S.z };
+}
+function P(x, y, g) {           // card px (origin: middle of the bottom edge; y up is negative) → frame px
+  const a = g.a * D2R, b = g.b * D2R, c = g.c * D2R;
+  const y1 = y * Math.cos(a), z1 = -y * Math.sin(a);
+  const x2 = x * Math.cos(b) + z1 * Math.sin(b), z2 = -x * Math.sin(b) + z1 * Math.cos(b);
+  const x3 = x2 * Math.cos(c) - y1 * Math.sin(c), y3 = x2 * Math.sin(c) + y1 * Math.cos(c);
+  const X = HX - VX + x3, Yw = HY - VY + y3, Z = z2 + g.z, q = (F + Z) / F;
+  return { x: VX + X / q, y: VY + Yw / q, q };
+}
+const cardPt = (tx, ty, g) => P(tx - CW / 2, ty - CH, g);   // from texture coordinates (0..CW, 0..CH)
+const barPt = (u, g) => P(-CW / 2 + BAR_IN + u * (CW - 2 * BAR_IN), BAR_Y, g);
+
+// ── the card's face (a canvas, then a WebGL quad with a true perspective) ──────────────────────────────────
+const TS = 1.6, PAD = 18, TW = Math.round((CW + 2 * PAD) * TS), TH = Math.round((CH + 2 * PAD) * TS);
+const tex = L.off(TW, TH), tc = tex.getContext("2d");
+function ytButton(c, x, y, w, h, fill = RED) {   // YouTube's play button: the red rounded shape, the white triangle
+  c.fillStyle = fill; L.rr(c, x - w / 2, y - h / 2, w, h, h * 0.3); c.fill();
+  c.fillStyle = "#FFFFFF"; c.beginPath();
+  c.moveTo(x - w / 2 + w * 0.4, y - h / 2 + h * 0.29); c.lineTo(x - w / 2 + w * 0.4, y - h / 2 + h * 0.71); c.lineTo(x - w / 2 + w * 0.665, y); c.closePath(); c.fill();
+}
+let texKey = "";
+function drawTex(t) {
+  const br = t > 2.3 ? 1 + 0.035 * Math.sin(2 * Math.PI * (t - 2.3) / 0.95) : 1;
+  const pr = S.press, ps = br * (1 - 0.12 * Math.sin(Math.PI * L.c01(pr)));
+  const key = [ps.toFixed(4), S.rip.toFixed(4), S.sw1.toFixed(4), S.sw2.toFixed(4)].join();
+  if (key === texKey) return false; texKey = key;
+  const c = tc; L.reset(c); c.clearRect(0, 0, TW, TH); c.scale(TS, TS); c.translate(PAD, PAD);
+  c.save(); L.rr(c, 0, 0, CW, CH, 20); c.clip();
+  c.drawImage(thumb, 0, 0, CW, CH);                                       // the thumbnail, whole
+  const g = c.createLinearGradient(0, CH * 0.78, 0, CH); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,.5)");
+  c.fillStyle = g; c.fillRect(0, CH * 0.78, CW, CH * 0.22);              // the player's bottom shade, under the bar
+  if (S.rip > 0 && S.rip < 1) {                                           // the tap's ripple, on the screen
+    const u = L.E("power2.out")(S.rip), r = L.lerp(40, 330, u), al = (1 - S.rip) ** 1.4;
+    const rg = c.createRadialGradient(PB.x, PB.y, r * 0.55, PB.x, PB.y, r);
+    rg.addColorStop(0, "rgba(255,255,255,0)"); rg.addColorStop(0.85, `rgba(255,255,255,${0.16 * al})`); rg.addColorStop(1, "rgba(255,255,255,0)");
+    c.fillStyle = rg; c.beginPath(); c.arc(PB.x, PB.y, r, 0, 7); c.fill();
+    c.strokeStyle = `rgba(255,255,255,${0.55 * al})`; c.lineWidth = L.lerp(5, 1.2, u); c.beginPath(); c.arc(PB.x, PB.y, r, 0, 7); c.stroke();
+  }
+  for (const sw of [S.sw1, S.sw2]) {                                      // a light sweep across the glass
+    if (sw <= 0 || sw >= 1) continue;
+    const x = L.lerp(-260, CW + 260, L.E("power2.inOut")(sw));
+    c.save(); c.translate(x, CH / 2); c.rotate(22 * D2R);
+    const sg = c.createLinearGradient(-90, 0, 90, 0); sg.addColorStop(0, "rgba(255,255,255,0)"); sg.addColorStop(0.5, "rgba(255,255,255,.22)"); sg.addColorStop(1, "rgba(255,255,255,0)");
+    c.fillStyle = sg; c.fillRect(-90, -600, 180, 1200); c.restore();
+  }
+  c.restore();
+  c.strokeStyle = "rgba(255,255,255,.16)"; c.lineWidth = 1.5; L.rr(c, 0.75, 0.75, CW - 1.5, CH - 1.5, 19.5); c.stroke();   // the glass rim
+  // the play button (breathing; pressed by the tap)
+  c.save(); c.translate(PB.x, PB.y); c.scale(ps, ps);
+  L.shadow(c, 0.45, 22, 8); ytButton(c, 0, 0, PB.w, PB.h); L.noShadow(c); c.restore();
+  // the duration badge
+  c.save(); L.font(c, 600, 19, "Text", 0.2); const bw = c.measureText("3:48").width + 16;
+  c.fillStyle = "rgba(0,0,0,.8)"; L.rr(c, CW - 16 - bw, CH + BAR_Y - 44, bw, 28, 6); c.fill();
+  c.fillStyle = "#FFFFFF"; c.textBaseline = "middle"; c.textAlign = "center"; c.fillText("3:48", CW - 16 - bw / 2, CH + BAR_Y - 30 + 1); c.restore();
+  return true;
+}
+// WebGL2: one quad, perspective-correct
+const glc = L.off(W, H);
+const gl = glc.getContext("webgl2", { antialias: true, premultipliedAlpha: true, preserveDrawingBuffer: true, alpha: true });
+let glp = null, glb = null, glt = null;
+function glInit() {
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+  glp = gl.createProgram();
+  gl.attachShader(glp, sh(gl.VERTEX_SHADER, `#version 300 es
+in vec4 p; in vec2 uv; out vec2 v; void main(){ gl_Position = p; v = uv; }`));
+  gl.attachShader(glp, sh(gl.FRAGMENT_SHADER, `#version 300 es
+precision highp float; uniform sampler2D s; in vec2 v; out vec4 o; void main(){ o = texture(s, v); }`));
+  gl.linkProgram(glp); gl.useProgram(glp);
+  glb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, glb);
+  const lp = gl.getAttribLocation(glp, "p"), lu = gl.getAttribLocation(glp, "uv");
+  gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp, 4, gl.FLOAT, false, 24, 0);
+  gl.enableVertexAttribArray(lu); gl.vertexAttribPointer(lu, 2, gl.FLOAT, false, 24, 16);
+  glt = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, glt);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  const an = gl.getExtension("EXT_texture_filter_anisotropic"); if (an) gl.texParameterf(gl.TEXTURE_2D, an.TEXTURE_MAX_ANISOTROPY_EXT, 8);
+}
+function renderCard(t, g) {
+  if (!glp) glInit();
+  if (drawTex(t)) { gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tex); gl.generateMipmap(gl.TEXTURE_2D); }
+  const corner = (tx, ty, u, v) => {
+    const x = tx - CW / 2, y = ty - CH, a = g.a * D2R, b = g.b * D2R, c = g.c * D2R;
+    const y1 = y * Math.cos(a), z1 = -y * Math.sin(a);
+    const x2 = x * Math.cos(b) + z1 * Math.sin(b), z2 = -x * Math.sin(b) + z1 * Math.cos(b);
+    const x3 = x2 * Math.cos(c) - y1 * Math.sin(c), y3 = x2 * Math.sin(c) + y1 * Math.cos(c);
+    const X = HX - VX + x3, Yw = HY - VY + y3, Z = z2 + g.z, q = (F + Z) / F;
+    const nx = (VX + X / q) / W * 2 - 1, ny = 1 - (VY + Yw / q) / H * 2;
+    return [nx * q, ny * q, 0, q, u, v];
+  };
+  const d = new Float32Array([...corner(-PAD, -PAD, 0, 0), ...corner(-PAD, CH + PAD, 0, 1), ...corner(CW + PAD, -PAD, 1, 0), ...corner(CW + PAD, CH + PAD, 1, 1)]);
+  gl.viewport(0, 0, W, H); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.bindBuffer(gl.ARRAY_BUFFER, glb); gl.bufferData(gl.ARRAY_BUFFER, d, gl.DYNAMIC_DRAW);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+// ── the glitch: the last frame split in its channels, sliced, dropped ─────────────────────────────────────
+let CHN = null; const gbuf = L.off(), gb = gbuf.getContext("2d");
+function chans() {
+  if (CHN) return CHN;
+  const s = L.off(), sc = s.getContext("2d", { willReadFrequently: true }); sc.drawImage(last, 0, 0, W, H);
+  const p = sc.getImageData(0, 0, W, H).data;
+  CHN = [0, 1, 2].map(k => { const cv = L.off(), cc = cv.getContext("2d"), id = cc.createImageData(W, H), q = id.data;
+    for (let i = 0; i < p.length; i += 4) { q[i + k] = p[i + k]; q[i + 3] = 255; } cc.putImageData(id, 0, 0); return cv; });
+  return CHN;
+}
+function split(dx, dy = 0) {   // gbuf = the frame with its red and blue moved apart
+  const [R, G, B] = chans(); L.reset(gb); gb.fillStyle = "#000"; gb.fillRect(0, 0, W, H);
+  gb.globalCompositeOperation = "lighter"; gb.drawImage(R, -dx, dy); gb.drawImage(G, 0, 0); gb.drawImage(B, dx, -dy); L.reset(gb);
+}
+// one plan per video frame of the glitch (30 fps): split, slices, their offset, brightness, black (signal lost), roll
+const GLITCH = {
+  5: { dx: 7, n: 3, off: 40, br: 1.05 },
+  6: { dx: 24, n: 8, off: 120, br: 1.3, blocks: 5 },
+  7: { black: 1 },
+  8: { dx: 38, n: 10, off: 170, br: 0.75, roll: -46, blocks: 8 },
+  9: { dx: 12, n: 5, off: 70, br: 1.55 },
+  10: { dx: 20, n: 7, off: 110, br: 1.15, roll: 22, blocks: 4 },
+};
+function glitch(c, fi) {
+  const p = GLITCH[fi] || GLITCH[10], r = K.rand(fi * 131 + 17);
+  c.fillStyle = "#000"; c.fillRect(0, 0, W, H);
+  if (p.black) {     // the signal drops: black, a band of noise, a thin white line
+    const y0 = 760 + r() * 200;
+    for (let i = 0; i < 26; i++) { c.fillStyle = `rgba(255,255,255,${0.05 + r() * 0.22})`; c.fillRect(r() * 300 - 150, y0 + r() * 90, 300 + r() * 1100, 1 + r() * 3); }
+    c.fillStyle = "rgba(255,255,255,.9)"; c.fillRect(0, HY - 1, W, 2);
+    return;
+  }
+  split(p.dx, p.dx * 0.15);
+  c.drawImage(gbuf, 0, p.roll || 0);
+  if (p.roll) c.drawImage(gbuf, 0, (p.roll || 0) + (p.roll > 0 ? -H : H));
+  for (let i = 0; i < p.n; i++) {    // horizontal slices, shifted
+    const y = r() * H, h = 8 + r() ** 2 * 150, o = (r() - 0.5) * 2 * p.off;
+    c.drawImage(gbuf, 0, y, W, h, o, y + (p.roll || 0) * 0.2, W, h);
+    if (r() < 0.4) { c.fillStyle = `rgba(255,255,255,${0.08 + r() * 0.12})`; c.fillRect(0, y, W, 2); }
+  }
+  for (let i = 0; i < (p.blocks || 0); i++) {   // a few blocks out of place
+    const w = 40 + r() * 260, h = 10 + r() * 60, sx = r() * W, sy = r() * H;
+    c.drawImage(gbuf, sx, sy, w, h, sx + (r() - 0.5) * 300, sy + (r() - 0.5) * 40, w, h);
+  }
+  if (p.br > 1) { c.globalCompositeOperation = "lighter"; c.fillStyle = `rgba(255,255,255,${(p.br - 1) * 0.5})`; c.fillRect(0, 0, W, H); }
+  else if (p.br < 1) { c.fillStyle = `rgba(0,0,0,${1 - p.br})`; c.fillRect(0, 0, W, H); }
+  c.globalCompositeOperation = "source-over";
+  c.fillStyle = "rgba(0,0,0,.16)"; for (let y = 0; y < H; y += 4) c.fillRect(0, y, W, 2);   // scan lines
+}
+
+// ── the frame ──────────────────────────────────────────────────────────────────────────────────────────────
+const grain = [0, 1, 2].map(k => { const cv = L.off(270, 480), cc = cv.getContext("2d"), id = cc.createImageData(270, 480), r = K.rand(900 + k);
+  for (let i = 0; i < id.data.length; i += 4) { const v = r() * 255; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 255; } cc.putImageData(id, 0, 0); return cv; });
+const T_GL = 0.15, T_COL = 0.36, T_LINE = 0.47, T_DOT = 0.6;
+const flat = { a: 90, b: 0, c: 0, z: 0 };
+const XD = () => barPt(SEG[1], flat);
+function background(c, t) {
+  c.fillStyle = "#070707"; c.fillRect(0, 0, W, H);
+  if (S.glow > 0) {    // the room lit by the screen
+    const g = c.createRadialGradient(540, 720, 40, 540, 760, 1050);
+    g.addColorStop(0, `rgba(58,58,62,${S.glow})`); g.addColorStop(0.45, `rgba(30,30,33,${S.glow})`); g.addColorStop(1, "rgba(7,7,7,0)");
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+  }
+}
+function crt(c, t) {       // the collapse: the frame squeezed into a line, the line into a dot
+  c.fillStyle = "#000"; c.fillRect(0, 0, W, H);
+  const xd = XD();
+  if (t < T_LINE) {
+    const u = L.seg(t, T_COL, T_LINE), sy = Math.max(0.004, 1 - L.E("sine.in")(u)), sx = 1 + 0.05 * u;
+    split(L.lerp(16, 3, u));
+    const h = H * sy, y = HY - HY * sy;
+    c.drawImage(gbuf, (W - W * sx) / 2, y, W * sx, h);
+    c.globalCompositeOperation = "lighter"; c.fillStyle = `rgba(255,255,255,${0.95 * u ** 1.3})`; c.fillRect(0, y, W, h); c.globalCompositeOperation = "source-over";
+    c.save(); c.shadowColor = "rgba(255,255,255,.9)"; c.shadowBlur = 40 * u; c.fillStyle = `rgba(255,255,255,${u})`; c.fillRect(0, HY - 2 - h * 0.02, W, 4 + h * 0.04); c.restore();
+    return;
+  }
+  const u = L.E("power3.in")(L.seg(t, T_LINE + 0.02, T_DOT)), x0 = L.lerp(-40, xd.x, u), x1 = L.lerp(W + 40, xd.x, u);
+  const th = L.lerp(5, 3, u);
+  c.save(); c.fillStyle = "rgba(255,255,255,.16)"; c.filter = "blur(10px)"; c.fillRect(x0, xd.y - 14, x1 - x0, 28); c.filter = "none";
+  c.shadowColor = "rgba(255,255,255,.95)"; c.shadowBlur = 26; c.fillStyle = "#FFFFFF"; c.fillRect(x0, xd.y - th / 2, Math.max(1, x1 - x0), th); c.restore();
+}
+function bar(c, t, g) {
+  const A = barPt(0, g), B = barPt(1, g), at = u => ({ x: L.lerp(A.x, B.x, u), y: L.lerp(A.y, B.y, u) });
+  const seg = (u0, u1, col, w, glow = 0) => {
+    if (u1 - u0 <= 0.0005) return; const p = at(u0), q = at(u1);
+    c.save(); c.lineCap = "round"; c.strokeStyle = col; c.lineWidth = w;
+    if (glow) { c.shadowColor = col; c.shadowBlur = glow; }
+    c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(q.x, q.y); c.stroke(); c.restore();
+  };
+  const tr = L.E("expo.out")(S.track);
+  if (tr > 0) seg(L.lerp(SEG[1], 0, tr), L.lerp(SEG[1], 1, tr), "rgba(255,255,255,.3)", 9);
+  if (S.seg > 0) seg(L.lerp(SEG[1], SEG[0], L.E("power2.inOut")(S.seg)), SEG[1], Y, 12, 18 * (1 - 0.6 * L.c01((t - 1.6) / 0.5)));
+  if (S.pos > 0.0005 && S.play > 0) seg(0, S.pos, RED, 9);
+  // the scrubber
+  if (S.dot > 0) {
+    const p = at(S.pos), hop = Math.sin(Math.PI * L.c01(S.hop)) * 86, land = L.c01((t - 1.46) / 0.22);
+    const sq = land > 0 && land < 1 ? Math.sin(Math.PI * land) * 0.28 : 0;
+    const r = L.lerp(7, 15, L.E("back.out(2.4)")(L.c01(S.dot))) * (1 + 0.1 * Math.sin(Math.PI * L.c01(S.press)));
+    const col = S.red >= 1 ? RED : `rgb(255,${Math.round(255 * (1 - S.red))},${Math.round(255 * (1 - S.red))})`;
+    c.save(); c.translate(p.x, p.y - hop); c.scale(1 + sq, 1 - sq);
+    c.shadowColor = S.red < 1 ? "rgba(255,255,255,.9)" : "rgba(0,0,0,.45)"; c.shadowBlur = S.red < 1 ? 30 * (1 - S.red) + 8 : 10; c.shadowOffsetY = S.red < 1 ? 0 : 3;
+    c.fillStyle = col; c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill(); c.restore();
+  }
+}
+function cardShadow(c, g) {
+  const pts = [cardPt(0, 0, g), cardPt(CW, 0, g), cardPt(CW, CH, g), cardPt(0, CH, g)];
+  const open = L.c01((90 - g.a) / 60);
+  c.save(); c.filter = "blur(46px)"; c.fillStyle = `rgba(0,0,0,${0.75 * open})`; c.translate(0, 42);
+  c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y)); c.closePath(); c.fill(); c.restore();
+}
+function logo(c, t) {      // the YouTube logo, tilted, leaning on the player
+  const u = S.logo; if (u <= 0) return;
+  const y = L.lerp(-520, 0, L.E("back.out(1.5)")(u)), rot = L.lerp(26, -8, L.E("expo.out")(u)), sc = L.lerp(1.6, 1, L.E("power3.out")(u));
+  const k = 0.92, iw = 120 * k, ih = 84 * k;
+  L.font(c, 700, 80 * k, "Text", -3.2 * k); const ww = c.measureText("YouTube").width, tw = iw + 12 * k + ww;
+  const ax = 200, ay = 540;           // its anchor: the bottom-left corner, resting
+  c.save(); c.translate(ax, ay + y); c.rotate(rot * D2R); c.scale(sc, sc);
+  L.shadow(c, 0.5, 30, 12); ytButton(c, iw / 2, -ih / 2, iw, ih); L.noShadow(c);
+  c.fillStyle = "#FFFFFF"; c.textBaseline = "alphabetic"; L.font(c, 700, 80 * k, "Text", -3.2 * k);
+  L.shadow(c, 0.45, 24, 8); c.fillText("YouTube", iw + 12 * k, -ih * 0.16); c.restore();
+  void tw;
+}
+// « Watch the entire video »
+let TX = null;
+function textGeo() {
+  if (TX) return TX;
+  const sz = Math.min(150, L.fit("entire video", 800, 630, -0.03)), ls = -0.03 * sz;
+  const l1 = L.layout("Watch the", 800, sz, ls), l2 = L.layout("entire video", 800, sz, ls);
+  const b1 = 1185, b2 = b1 + sz * 1.06;
+  TX = { sz, ls, l1, l2, b1, b2, x1: 540 - (l1.width) / 2, x2: 540 - (l2.width) / 2 };
+  return TX;
+}
+function letters(c, lay, x0, base, prog, n0, col, clip) {
+  const g = textGeo();
+  c.save(); c.beginPath(); c.rect(clip[0], clip[1], clip[2], clip[3]); c.clip();
+  L.font(c, 800, g.sz, "Title", 0); c.fillStyle = col; c.textBaseline = "alphabetic";
+  lay.glyphs.forEach((gl, i) => {
+    const u = L.c01((prog - i * 0.055) / 0.5); if (u <= 0 || gl.ch === " ") return;
+    const e = L.E("expo.out")(u), dy = (1 - e) * g.sz * 1.05, rot = (1 - e) * 14;
+    c.save(); c.translate(x0 + gl.x + gl.w / 2, base + dy); c.rotate(rot * D2R); c.fillText(gl.ch, -gl.w / 2, 0); c.restore();
+  });
+  c.restore();
+}
+function words(c, t) {
+  const g = textGeo();
+  if (S.l1 > 0) letters(c, g.l1, g.x1, g.b1, S.l1, 0, "#FFFFFF", [0, g.b1 - g.sz * 1.0, W, g.sz * 1.24]);
+  if (S.mk > 0) {
+    const pad = 26, x0 = g.x2 - pad, w = g.l2.width + pad * 2, top = g.b2 - g.sz * 0.8, h = g.sz * 1.02;
+    const e = L.E("power3.inOut")(S.mk);
+    c.save(); L.shadow(c, 0.35, 30, 12); c.fillStyle = Y; L.rr(c, x0, top, w * e, h, 18); c.fill(); c.restore();
+    letters(c, g.l2, g.x2, g.b2, S.l2, 0, INK, [x0, top, w * e, h]);
+  }
+}
+function finger(c, t, g) {        // a touch: comes in, presses the play button, lets go
+  if (S.fin <= 0 || S.out >= 1) return;
+  const tgt = cardPt(PB.x, PB.y, g), st = { x: 1020, y: 1640 }, ctl = { x: 1000, y: tgt.y + 180 };
+  const u = L.E("power3.out")(L.c01(S.fin));
+  const x = (1 - u) ** 2 * st.x + 2 * (1 - u) * u * ctl.x + u * u * tgt.x + S.out * 70;
+  const y = (1 - u) ** 2 * st.y + 2 * (1 - u) * u * ctl.y + u * u * tgt.y + S.out * 120 + 8;
+  const pr = Math.sin(Math.PI * L.c01(S.press)), r = 50 * (1 - 0.2 * pr), al = 1 - S.out;
+  c.save(); c.globalAlpha = al;
+  L.shadow(c, 0.45 * (1 - pr * 0.6), 30 - 18 * pr, 14 - 10 * pr);
+  c.fillStyle = `rgba(255,255,255,${0.32 + 0.3 * pr})`; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); L.noShadow(c);
+  c.strokeStyle = "rgba(255,255,255,.95)"; c.lineWidth = 4; c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke();
+  c.restore();
+}
+function scene(ctx, t, T) {
+  if (T < T_GL) { ctx.drawImage(last, 0, 0, W, H); return; }                  // the short's last frame, untouched
+  if (T < T_COL) { glitch(ctx, Math.floor(T * 30 + 1e-6)); return; }
+  if (t < T_DOT) { crt(ctx, t); if (t >= T_DOT - 0.04) bar(ctx, t, flat); return; }
+  background(ctx, t);
+  const g = S.a >= 89.9 ? flat : geom(t);
+  if (S.a < 89.5) { cardShadow(ctx, g); renderCard(t, g); ctx.drawImage(glc, 0, 0); }
+  bar(ctx, t, g);
+  logo(ctx, t);
+  words(ctx, t);
+  finger(ctx, t, g);
+  // film: grain and a vignette
+  ctx.save(); ctx.globalCompositeOperation = "soft-light"; ctx.globalAlpha = 0.16; ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(grain[Math.floor(T * 24) % 3], 0, 0, W, H); ctx.restore();
+  const v = ctx.createRadialGradient(540, 860, 500, 540, 900, 1250); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,.55)");
+  ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+}
+
+let TL = null;
+const draw = L.mount({ tl: () => TL, scene, samples: T => (T >= T_LINE && T <= 1.02) || (T >= 1.18 && T <= 3.55) ? 10 : 1, shutter: 1 / 50 });
+PAGE({
+  dur: 4.2,
+  cues: [
+    { t: 0.15, name: "t:glitch", gain: -16 },
+    { t: 0.2, name: "m:ui-glitch-flicker", gain: -17 },
+    { t: 0.36, name: "m:deep-short-whoosh", gain: -17 },
+    { t: 0.58, name: "m:thump-click", gain: -15 },
+    { t: 1.46, name: "m:ui-premium-open", gain: -17 },
+    { t: 2.42, name: "m:premium-pop-1", gain: -18 },
+    { t: 3.27, name: "m:mouse-click-1", gain: -15 },
+  ],
+  build(tl) {
+    TL = tl; L.preload(); document.fonts.load("700 80px Text");
+    // the dot, then the bar unrolling out of it, the stretch « you just watched »
+    tl.to(S, { dot: 1, duration: 0.2, ease: "none" }, T_DOT - 0.04);
+    tl.to(S, { red: 1, duration: 0.14, ease: "none" }, 0.66);
+    tl.to(S, { track: 1, duration: 0.5, ease: "none" }, 0.7);
+    tl.to(S, { seg: 1, duration: 0.36, ease: "none" }, 0.86);
+    // back to 0:00: a hop
+    tl.to(S, { pos: 0, duration: 0.28, ease: "power3.inOut" }, 1.2);
+    tl.to(S, { hop: 1, duration: 0.28, ease: "none" }, 1.2);
+    // the bar is a hinge: the player swings up out of the depth, overshoots, settles turned
+    tl.to(S, { a: -12, duration: 0.72, ease: "power2.out" }, 1.48);
+    tl.to(S, { a: 7, duration: 0.45, ease: "sine.inOut" }, 2.2);
+    tl.to(S, { b: -11, c: -1.6, duration: 0.85, ease: "power2.inOut" }, 1.8);
+    tl.to(S, { glow: 1, duration: 0.7, ease: "power2.out" }, 1.5);
+    tl.to(S, { sw1: 1, duration: 0.6, ease: "none" }, 2.12);
+    // the logo lands, leaning
+    tl.to(S, { logo: 1, duration: 0.5, ease: "none" }, 2.2);
+    // the words
+    tl.to(S, { l1: 1.0, duration: 0.95, ease: "none" }, 2.48);
+    tl.to(S, { mk: 1, duration: 0.34, ease: "none" }, 2.66);
+    tl.to(S, { l2: 1.2, duration: 1.1, ease: "none" }, 2.74);
+    // the tap
+    tl.to(S, { fin: 1, duration: 0.32, ease: "none" }, 2.95);
+    tl.to(S, { press: 1, duration: 0.2, ease: "none" }, 3.24);
+    tl.to(S, { z: 26, duration: 0.09, ease: "power2.out" }, 3.25);
+    tl.to(S, { z: 0, duration: 0.35, ease: "back.out(2)" }, 3.34);
+    tl.to(S, { rip: 1, duration: 0.7, ease: "none" }, 3.27);
+    tl.to(S, { out: 1, duration: 0.3, ease: "power2.in" }, 3.5);
+    // the video starts
+    tl.to(S, { play: 1, duration: 0.01, ease: "none" }, 3.3);
+    tl.to(S, { pos: 0.04, duration: 0.9, ease: "none" }, 3.3);
+    tl.to(S, { sw2: 1, duration: 0.6, ease: "none" }, 3.58);
+    tl.set({}, {}, 4.2);
+  },
+  draw: t => draw(t),
+});
+</script></body></html>

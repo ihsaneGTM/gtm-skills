@@ -1,0 +1,49 @@
+{
+  "_note": "The hook's effect, one set of numbers read by plan.mjs (camera, overlay) and tmp/hookfx.py (the footage). glitch.bursts: [from, to, strength] in OUTPUT seconds, on the stressed words (WHERE, NUMBER?, NUMBER, NOT, the break into the sheet). zoom.freezes: [from, to] in RAW seconds, the picture held on its first frame (NUMBER?, NOT listed.) while the camera crash-zooms.",
+  "glitch": {
+    "bursts": [
+      [
+        0.06,
+        0.24,
+        0.8
+      ],
+      [
+        1.07,
+        1.27,
+        1
+      ],
+      [
+        2.27,
+        2.37,
+        0.6
+      ],
+      [
+        2.67,
+        2.86,
+        1
+      ],
+      [
+        3.4,
+        3.52,
+        1.1
+      ]
+    ]
+  },
+  "zoom": {
+    "freezes": [
+      [
+        1.3,
+        1.68
+      ],
+      [
+        3.22,
+        3.7
+      ]
+    ],
+    "levels": [
+      1.38,
+      1.62
+    ],
+    "anchor": 0.88
+  }
+}

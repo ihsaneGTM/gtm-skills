@@ -1,0 +1,19 @@
+{
+  "default": "document",
+  "styles": {
+    "document": {
+      "name": "Document",
+      "line": "A white desk: real pages at the full viewport and real logos, LinkedIn-style cards of fictional people, editorial lines with a yellow marker, charts under their app icon, the yellow chapter pages; real stock shots in a frame on the paper and GIFs as pinned prints; the filmed intro and cutbacks dressed with lockups behind the head.",
+      "template": "template/document",
+      "look": "references/look.md",
+      "engine": "the article-video engine (engine.js F.*, fx.js, blocs.js B.*, theme.css) and the stock-shot frame (framed.js), copied into the template",
+      "validated": "2026-10-13, waterfall enrichers (workspace/videos/waterfall-complete-2d.mp4, « quasiment parfait »)",
+      "examples": [
+        "references/example-intro-story.js",
+        "references/example-story-part1.js",
+        "references/example-cutback-story.js",
+        "references/example-story-part2.js"
+      ]
+    }
+  }
+}

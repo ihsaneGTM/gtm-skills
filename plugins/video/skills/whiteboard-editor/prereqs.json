@@ -1,0 +1,131 @@
+{
+  "skill": "whiteboard-editor",
+  "summary": "Whiteboard (the Short video editor's first style): one raw vertical take in, one finished short out, in the look of Long video to shorts: your face from the first frame, Dynamic text, the pictures behind you, white pages that draw the idea; one music, -14 LUFS, checked. Heard on your Mac, no key needed.",
+  "prerequisites": [
+    {
+      "id": "ffmpeg",
+      "label": "ffmpeg (cuts, compositing, render, mix, measurements)",
+      "type": "bin",
+      "required": true,
+      "bin": "ffmpeg",
+      "hint": "brew install ffmpeg"
+    },
+    {
+      "id": "ffprobe",
+      "label": "ffprobe (file checks)",
+      "type": "bin",
+      "required": true,
+      "bin": "ffprobe",
+      "hint": "Ships with ffmpeg."
+    },
+    {
+      "id": "node",
+      "label": "Node.js 22 or later (the skill's scripts)",
+      "type": "bin",
+      "required": true,
+      "bin": "node",
+      "hint": "brew install node"
+    },
+    {
+      "id": "python3",
+      "label": "Python 3 (speech-to-text runtime)",
+      "type": "bin",
+      "required": true,
+      "bin": "python3",
+      "hint": "xcode-select --install"
+    },
+    {
+      "id": "swiftc",
+      "label": "Swift compiler (finding your face, cutting you out: Apple Vision)",
+      "type": "bin",
+      "required": true,
+      "bin": "swiftc",
+      "hint": "xcode-select --install"
+    },
+    {
+      "id": "whisper",
+      "label": "Speech-to-text (Whisper, on your Mac's GPU)",
+      "type": "file",
+      "required": false,
+      "auto": true,
+      "path": "${WHISPER_PY:-~/.venv/whisper/bin/python}",
+      "hint": "Installed on the first video by the video engine's bootstrap (plugins/video/skills/short-editor/scripts/bootstrap.mjs): it hears your take on this Mac, free, nothing sent."
+    },
+    {
+      "id": "elevenlabs",
+      "label": "ELEVENLABS_API_KEY (your voice made better, a bonus)",
+      "type": "env",
+      "required": false,
+      "vars": [
+        "ELEVENLABS_API_KEY"
+      ],
+      "hint": "Your own ElevenLabs key: in the app, Settings › Connectors › Add key. Only for the bonus « Your voice made better » (ElevenLabs' voice isolator: the room's echo and the noise out of your take), billed by ElevenLabs per minute of sound. Your take is heard on your Mac without it.",
+      "offer": "Your voice can be made better (the room's echo and the noise taken out) with an ElevenLabs key. Without one, the take's own sound is used.",
+      "does": "Takes the room's echo and the noise out of your take (the bonus « Your voice made better »). Your take is heard on your Mac without it.",
+      "without": "Your take's own sound, as you recorded it.",
+      "cost": "Billed by ElevenLabs per minute of sound (the voice isolator)."
+    },
+    {
+      "id": "gemini",
+      "label": "GEMINI_API_KEY (the mood stickers of the hook, Nano Banana 2)",
+      "type": "env",
+      "required": false,
+      "vars": [
+        "GEMINI_API_KEY"
+      ],
+      "altVars": [
+        "NANO_BANANA_API_KEY"
+      ],
+      "hint": "About $0.07 a sticker (1K), billed by Google. Without one, the hook's mood pictures are the real icons of the tools you name, or left out.",
+      "does": "Makes the few stickers that set the mood of the hook (an empty mail tray, a dartboard…), Nano Banana 2.",
+      "without": "No sticker made: the hook keeps the real icons of the tools you name, or none.",
+      "cost": "About $0.07 a sticker, four to six a subject, billed by Google."
+    },
+    {
+      "id": "giphy",
+      "label": "GIPHY_API_KEY (searching the GIFs)",
+      "type": "env",
+      "required": false,
+      "vars": [
+        "GIPHY_API_KEY"
+      ],
+      "hint": "Free at developers.giphy.com. Without it, a GIF comes from a giphy.com link given by hand. GIPHY grants no commercial licence: organic use only.",
+      "does": "Searches the GIFs pinned as prints in your short.",
+      "without": "No GIF search: a GIF only from a giphy.com link you give.",
+      "cost": "Free (developers.giphy.com). GIFs are for organic posts only."
+    },
+    {
+      "id": "pexels",
+      "label": "PEXELS_API_KEY (searching Pexels' stock videos)",
+      "type": "env",
+      "required": false,
+      "vars": [
+        "PEXELS_API_KEY"
+      ],
+      "hint": "Free at pexels.com/api. Without it, Mixkit's free clips are searched (no key) and a Pexels video page given by hand is fetched through its own free-download link.",
+      "does": "Searches Pexels' stock videos for the pictures on your words.",
+      "without": "Mixkit's free clips only (no key needed), or a Pexels page you give.",
+      "cost": "Free (pexels.com/api)."
+    },
+    {
+      "id": "motion-kit",
+      "label": "The motion kit (fonts, Chrome, the Mac's tools)",
+      "type": "file",
+      "required": false,
+      "auto": true,
+      "path": "plugins/video/motion/native/cutout",
+      "hint": "Set up on the first video by node plugins/video/motion/bootstrap.mjs (fonts, a headless Chrome if there is none, the Swift tools)."
+    },
+    {
+      "id": "music",
+      "label": "Music shelf (Mixkit)",
+      "type": "files",
+      "required": false,
+      "auto": true,
+      "paths": [
+        "plugins/video/assets/music/mixkit-gimme-that-groove-872.mp3"
+      ],
+      "hint": "Downloaded from mixkit.co on the first video."
+    }
+  ]
+}

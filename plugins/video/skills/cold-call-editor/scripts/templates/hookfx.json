@@ -1,0 +1,6 @@
+{
+ "_note": "The hook's glitch: [from, to, strength] in OUTPUT seconds, on the stressed words, then the break into the sheet. node bursts.mjs writes it; assemble.py, plan.mjs and edl.mjs read it.",
+ "glitch": {
+  "bursts": []
+ }
+}

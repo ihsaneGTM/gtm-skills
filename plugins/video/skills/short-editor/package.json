@@ -1,0 +1,14 @@
+{
+  "name": "short-editor",
+  "version": "1.0.0",
+  "description": "Vertical-short editing pipeline: motion-design overlay, procedural sound design, subtitles, loudness normalization.",
+  "type": "module",
+  "scripts": {
+    "render": "node scripts/render.mjs",
+    "sfx": "node scripts/sfx.mjs"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.60",
+    "sharp": "^0.33.5"
+  }
+}

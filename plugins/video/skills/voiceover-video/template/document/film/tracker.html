@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Progress marker</title>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="brand.css">
+<style>
+  /* The progress marker of a long video (validated by Ihsane on « Créer le meilleur système d'acquisition B2B »,
+     2026-10-14, after four rounds: pills, a line of dots, a stepper, a corner tab, a breadcrumb, then a hanging sign,
+     a ticket, a game map, unlocked tiles; the dark breadcrumb kept and made squarer). It shows right AFTER a chapter page,
+     holds about 4.5 s, then leaves on mechanical sounds (a shutter, clicks, a gear: the assembly lays them): it says « we
+     passed to the next step », then gets out of the way. Square, in the language of the Fr1 frame the stock shots play in
+     (framed.js): faint guide lines out to the page's edges, a thin rectangle, crosshairs at the corners, the F1
+     screen-door grid over the bar, the bar opening from its middle line with a yellow scan line, the chapter count in mono
+     under the right corner. The brand's logo first, a short kicker, then three chapters: the one just done (dimmed), the
+     new one (the accent), the next one PIXELATED (a mosaic, never a blur: Ihsane). The mascot (img/mascot/<file>, the
+     brand's own: Pipecorn's Frame 49) comes up from BEHIND the bar's top edge, clipped there: never seen under the bar.
+     ?theme=white (chosen by Ihsane, 2026-10-14: the default) | yellow | dark (the first one validated). Transparent page: scripts/tracker.mjs draws it, the assembly lays it on.
+     draw(t, o): o = { appear, hide, kicker, count, mascot, items: [{ t: 'Level 1', b: 'now', a: 'done' }, …] }
+     (b: the state before the update, a: after; states done | now | next). */
+  html,body{margin:0;background:transparent!important;overflow:hidden;width:1920px;height:1080px}
+  *{box-sizing:border-box}
+  #tk{position:absolute;left:0;top:0;width:1920px;height:1080px}
+  canvas#fr{position:absolute;left:0;top:0;width:1920px;height:1080px}
+  .bar{position:absolute;left:0;top:0;height:70px;overflow:hidden;background:var(--bg)}
+  .bar .grid{position:absolute;inset:0;background-image:repeating-linear-gradient(90deg,var(--gl) 0 1px,transparent 1px 4px),repeating-linear-gradient(0deg,var(--gl) 0 1px,transparent 1px 4px),radial-gradient(ellipse 70% 120% at 50% 50%,transparent 50%,var(--vig) 100%)}
+  .bar .in{position:absolute;left:0;top:0;height:70px;display:flex;align-items:center;gap:18px;padding:0 26px 0 12px;white-space:nowrap}
+  .bar .logo{width:46px;height:46px;display:block}
+  .bar .k{font:600 15px/1 ui-monospace,Menlo,monospace;letter-spacing:.24em;color:var(--kc);margin-right:4px}
+  .bar .sep{font:700 22px/1 var(--title);color:var(--sc)}
+  .bar .it{position:relative;display:flex;align-items:center;height:42px;padding:0 6px}
+  .bar .it.now{background:var(--nbg)}
+  .bar canvas{display:block;image-rendering:pixelated}
+  .bar .scan{position:absolute;left:0;width:100%;height:2px;background:rgba(255,217,13,.9)}
+  .mwrap{position:absolute;overflow:hidden}
+  .mwrap img{position:absolute;left:0;width:118px;display:block;filter:drop-shadow(0 8px 10px rgba(0,0,0,.25))}
+  /* the three themes: the bar's ground, its grid, and the colours of its words */
+  :root{--bg:#141414;--gl:rgba(255,255,255,.06);--vig:rgba(0,0,0,.35);--kc:rgba(255,255,255,.45);--sc:rgba(255,255,255,.3);--nbg:transparent}
+  :root[data-theme="white"]{--bg:#FFFFFF;--gl:rgba(26,26,26,.045);--vig:rgba(26,26,26,.06);--kc:rgba(26,26,26,.5);--sc:rgba(26,26,26,.3);--nbg:var(--v)}
+  :root[data-theme="yellow"]{--bg:var(--v);--gl:rgba(26,26,26,.07);--vig:rgba(120,90,0,.18);--kc:rgba(26,26,26,.6);--sc:rgba(26,26,26,.35);--nbg:#FFFFFF}
+  .bar.yellow .logo{border-radius:12px;outline:3px solid #1A1A1A;outline-offset:-1px}
+  .bar.white{box-shadow:0 2px 4px rgba(28,26,46,.08),0 16px 30px -14px rgba(28,26,46,.35)}
+</style>
+</head>
+<body>
+<div id="tk"><canvas id="fr" width="1920" height="1080"></canvas></div>
+<script>
+  const Q = new URLSearchParams(location.search);
+  const THEME = Q.get('theme') || 'white';
+  document.documentElement.dataset.theme = THEME;
+  // the words' colours: the new chapter, the others (done is the same at 45 %)
+  const COL = { dark: { now: '#FFD90D', other: '#FFFFFF' }, white: { now: '#1A1A1A', other: '#1A1A1A' }, yellow: { now: '#1A1A1A', other: '#1A1A1A' } }[THEME];
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const io = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const back = (x) => { const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+  const P = (t, a, d) => clamp((t - a) / d);
+  const tk = document.getElementById('tk'), cv = document.getElementById('fr'), c = cv.getContext('2d');
+  const bar = document.createElement('div'); bar.className = 'bar ' + THEME; tk.appendChild(bar);
+  const mw = document.createElement('div'); mw.className = 'mwrap'; tk.appendChild(mw);
+  const mi = document.createElement('img'); mw.appendChild(mi);
+  const pxLabel = (text) => {
+    const off = document.createElement('canvas'), g0 = off.getContext('2d');
+    g0.font = '700 23px "GTM Title"'; const w = Math.ceil(g0.measureText(text).width) + 4, h = 30;
+    off.width = w; off.height = h;
+    const cvs = document.createElement('canvas'); cvs.width = w; cvs.height = h; cvs.style.width = w + 'px'; cvs.style.height = h + 'px';
+    const draw = (px, col) => {
+      const o = off.getContext('2d'); o.clearRect(0, 0, w, h); o.font = '700 23px "GTM Title"'; o.fillStyle = col; o.textBaseline = 'middle'; o.fillText(text, 2, h / 2 + 1);
+      const g = cvs.getContext('2d'); g.clearRect(0, 0, w, h); g.imageSmoothingEnabled = false;
+      if (px <= 1.01) { g.drawImage(off, 0, 0); return; }
+      const sw = Math.max(1, Math.round(w / px)), sh = Math.max(1, Math.round(h / px));
+      const t = document.createElement('canvas'); t.width = sw; t.height = sh; t.getContext('2d').drawImage(off, 0, 0, sw, sh);
+      g.drawImage(t, 0, 0, sw, sh, 0, 0, w, h);
+    };
+    return { c: cvs, draw };
+  };
+  let key = '', W = 0, inn = null, scan = null, items = [];
+  const build = (o) => {
+    bar.innerHTML = `<div class="in"><img class="logo" src="${o.logo || 'img/logo.png'}">${o.kicker ? `<span class="k">${o.kicker}</span>` : ''}</div><i class="grid"></i><i class="scan"></i>`;
+    inn = bar.querySelector('.in'); scan = bar.querySelector('.scan');
+    items = o.items.map((it, j) => {
+      if (j) { const s = document.createElement('span'); s.className = 'sep'; s.textContent = '›'; inn.appendChild(s); }
+      const box = document.createElement('span'); box.className = 'it'; inn.appendChild(box);
+      const lb = pxLabel(it.t); box.appendChild(lb.c); return { ...it, lb, box };
+    });
+    W = Math.ceil(inn.getBoundingClientRect().width); bar.style.width = W + 'px';
+    mi.src = `img/mascot/${o.mascot || 'pipecorn-49.png'}`;
+  };
+  const Y = 132, H = 70;
+  window.draw = (t, o) => {
+    const k = JSON.stringify([o.items, o.kicker, o.logo, o.mascot]);
+    if (k !== key) { key = k; build(o); }
+    const x = Math.round(960 - W / 2), y = Y;
+    bar.style.left = x + 'px'; bar.style.top = y + 'px';
+    const a = o.appear, h = o.hide;
+    // the frame draws in (0 → 0.3 s), the bar opens from its middle line (0.18 → 0.42 s); at the end the reverse
+    const kF = Math.min(io(P(t, a, 0.3)), 1 - io(P(t, h + 0.22, 0.25)));
+    const kS = Math.min(io(P(t, a + 0.18, 0.24)), 1 - io(P(t, h, 0.2)));
+    c.clearRect(0, 0, 1920, 1080);
+    if (kF > 0) {
+      c.strokeStyle = 'rgba(26,26,26,.16)'; c.lineWidth = 1.2;
+      for (const yy of [y, y + H]) { c.beginPath(); c.moveTo(x - x * kF, yy); c.lineTo(x + W + (1920 - x - W) * kF, yy); c.stroke(); }
+      for (const xx of [x, x + W]) { c.beginPath(); c.moveTo(xx, y - y * kF); c.lineTo(xx, y + H + 60 * kF); c.stroke(); }
+      c.strokeStyle = '#1A1A1A'; c.lineWidth = 1.5; c.strokeRect(x - 6, y - 6, (W + 12) * kF, H + 12);
+      const kk = 14 * kF; c.lineWidth = 2;
+      for (const [px, py] of [[x - 6, y - 6], [x + W + 6, y - 6], [x - 6, y + H + 6], [x + W + 6, y + H + 6]]) { c.beginPath(); c.moveTo(px - kk, py); c.lineTo(px + kk, py); c.moveTo(px, py - kk); c.lineTo(px, py + kk); c.stroke(); }
+      if (o.count) { c.font = '600 14px ui-monospace, Menlo, monospace'; c.fillStyle = `rgba(26,26,26,${(0.55 * kF).toFixed(2)})`; c.textAlign = 'right'; c.fillText(o.count, x + W + 6, y + H + 30); }
+    }
+    bar.style.clipPath = `inset(${((1 - kS) * 50).toFixed(2)}% 0 ${((1 - kS) * 50).toFixed(2)}% 0)`;
+    bar.style.visibility = kS > 0.001 ? '' : 'hidden';
+    scan.style.top = (H / 2 - 1 + (kS < 1 ? (kS * H) / 2 - 1 : 0)).toFixed(1) + 'px';
+    scan.style.opacity = (kS > 0.002 && kS < 0.998 ? 1 - kS : 0).toFixed(2);
+    // the update, once it is back: the chapter just done dims, the new one takes the accent and its pixels resolve
+    const u = io(P(t, a + 0.75, 0.55));
+    items.forEach((it) => {
+      const st = u >= 0.5 ? it.a : it.b;
+      const px = it.b === 'next' && it.a !== 'next' ? lerp(9, 1, u) : st === 'next' ? 9 : 1;
+      it.lb.draw(px, st === 'now' ? COL.now : COL.other);
+      it.lb.c.style.opacity = st === 'done' ? '.45' : '1';
+      it.box.classList.toggle('now', st === 'now');
+    });
+    // the mascot comes up from BEHIND the bar's top edge (its window ends there), ducks back before it closes
+    const mk = back(P(t, a + 0.55, 0.45)) * (1 - io(P(t, h - 0.35, 0.3)));
+    const mH = 118 * 760 / 611;
+    mw.style.left = (x + 18) + 'px'; mw.style.top = (y - 130) + 'px'; mw.style.width = '140px'; mw.style.height = '130px';
+    mi.style.top = (130 - mH * 0.78 * mk + (1 - mk) * 20).toFixed(1) + 'px';
+    mi.style.transform = `rotate(${(-6 + 6 * mk).toFixed(2)}deg)`;
+    mw.style.display = o.mascot === false ? 'none' : '';
+  };
+  Promise.all([document.fonts.load('700 23px "GTM Title"'), document.fonts.ready]).then(() => { window.__ready = true; });
+</script>
+</body>
+</html>

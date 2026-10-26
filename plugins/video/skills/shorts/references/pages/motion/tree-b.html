@@ -1,0 +1,175 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+#world{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:0 0}
+.w{position:absolute;left:0;top:0;white-space:nowrap;color:var(--ink);font-family:Title;line-height:.86;text-align:center;transform-origin:50% 50%}
+.w .ln{display:block;overflow:hidden;padding:.06em .08em .1em;margin:-.06em -.08em -.1em}
+.w .ch{display:inline-block;will-change:transform}
+.tag{position:absolute;left:0;top:0;white-space:nowrap;font:740 48px/1 Title;letter-spacing:-.04em;display:flex;align-items:center;gap:12px;
+  padding:15px 26px 18px 18px;border-radius:999px;transform-origin:10% 80%;box-shadow:0 3px 4px rgba(26,26,26,.1),0 22px 40px -16px rgba(26,26,26,.4)}
+</style></head><body><div id="stage"></div>
+<script src="vendor/gsap/gsap.min.js"></script><script src="vendor/gsap/CustomEase.min.js"></script>
+<script src="kit.js"></script><script src="words.js"></script>
+<script>
+/* B · "The type tree": the org chart made only of type and ink. Rank IS weight: the buyer is a giant heavy word,
+   the managers medium, the team light. Branches are thick ink strokes drawing themselves; a yellow marker highlights
+   the Senior SDR and climbs the branches, through « Head of Sales », up to « CMO ». */
+gsap.registerPlugin(CustomEase);
+const A = K.A;
+Promise.all(["200 100px Title", "800 100px Title", "600 100px Title"].map(f => document.fonts.load(f))).then(() => {
+const stage = document.getElementById("stage");
+K.el("svg", { width: 0, height: 0, style: { position: "absolute" }, html: `<filter id="mb" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur id="mbs" stdDeviation="0 0"/></filter>` });
+const world = K.el("div", { id: "world" });
+const cam = { fx: 540, fy: 760, s: 1.42, sy: 960, mb: 0 };
+// the branches (under the type)
+const svg = K.el("svg", { width: 1080, height: 1920, style: { position: "absolute", left: 0, top: 0, overflow: "visible" } }, world);
+const ink = d => K.el("path", { d, fill: "none", stroke: "#1A1A1A", "stroke-width": 13, "stroke-linecap": "round", "stroke-linejoin": "round" }, svg);
+const rp = (pts, r = 34) => {   // rounded orthogonal polyline
+  let d = `M${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i], [cx, cy] = pts[i + 1];
+    const l1 = Math.hypot(bx - ax, by - ay), l2 = Math.hypot(cx - bx, cy - by), rr = Math.min(r, l1 / 2, l2 / 2);
+    d += `L${bx + (ax - bx) * rr / l1} ${by + (ay - by) * rr / l1}Q${bx} ${by} ${bx + (cx - bx) * rr / l2} ${by + (cy - by) * rr / l2}`;
+  }
+  return d + `L${pts[pts.length - 1][0]} ${pts[pts.length - 1][1]}`;
+};
+const hl = K.el("path", { fill: "none", stroke: "#FFD90D", "stroke-width": 0, "stroke-linecap": "round", "stroke-linejoin": "round" }, svg);   // the marker (filled below)
+// the words
+const word = (lines, x, y, size, wght, track = -.05, wMax = wght) => {
+  const e = K.el("div", { class: "w", style: { fontSize: size + "px", fontWeight: wMax, letterSpacing: track + "em" } }, world);
+  const chars = [];
+  lines.forEach(l => { const ln = K.el("span", { class: "ln" }, e); [...l].forEach(c => chars.push(K.el("span", { class: "ch", html: c === " " ? "&nbsp;" : c }, ln))); });
+  const r = e.getBoundingClientRect(); e.style.fontWeight = wght;
+  e.style.left = x + "px"; e.style.top = y + "px";
+  return { e, chars, x, y, w: r.width, h: r.height, st: { wght, pun: 1, dim: 0, sc: 1, dx: 0 } };
+};
+const W = {
+  cmo: word(["CMO"], 540, 640, 268, 200, -.035, 840),
+  sales: word(["Head of", "Sales"], 300, 1000, 84, 600, -.025),
+  mkt: word(["Marketing", "Lead"], 770, 1000, 84, 600, -.025),
+  sdr: word(["SDR"], 175, 1335, 60, 380, -.03),
+  senior: word(["Senior SDR"], 455, 1335, 60, 380, -.03, 820),
+  growth: word(["Growth"], 805, 1335, 60, 380, -.03),
+};
+const b = k => ({ t: W[k].y - W[k].h / 2 - (k == "senior" ? 30 : 12), b: W[k].y + W[k].h / 2 + 16 });
+const yL2 = (b("cmo").b + b("sales").t) / 2, yL3 = (b("sales").b + b("senior").t) / 2;
+const BR = {
+  sales: ink(rp([[540, b("cmo").b], [540, yL2], [W.sales.x, yL2], [W.sales.x, b("sales").t]])),
+  mkt: ink(rp([[540, yL2], [W.mkt.x, yL2], [W.mkt.x, b("mkt").t]])),
+  sdr: ink(rp([[W.sales.x, b("sales").b], [W.sales.x, yL3], [W.sdr.x, yL3], [W.sdr.x, b("sdr").t]])),
+  senior: ink(rp([[W.sales.x, yL3], [W.senior.x, yL3], [W.senior.x, b("senior").t]])),
+  growth: ink(rp([[W.mkt.x, b("mkt").b], [W.mkt.x, b("growth").t]])),
+};
+const LEN = {}; for (const k in BR) { LEN[k] = BR[k].getTotalLength(); BR[k].style.strokeDasharray = `0 ${LEN[k] + 20}`; }
+const br = {}; for (const k in BR) br[k] = { p: 0, dim: 0 };
+// the marker: under Senior SDR, up through Head of Sales, to the CMO
+const SG = 1.5, sw2 = W.senior.w * SG / 2;
+const mkPath = (d, w) => { const e = K.el("path", { d, fill: "none", stroke: "#FFD90D", "stroke-width": w, "stroke-linecap": "round", "stroke-linejoin": "round" }, svg); svg.insertBefore(e, svg.firstChild); return e; };
+const mkS = mkPath(rp([[W.senior.x - sw2 + 14, W.senior.y + 8], [W.senior.x + sw2 - 14, W.senior.y + 2]], 0), 92);
+const mkU = mkPath(rp([[W.senior.x, W.senior.y - 40], [W.senior.x, yL3], [W.sales.x, yL3], [W.sales.x, b("sales").b - 10]], 40), 40);
+const mkH1 = mkPath(`M${W.sales.x - W.sales.w / 2 + 6} ${W.sales.y - 30}L${W.sales.x + W.sales.w / 2 - 6} ${W.sales.y - 36}`, 74);
+const mkH2 = mkPath(`M${W.sales.x - W.sales.w / 2 + 40} ${W.sales.y + 40}L${W.sales.x + W.sales.w / 2 - 40} ${W.sales.y + 36}`, 74);
+const mkB = mkPath(rp([[W.sales.x, b("sales").t + 10], [W.sales.x, yL2], [540, yL2], [540, b("cmo").b - 10]], 40), 40);
+const HS = [mkU, mkH1, mkH2, mkB].map(e => e.getTotalLength());
+const CP = rp([[W.cmo.x - W.cmo.w / 2 + 20, W.cmo.y + 44], [W.cmo.x + W.cmo.w / 2 - 20, W.cmo.y + 28]], 0);
+const mkC = K.el("path", { d: CP, fill: "none", stroke: "#FFD90D", "stroke-width": 120, "stroke-linecap": "round" }, svg);
+svg.insertBefore(mkC, svg.firstChild);
+const LS = mkS.getTotalLength(), LC = mkC.getTotalLength();
+const mk = { s: 0, u: 0, h1: 0, h2: 0, v: 0, c: 0, cw: 1 };
+// the ink loop around the target (hand-drawn)
+const loopD = (() => { const cx = W.senior.x, cy = W.senior.y + 2, rx = sw2 + 36, ry = 74; let d = ""; for (let i = 0; i <= 64; i++) { const a = -2.4 + i / 64 * Math.PI * 2.15, r = 1 + .05 * Math.sin(i * .9); d += (i ? "L" : "M") + (cx + Math.cos(a) * rx * r).toFixed(1) + " " + (cy + Math.sin(a) * ry * r - i * .25).toFixed(1); } return d; })();
+const loop = K.el("path", { d: loopD, fill: "none", stroke: "#1A1A1A", "stroke-width": 9, "stroke-linecap": "round" }, svg);
+const LL = loop.getTotalLength(); const lp = { p: 0 };
+// tags
+const buy = K.el("div", { class: "tag", style: { background: "var(--ink)", color: "#fff" }, html: `<svg width="34" height="34" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#FFD90D"/><path d="M7 12.3l3.2 3.2L17 8.7" fill="none" stroke="#1A1A1A" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Can buy` }, world);
+const inf = K.el("div", { class: "tag", style: { background: "#fff", color: "var(--ink)" }, html: `<svg width="30" height="30" viewBox="0 0 24 24"><path d="M12 20V5M5.5 11.5L12 5l6.5 6.5" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Influence` }, world);
+const tg = { buy: 0, inf: 0 };
+const place = (e, x, y) => { e.style.left = x + "px"; e.style.top = y + "px"; };
+place(buy, W.cmo.x + W.cmo.w / 2 - 150, W.cmo.y - W.cmo.h / 2 - 34);
+place(inf, W.sales.x + 36, yL3 - 92);
+
+PAGE({
+  dur: 7.76,
+  cues: [
+    { t: 0.36, name: "m:smooth-whoosh", gain: -19 },
+    { t: 2.96, name: "p:mixkit-writing-scribble-2369", gain: -18 },
+    { t: 4.74, name: "m:cinematic-fast-whoosh", gain: -18 },
+    { t: 5.6, name: "p:mixkit-writing-pencil-3194", gain: -19 },
+    { t: 6.02, name: "m:data-whoosh", gain: -18 },
+    { t: 6.98, name: "m:premium-pop-2", gain: -16 },
+  ],
+  build(tl) {
+    const C = W.cmo;
+    C.e.querySelectorAll(".ln").forEach(l => (l.style.overflow = "visible"));
+    // 1 · « CMO » punches up through its mask, light, then gains weight on « in charge »
+    C.chars.forEach((c, i) => {
+      tl.fromTo(c, { yPercent: 80, scaleY: 1.9, opacity: 0, filter: "blur(14px)" }, { yPercent: 0, scaleY: 1, opacity: 1, filter: "blur(0px)", duration: .5, ease: "expo.out", immediateRender: true }, .3 + i * .06);
+    });
+    tl.to(C.st, { wght: 840, duration: .55, ease: "expo.out" }, A("in") - .05);
+    tl.fromTo(C.st, { tr: .12 }, { tr: -.035, duration: 1.5, ease: "expo.out", immediateRender: true }, .3);
+    tl.fromTo(C.st, { pun: 1.1 }, { pun: 1, duration: .6, ease: "elastic.out(1,.45)", immediateRender: false }, A("in") - .05);
+    tl.to(cam, { s: 1.3, duration: 1.3, ease: "none" }, .5);
+    // 2 · « who can directly … » : pull back; the branches draw, the managers then the team type in
+    tl.to(cam, { s: 1, fy: 960, duration: 1.0, ease: "expo.inOut" }, 1.85);
+    const typeIn = (w, t0, st = .03) => w.chars.forEach((c, i) => tl.fromTo(c, { yPercent: 140 }, { yPercent: 0, duration: .42, ease: "expo.out", immediateRender: true }, t0 + i * st));
+    tl.to([br.sales, br.mkt], { p: 1, duration: .45, ease: "power3.inOut" }, 2.15);
+    typeIn(W.sales, 2.45); typeIn(W.mkt, 2.5);
+    tl.to([br.sdr, br.senior, br.growth], { p: 1, duration: .4, ease: "power3.inOut" }, 2.62);
+    typeIn(W.sdr, 2.86, .04); typeIn(W.senior, 2.9, .025); typeIn(W.growth, 2.94, .03);
+    // 3 · « buy » : the yellow marker swipes under « CMO », the tag stamps on
+    tl.to(cam, { s: 1.22, fy: 760, duration: .7, ease: "expo.inOut" }, 3.1);
+    tl.to(mk, { c: 1, duration: .38, ease: "power2.inOut" }, A("buy") + .02);
+    tl.fromTo(tg, { buy: 0 }, { buy: 1, duration: .5, ease: "back.out(2.6)", immediateRender: false }, 3.3);
+    tl.fromTo(C.st, { pun: 1.08 }, { pun: 1, duration: .55, ease: "elastic.out(1,.45)", immediateRender: false }, A("buy", 2));
+    tl.to(cam, { s: 1.3, duration: .8, ease: "sine.inOut" }, 3.85);
+    // 4 · « and then there is people » : whip down to the team; « Senior SDR » takes weight, the pen circles her
+    tl.to(cam, { s: 1.17, fx: 540, fy: 965, sy: 985, duration: .7, ease: "expo.inOut" }, 4.68);
+    tl.to(W.sdr.st, { dx: -520, duration: .5, ease: "expo.in" }, 5.12);
+    tl.to(br.sdr, { p: 0, duration: .32, ease: "power2.in" }, 5.12);
+    tl.to(W.growth.st, { dx: 520, duration: .5, ease: "expo.in" }, 5.16);
+    tl.to(br.growth, { p: 0, duration: .32, ease: "power2.in" }, 5.16);
+    tl.to(W.senior.st, { sc: SG, duration: .5, ease: "back.out(1.8)" }, A("people", 2) - .1);
+    tl.to(cam, { mb: 1, duration: .32, ease: "power2.in" }, 4.7).to(cam, { mb: 0, duration: .3, ease: "power2.out" }, 5.02);
+    tl.to([W.mkt.st], { dim: 1, duration: .4, ease: "power2.out" }, 5.2);
+    tl.to([br.mkt], { dim: 1, duration: .4, ease: "power2.out" }, 5.2);
+    tl.to(W.senior.st, { wght: 820, duration: .45, ease: "expo.out" }, A("people", 2) - .1);
+    tl.fromTo(W.senior.st, { pun: 1.16 }, { pun: 1, duration: .6, ease: "elastic.out(1,.4)", immediateRender: false }, A("people", 2) - .1);
+    tl.to(mk, { s: 1, duration: .3, ease: "power2.inOut" }, 5.68);
+    tl.to(lp, { p: 1, duration: .5, ease: "power2.inOut" }, 5.6);
+    // 5 · « influence the decision » : the camera pulls back, the marker climbs to the buyer
+    tl.to(cam, { s: 1.04, fy: 940, sy: 960, duration: 1.0, ease: "expo.inOut" }, 6.0);
+    tl.to(mk, { u: 1, duration: .38, ease: "power2.in" }, 6.02);
+    tl.to(mk, { h1: 1, duration: .14, ease: "none" }, 6.4).to(mk, { h2: 1, duration: .12, ease: "none" }, 6.53);
+    tl.to(mk, { v: 1, duration: .32, ease: "power2.out" }, 6.64);
+    tl.fromTo(tg, { inf: 0 }, { inf: 1, duration: .45, ease: "back.out(2.4)", immediateRender: false }, A("influence"));
+    tl.to(W.sales.st, { wght: 820, duration: .2, ease: "power2.out" }, 6.42).to(W.sales.st, { wght: 600, duration: .5, ease: "power2.inOut" }, 6.66);
+    tl.fromTo(W.sales.st, { pun: 1.1 }, { pun: 1, duration: .5, ease: "elastic.out(1,.4)", immediateRender: false }, 6.42);
+    tl.to(W.mkt.st, { dim: 1, duration: .3 }, 6.0);
+    C.chars.forEach((c, i) => tl.fromTo(c, { y: -46 }, { y: 0, duration: .7, ease: "bounce.out", immediateRender: false }, 6.96 + i * .05));
+    tl.fromTo(mk, { cw: 1.25 }, { cw: 1, duration: .6, ease: "expo.out", immediateRender: false }, 6.96);
+    tl.fromTo(tg, { buy: 1.25 }, { buy: 1, duration: .5, ease: "back.out(3)", immediateRender: false }, A("decision"));
+    tl.to(cam, { s: 1.07, fy: 900, duration: .8, ease: "sine.inOut" }, 6.96);
+    tl.set({}, {}, 7.76);
+  },
+  draw(t) {
+    world.style.transform = `translate(${(540 - cam.fx * cam.s).toFixed(2)}px,${(cam.sy - cam.fy * cam.s).toFixed(2)}px) scale(${cam.s.toFixed(4)})`;
+    document.getElementById("mbs").setAttribute("stdDeviation", `0 ${(cam.mb * 22).toFixed(2)}`);
+    world.style.filter = cam.mb > .02 ? "url(#mb)" : "none";
+    for (const k in W) {
+      const w = W[k];
+      w.e.style.fontWeight = Math.round(w.st.wght);
+      if (w.st.tr !== undefined) w.e.style.letterSpacing = w.st.tr.toFixed(4) + "em";
+      w.e.style.transform = `translate(-50%,-50%) translate(${w.st.dx.toFixed(1)}px,0) scale(${(w.st.pun * w.st.sc).toFixed(4)})`;
+      w.e.style.color = w.st.dim > 0 ? `rgba(26,26,26,${(1 - .72 * w.st.dim).toFixed(3)})` : "#1A1A1A";
+    }
+    for (const k in BR) { const L = LEN[k]; BR[k].style.strokeDasharray = `${(L * br[k].p).toFixed(1)} ${L + 20}`; BR[k].style.opacity = br[k].p > 0 ? (1 - .7 * br[k].dim).toFixed(3) : 0; }
+    mkS.style.strokeDasharray = `${(LS * mk.s).toFixed(1)} ${LS + 200}`; mkS.style.opacity = mk.s > 0 ? 1 : 0;
+    [mkU, mkH1, mkH2, mkB].forEach((e, i) => { const v = [mk.u, mk.h1, mk.h2, mk.v][i]; e.style.strokeDasharray = `${(HS[i] * v).toFixed(1)} ${HS[i] + 200}`; e.style.opacity = v > 0 ? 1 : 0; });
+    mkC.style.strokeDasharray = `${(LC * mk.c).toFixed(1)} ${LC + 200}`; mkC.style.opacity = mk.c > 0 ? 1 : 0;
+    mkC.setAttribute("stroke-width", (120 * mk.cw).toFixed(1));
+    loop.style.strokeDasharray = `${(LL * lp.p).toFixed(1)} ${LL + 20}`; loop.style.opacity = lp.p > 0 ? 1 : 0;
+    buy.style.transform = `rotate(-6deg) scale(${tg.buy.toFixed(3)})`; buy.style.opacity = K.clamp(tg.buy * 3);
+    inf.style.transform = `rotate(-3deg) scale(${tg.inf.toFixed(3)})`; inf.style.opacity = K.clamp(tg.inf * 3);
+  },
+});
+});
+</script></body></html>

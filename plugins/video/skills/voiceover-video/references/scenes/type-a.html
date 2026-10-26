@@ -1,0 +1,251 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+#world{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+.w{position:absolute;left:0;top:0;white-space:nowrap;color:var(--ink);font-family:Title;line-height:.86;text-align:center;transform-origin:50% 50%}
+.w .ln{display:block;overflow:hidden;padding:.06em .08em .12em;margin:-.06em -.08em -.12em}
+.w .ch{display:inline-block;will-change:transform}
+.tag{position:absolute;left:0;top:0;white-space:nowrap;font:720 28px/1 Title;letter-spacing:-.03em;display:flex;align-items:center;gap:9px;
+  padding:10px 18px 12px 12px;border-radius:999px;transform-origin:0 100%;box-shadow:0 3px 4px rgba(26,26,26,.1),0 18px 34px -14px rgba(26,26,26,.42)}
+.tag.dark{background:var(--ink);color:#fff}
+.tag.pill{background:#fff;padding:11px 18px 11px 18px}
+.tag.pill img{height:34px;display:block}
+.cnt{position:absolute;left:114px;top:70px;font:500 24px/1 Mono;letter-spacing:.08em;color:var(--ink2);white-space:nowrap;display:flex;align-items:center;gap:14px}
+.cnt b{display:block;width:44px;height:3px;background:var(--ink);border-radius:2px}
+.cnt .n{color:var(--ink);font-weight:700}
+.node{position:absolute;left:0;top:0;transform-origin:50% 60%}
+.node img{display:block;height:72px}
+</style></head><body><div id="stage"></div>
+<script src="vendor/gsap/gsap.min.js"></script><script src="vendor/gsap/CustomEase.min.js"></script>
+<script src="kit.js"></script><script src="words.js"></script>
+<script>
+/* type-a · "The signal tree": tree-b's type tree applied to signals. A wall of 20 company names in light type;
+   relevance IS weight. Hiring an SDR: three names gain weight, the yellow marker swipes under them, a tag sticks on; the
+   camera pushes onto one, the pen circles it, a label + a rising stroke. The reverse move, then the HubSpot users take
+   weight (ink underlines, logo pills). The light names fall away, the six heavy ones gather into the bottom of a type tree
+   (Hiring · SDR / HubSpot), the branches draw upward, the marker climbs, and « Signal » lands as the giant heavy word. */
+gsap.registerPlugin(CustomEase);
+const A = K.A;
+Promise.all(["200 100px Title", "600 100px Title", "800 100px Title", "500 24px Mono", "700 24px Mono"].map(f => document.fonts.load(f))).then(() => {
+K.el("svg", { width: 0, height: 0, style: { position: "absolute" }, html:
+  `<filter id="mb" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur id="mbs" stdDeviation="0 0"/></filter>` +
+  `<filter id="mbf" x="-30%" y="-150%" width="160%" height="400%"><feGaussianBlur id="mbfs" stdDeviation="0 0"/></filter>` });
+const world = K.el("div", { id: "world" });
+const cam = { fx: 960, fy: 540, s: 1.45, mb: 0 };
+const svg = K.el("svg", { width: 1920, height: 1080, style: { position: "absolute", left: 0, top: 0, overflow: "visible" } }, world);
+const gY = K.el("g", {}, svg), gI = K.el("g", {}, svg);   // yellow under, ink over
+const path = (g, d, col, w) => K.el("path", { d, fill: "none", stroke: col, "stroke-width": w, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
+const rp = (pts, r = 34) => {
+  let d = `M${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i], [cx, cy] = pts[i + 1];
+    const l1 = Math.hypot(bx - ax, by - ay), l2 = Math.hypot(cx - bx, cy - by), rr = Math.min(r, l1 / 2, l2 / 2);
+    d += `L${bx + (ax - bx) * rr / l1} ${by + (ay - by) * rr / l1}Q${bx} ${by} ${bx + (cx - bx) * rr / l2} ${by + (cy - by) * rr / l2}`;
+  }
+  return d + `L${pts[pts.length - 1][0]} ${pts[pts.length - 1][1]}`;
+};
+const strokes = [];   // every drawn stroke: { e, L, v }
+const stroke = (g, d, col, w) => { const e = path(g, d, col, w), o = { e, L: e.getTotalLength(), v: 0, op: 1 }; strokes.push(o); return o; };
+
+// a word of type: per-letter, masked, weight on a variable axis
+const WORDS_ = [];
+const word = (text, x, y, size, wght, track = -.04, wMax = 800) => {
+  const e = K.el("div", { class: "w", style: { fontSize: size + "px", fontWeight: wMax, letterSpacing: track + "em" } }, world);
+  const ln = K.el("span", { class: "ln" }, e), chars = [];
+  [...text].forEach(c => chars.push(K.el("span", { class: "ch", html: c === " " ? "&nbsp;" : c }, ln)));
+  const r = e.getBoundingClientRect();
+  e.style.fontWeight = wght;
+  const o = { e, chars, text, w: r.width, h: r.height, st: { x, y, wght, pun: 1, dim: 0, sc: 1, rot: 0, op: 1, tr: track, blur: 0, by: 0 } };
+  WORDS_.push(o);
+  return o;
+};
+
+// 1 · the wall: 20 fictional companies, 4 columns × 5 rows, alternate rows offset
+const ROWS = [
+  ["Cobaltine", "Norvane", "Pellatrix", "Fernquist"],
+  ["Halvorn", "Ardenta", "Vexley", "Lumavale"],
+  ["Quillstone", "Brightwell", "Orrisa", "Kestrel"],
+  ["Duneridge", "Corvett", "Marlow Labs", "Ashbury"],
+  ["Wrenfield", "Tessaline", "Quorra", "Selvane"],
+];
+const RY = [190, 365, 540, 715, 890], FS = 72;
+const N = {}, LIST = [];
+ROWS.forEach((row, r) => row.forEach((name, c) => {
+  const x = 330 + c * 420 + (r % 2 ? 40 : -40);
+  const o = word(name, x, RY[r], FS, 200, -.03);
+  o.r = r; o.c = c; o.name = name;
+  N[name] = o; LIST.push(o);
+}));
+const HIRE = ["Halvorn", "Norvane", "Corvett"].map(n => N[n]);
+const HUB = ["Orrisa", "Selvane", "Lumavale"].map(n => N[n]);
+const SIX = [...HIRE, ...HUB];
+const LIGHT = LIST.filter(o => !SIX.includes(o));
+// typing order: from the centre out (the camera starts close)
+const ORDER = [...LIST].sort((a, b) => Math.hypot(a.st.x - 960, (a.st.y - 540) * 1.6) - Math.hypot(b.st.x - 960, (b.st.y - 540) * 1.6));
+const typeT = new Map(); ORDER.forEach((o, i) => typeT.set(o, .28 + i * .112));
+
+// marks on the wall
+const hlH = HIRE.map(o => stroke(gY, `M${o.st.x - o.w / 2 + 14} ${o.st.y + 12}L${o.st.x + o.w / 2 - 14} ${o.st.y + 5}`, "#FFD90D", 50));
+const ulS = HUB.map(o => stroke(gI, `M${o.st.x - o.w / 2 + 2} ${o.st.y + 42}Q${o.st.x + 10} ${o.st.y + 50} ${o.st.x + o.w / 2 + 10} ${o.st.y + 35}`, "#1A1A1A", 7));
+const mkTag = (o, html, cls, up = 46) => {
+  const e = K.el("div", { class: "tag " + cls, html }, world);
+  const r = e.getBoundingClientRect();
+  e.style.left = (o.st.x + o.w / 2 - 78) + "px"; e.style.top = (o.st.y - up - r.height) + "px";
+  return { e, v: 0, op: 1 };
+};
+const tagH = HIRE.map(o => mkTag(o, `<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#FFD90D"/><path d="M7 12.3l3.2 3.2L17 8.7" fill="none" stroke="#1A1A1A" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Hiring · SDR`, "dark", o.name === "Norvane" ? 72 : 46));
+const pillS = HUB.map(o => mkTag(o, `<img src="${K.img("logos/hubspot.png")}">`, "pill"));
+
+// the push-in: the pen circles Norvane, an arrow to a label, a rising stroke
+const NV = N.Norvane;
+const loopD = (() => { const cx = NV.st.x + 2, cy = NV.st.y + 2, rx = NV.w / 2 + 64, ry = 52; let d = ""; for (let i = 0; i <= 72; i++) { const a = 2.75 + i / 72 * Math.PI * 2.14, r = 1 + .04 * Math.sin(i * .8); d += (i ? "L" : "M") + (cx + Math.cos(a) * rx * r).toFixed(1) + " " + (cy + Math.sin(a) * ry * r - i * .1).toFixed(1); } return d; })();
+const loop = stroke(gI, loopD, "#1A1A1A", 8);
+const LBX = 520, LBY = 52;
+const arrow = stroke(gI, `M${NV.st.x - NV.w / 2 - 6} ${NV.st.y - 44}C${NV.st.x - NV.w / 2 - 20} ${LBY + 80} ${LBX + 40} ${LBY + 70} ${LBX + 14} ${LBY + 40}`, "#1A1A1A", 6);
+const arrowHead = stroke(gI, `M${LBX + 2} ${LBY + 60}L${LBX + 13} ${LBY + 40}L${LBX + 34} ${LBY + 50}`, "#1A1A1A", 6);
+const lab = word("Sales team", LBX - 30, LBY - 6, 44, 600, -.03);
+lab.st.x = LBX + 13;   // the arrow points up at the label
+const spX = lab.st.x + lab.w / 2 + 22;
+const spark = stroke(gI, `M${spX} ${LBY + 16}L${spX + 22} ${LBY - 2}L${spX + 40} ${LBY + 6}L${spX + 74} ${LBY - 28}`, "#1A1A1A", 7);
+const sparkHead = stroke(gI, `M${spX + 56} ${LBY - 30}L${spX + 76} ${LBY - 30}L${spX + 76} ${LBY - 10}`, "#1A1A1A", 7);
+
+// the counter (a data label)
+const cnt = K.el("div", { class: "cnt", html: `<b></b><span class="n">00</span><span>COMPANIES</span>` }, world);
+const cntN = cnt.querySelector(".n");
+
+// 5 · the tree (bottom-up): six slots, two nodes, the trunk, « Signal » on top
+const SLOT = [[245, 884], [525, 884], [805, 884], [1115, 884], [1395, 884], [1675, 884]];
+const NX = [525, 1395];
+const SC3 = .76;
+const nodeH = word("Hiring · SDR", NX[0], 612, 68, 600, -.03, 600);
+const nodeS = K.el("div", { class: "node", html: `<img src="${K.img("logos/hubspot.png")}">` }, world);
+const nsR = { w: 72 * 438 / 128, h: 72 };
+nodeS.style.left = (NX[1] - nsR.w / 2) + "px"; nodeS.style.top = (612 - nsR.h / 2) + "px";
+const ns = { v: 0 };
+const SG = word("Signal", 960, 245, 250, 200, .1, 800);
+SG.e.querySelector(".ln").style.overflow = "visible";
+const sgW = (() => { SG.e.style.fontWeight = 800; SG.e.style.letterSpacing = "-.035em"; const w = SG.e.getBoundingClientRect().width; SG.e.style.fontWeight = 200; SG.e.style.letterSpacing = ".1em"; return w; })();
+const bS = 245 + 132, L2t = 612 - 46, L2b = 612 + 44, L3t = 884 - 46;
+const yL2 = (bS + L2t) / 2, yL3 = (L2b + L3t) / 2;
+const brL3 = SLOT.map(([x, y], i) => stroke(gI, rp([[x, L3t], [x, yL3], [NX[i < 3 ? 0 : 1], yL3], [NX[i < 3 ? 0 : 1], L2b]]), "#1A1A1A", 11));
+const brL2 = NX.map(x => stroke(gI, rp([[x, L2t], [x, yL2], [960, yL2], [960, bS]], 40), "#1A1A1A", 11));
+const climb = NX.map(x => stroke(gY, rp([[x, L2t + 8], [x, yL2], [960, yL2], [960, bS - 6]], 40), "#FFD90D", 40));
+const hlSG = stroke(gY, `M${960 - sgW / 2 + 30} ${245 + 52}L${960 + sgW / 2 - 30} ${245 + 36}`, "#FFD90D", 104);
+const fb = { v: 0 };   // directional blur of the names that move on their own
+
+PAGE({
+  dur: 21.09,
+  cues: [
+    { t: 6.12, name: "m:smooth-whoosh", gain: -22 },
+    { t: 6.9, name: "p:mixkit-writing-scribble-2369", gain: -23 },
+    { t: 20.5, name: "m:smooth-pop", gain: -23 },
+  ],
+  build(tl) {
+    const FT = (o, a, b, pos) => tl.fromTo(o, a, Object.assign({ immediateRender: false }, b), pos);
+    const typeIn = (w, t0, st = .028) => w.chars.forEach((c, i) => tl.fromTo(c, { yPercent: 140 }, { yPercent: 0, duration: .42, ease: "expo.out", immediateRender: true }, t0 + i * st));
+    const typeOut = (w, t0, st = .02) => w.chars.forEach((c, i) => tl.to(c, { yPercent: -140, duration: .26, ease: "power2.in" }, t0 + i * st));
+    const heavy = (w, t0, to = 800, p = 1.14) => { tl.to(w.st, { wght: to, duration: .45, ease: "expo.out" }, t0); FT(w.st, { pun: p }, { pun: 1, duration: .6, ease: "elastic.out(1,.42)" }, t0); };
+    const draw = (o, t0, d = .3, ease = "power2.inOut") => tl.to(o, { v: 1, duration: d, ease }, t0);
+    const undraw = (o, t0, d = .25, ease = "power2.in") => tl.to(o, { v: 0, duration: d, ease }, t0);
+
+    // 1 · « a whole list of companies » : the wall types in from the centre while the camera pulls back
+    LIST.forEach(o => typeIn(o, typeT.get(o), .026));
+    tl.to(cam, { s: 1, duration: 2.7, ease: "power2.inOut" }, .2);
+
+    // 2 · « actually hiring an SDR » : three names gain weight, the rest dims, the marker swipes, tags stick on
+    HIRE.forEach((o, i) => heavy(o, A("hiring") - .02 + i * .14));
+    tl.to(LIGHT.concat(HUB).map(o => o.st), { dim: 1, duration: .4, ease: "power2.out" }, 4.95);
+    hlH.forEach((m, i) => draw(m, 5.18 + i * .1, .22));
+    tagH.forEach((g, i) => FT(g, { v: 0 }, { v: 1, duration: .38, ease: "back.out(2.6)" }, 5.62 + i * .08));
+
+    // 3 · « this team is looking for improvements in the sales field » : push onto Norvane, the pen circles it
+    tl.to(cam, { s: 1.8, fx: 700, fy: 138, duration: .75, ease: "expo.inOut" }, 6.12);
+    tl.to(cam, { mb: 1, duration: .3, ease: "power2.in" }, 6.16).to(cam, { mb: 0, duration: .3, ease: "power2.out" }, 6.5);
+    tl.to(cam, { s: 1.9, fx: 690, duration: 3.2, ease: "sine.inOut" }, 6.9);
+    const oth = [N.Halvorn, N.Corvett], othI = [0, 2];
+    tl.to(oth.map(o => o.st), { dim: .8, duration: .4, ease: "power2.out" }, 6.2);
+    tl.to(othI.map(i => hlH[i]).concat(othI.map(i => tagH[i])), { op: .2, duration: .4, ease: "power2.out" }, 6.2);
+    tl.to(cnt, { opacity: 0, duration: .25 }, 6.12);
+    draw(loop, 6.9, .5);
+    draw(arrow, A("looking") + .02, .3, "power2.out"); draw(arrowHead, A("looking") + .3, .12, "none");
+    typeIn(lab, 7.78, .03);
+    draw(spark, A("improvements") + .02, .4, "power2.inOut"); draw(sparkHead, A("improvements") + .4, .12, "none");
+    tl.to(lab.st, { wght: 800, duration: .4, ease: "expo.out" }, A("sales") - .02);
+    FT(lab.st, { pun: 1.12 }, { pun: 1, duration: .55, ease: "elastic.out(1,.42)" }, A("sales") - .02);
+    // the label and its pen marks leave, the camera pulls back
+    typeOut(lab, 10.1);
+    [sparkHead, spark, arrowHead, arrow].forEach((o, i) => undraw(o, 10.1 + i * .04, .2));
+    undraw(loop, 10.16, .26);
+    tl.to(cam, { s: 1, fx: 960, fy: 540, duration: .75, ease: "expo.inOut" }, 10.44);
+    tl.to(oth.map(o => o.st), { dim: 0, duration: .4, ease: "power2.out" }, 10.6);
+    tl.to(othI.map(i => hlH[i]).concat(othI.map(i => tagH[i])), { op: 1, duration: .4, ease: "power2.out" }, 10.6);
+    tl.to(cnt, { opacity: 1, duration: .3 }, 10.9);
+    tl.to(cam, { mb: 1, duration: .3, ease: "power2.in" }, 10.5).to(cam, { mb: 0, duration: .3, ease: "power2.out" }, 10.82);
+
+    // 4 · the reverse move: marks wipe away, weights fall back to light; then the HubSpot users take weight
+    hlH.forEach((m, i) => undraw(m, 11.22 + i * .05, .24));
+    tagH.forEach((g, i) => tl.to(g, { v: 0, duration: .26, ease: "back.in(2)" }, 11.3 + i * .05));
+    HIRE.forEach((o, i) => tl.to(o.st, { wght: 200, duration: .45, ease: "power2.inOut" }, 11.62 + i * .09));
+    tl.to(LIST.map(o => o.st), { dim: 0, duration: .45, ease: "power2.inOut" }, 11.75);
+    HUB.forEach((o, i) => heavy(o, A("companies", 2) - .02 + i * .14));
+    tl.to(LIGHT.concat(HIRE).map(o => o.st), { dim: 1, duration: .4, ease: "power2.out" }, 14.1);
+    ulS.forEach((m, i) => draw(m, A("using") - .05 + i * .12, .26));
+    pillS.forEach((g, i) => FT(g, { v: 0 }, { v: 1, duration: .38, ease: "back.out(2.6)" }, A("hubspots") + .05 + i * .1));
+
+    // 5 · « the second tool … can easily find these companies » : both signals heavy, the light ones fall away,
+    //     the six gather into the bottom of a tree, the branches draw upward
+    HIRE.forEach((o, i) => { heavy(o, 15.5 + i * .07, 800, 1.1); tl.to(o.st, { dim: 0, duration: .3, ease: "power2.out" }, 15.5 + i * .07); });
+    tl.to(HUB.map(o => o.st), { dim: 0, duration: .3 }, 15.5);
+    const rnd = K.rand(7);
+    LIGHT.forEach((o, i) => {
+      const t0 = 15.9 + rnd() * .32;   // they sink into the paper: smaller, defocused, gone
+      tl.to(o.st, { sc: .5, y: o.st.y + 26, rot: (rnd() - .5) * 10, op: 0, blur: 12, duration: .46, ease: "power2.in" }, t0);
+    });
+    ulS.forEach((m, i) => undraw(m, 15.9 + i * .03, .2));
+    pillS.forEach((g, i) => tl.to(g, { v: 0, duration: .24, ease: "back.in(2)" }, 15.9 + i * .04));
+    // gather (sorted by x within each set, so no paths cross)
+    const order = [...HIRE].sort((a, b) => a.st.x - b.st.x).concat([...HUB].sort((a, b) => a.st.x - b.st.x));
+    order.forEach((o, i) => tl.to(o.st, { x: SLOT[i][0], y: SLOT[i][1], sc: SC3, wght: 760, duration: .78, ease: "expo.inOut" }, 16.5 + (i % 3) * .05));
+    tl.to(fb, { v: .38, duration: .3, ease: "power2.in" }, 16.62).to(fb, { v: 0, duration: .3, ease: "power2.out" }, 16.92);
+    brL3.forEach((b, i) => draw(b, 17.28 + (i % 3) * .04, .34, "power2.inOut"));
+    typeIn(nodeH, A("easily") + .02, .026);
+    FT(ns, { v: 0 }, { v: 1, duration: .42, ease: "back.out(2.4)" }, A("easily") + .22);
+    brL2.forEach(b => draw(b, A("find") + .02, .45, "power2.inOut"));
+    order.forEach((o, i) => FT(o.st, { by: -34 }, { by: 0, duration: .7, ease: "bounce.out" }, A("companies", 3) - .02 + i * .05));
+    tl.to(cam, { s: 1.02, duration: 1.4, ease: "sine.inOut" }, 18.45);
+
+    // 6 · « we call it a signal » : « Signal » types in light, the marker climbs to it, it takes its weight
+    SG.chars.forEach((c, i) => tl.fromTo(c, { yPercent: 80, scaleY: 1.9, opacity: 0, filter: "blur(14px)" }, { yPercent: 0, scaleY: 1, opacity: 1, filter: "blur(0px)", duration: .42, ease: "expo.out", immediateRender: true }, A("and", 2) + i * .035));
+    climb.forEach(c => draw(c, 20.08, .38, "power2.in"));
+    tl.to(SG.st, { wght: 800, duration: .42, ease: "expo.out" }, A("signal.") - .04);
+    FT(SG.st, { tr: .1 }, { tr: -.035, duration: .5, ease: "expo.out" }, A("signal.") - .04);
+    FT(SG.st, { pun: 1.12 }, { pun: 1, duration: .55, ease: "elastic.out(1,.42)" }, A("signal.") - .04);
+    draw(hlSG, A("signal.") + .1, .26, "power2.inOut");
+    tl.set({}, {}, 21.09);
+  },
+  draw(t) {
+    world.style.transform = `translate(${(960 - cam.fx * cam.s).toFixed(2)}px,${(540 - cam.fy * cam.s).toFixed(2)}px) scale(${cam.s.toFixed(4)})`;
+    document.getElementById("mbs").setAttribute("stdDeviation", `0 ${(cam.mb * 20).toFixed(2)}`);
+    world.style.filter = cam.mb > .02 ? "url(#mb)" : "none";
+    document.getElementById("mbfs").setAttribute("stdDeviation", `0 ${(fb.v * 24).toFixed(2)}`);
+    for (const w of WORDS_) {
+      const s = w.st;
+      w.e.style.left = s.x.toFixed(1) + "px"; w.e.style.top = (s.y + (s.by || 0)).toFixed(1) + "px";
+      w.e.style.fontWeight = Math.round(s.wght);
+      w.e.style.letterSpacing = s.tr.toFixed(4) + "em";
+      w.e.style.transform = `translate(-50%,-50%) rotate(${s.rot.toFixed(2)}deg) scale(${(s.pun * s.sc).toFixed(4)})`;
+      w.e.style.color = s.dim > 0 ? `rgba(26,26,26,${(1 - .78 * s.dim).toFixed(3)})` : "#1A1A1A";
+      w.e.style.opacity = s.op.toFixed(3);
+      w.e.style.filter = s.blur > .05 ? `blur(${s.blur.toFixed(2)}px)` : (fb.v > .02 && SIX.includes(w) ? "url(#mbf)" : "none");
+    }
+    for (const o of strokes) { o.e.style.strokeDasharray = `${(o.L * o.v).toFixed(1)} ${o.L + 200}`; o.e.style.opacity = o.v > 0.001 ? o.op : 0; }
+    tagH.forEach(g => { g.e.style.transform = `rotate(-5deg) scale(${g.v.toFixed(3)})`; g.e.style.opacity = K.clamp(g.v * 3) * g.op; });
+    pillS.forEach(g => { g.e.style.transform = `rotate(-4deg) scale(${g.v.toFixed(3)})`; g.e.style.opacity = K.clamp(g.v * 3); });
+    nodeS.style.transform = `rotate(${((1 - ns.v) * -8).toFixed(2)}deg) scale(${(.5 + .5 * ns.v).toFixed(3)})`; nodeS.style.opacity = K.clamp(ns.v * 2.5);
+    // the counter: names typed in, minus the ones that fell out of the frame
+    let n = 0; for (const o of LIST) if (t >= typeT.get(o) && o.st.op > .5) n++;
+    cntN.textContent = String(n).padStart(2, "0");
+  },
+});
+LIST.forEach(o => (o.y0 = o.st.y));
+});
+</script></body></html>

@@ -1,0 +1,213 @@
+[
+  {
+    "id": "never-invent-substance",
+    "name": "Never invent substance",
+    "kind": "rule",
+    "what": "No number, name, result, tool or claim the memo does not say; a version may say less than the memo, never more, and a missing proof becomes a feedback.",
+    "when": "Always.",
+    "status": "validated",
+    "why": "The memo is the user's substance (le fond); only the form changes.",
+    "doc": "references/versions.md § Nothing invented"
+  },
+  {
+    "id": "transcript-not-translated",
+    "name": "Transcript in its language, versions in the video's",
+    "kind": "rule",
+    "what": "The memo is transcribed in the language spoken; the versions are written in the profile's video language, translating the user's voice, not their words.",
+    "when": "Always.",
+    "status": "validated",
+    "why": "Written as a never of the skill.",
+    "where": "scripts/prepare.mjs",
+    "doc": "SKILL.md § What you must never do"
+  },
+  {
+    "id": "several-shorts",
+    "name": "One memo, several shorts",
+    "kind": "rule",
+    "what": "The whole memo is read, then cut into the points it holds, one short per point a viewer can repeat in one sentence, in the memo's order.",
+    "when": "Every memo; a 1 to 3 minute memo is usually one short, a 10 minute memo may hold 4 to 8. Never split a point, never merge two.",
+    "status": "validated",
+    "since": "2026-10-07",
+    "why": "Ihsane: « il y a peut-être plusieurs vidéos que je peux faire… au lieu d'en faire une seule très grande ».",
+    "doc": "references/split.md § One memo, several shorts"
+  },
+  {
+    "id": "whole-and-parts",
+    "name": "The whole and the parts",
+    "kind": "rule",
+    "what": "A memo that walks through a process gives an overview short (every step in one line) and one short per step it develops enough.",
+    "when": "When the memo lists steps, tips or a system.",
+    "status": "validated",
+    "why": "Written as the skill's rule for cutting a memo.",
+    "doc": "references/split.md § The whole and the parts"
+  },
+  {
+    "id": "afterthoughts-and-asides",
+    "name": "Afterthoughts join their point, asides are instructions",
+    "kind": "rule",
+    "what": "An « oh, I forgot » goes into the range of the point it completes; asides to the editor are followed, never put in a script; the memo's opening and closing are not shorts.",
+    "when": "Every memo.",
+    "status": "validated",
+    "why": "Written as the skill's rule for cutting a memo.",
+    "doc": "references/split.md § The pieces that move"
+  },
+  {
+    "id": "three-versions",
+    "name": "Three versions of each short",
+    "kind": "text",
+    "what": "Straight (the memo's order, tightened), Hook first (opens on the strongest line), and a third shape that fits the point: Story, Contrarian or List.",
+    "when": "Every short, in this order, so they compare from one short to the next.",
+    "status": "validated",
+    "why": "Ihsane: « il ne va pas me faire juste une retranscription restructurée, il va m'en faire trois ».",
+    "doc": "references/versions.md § The three shapes"
+  },
+  {
+    "id": "read-aloud",
+    "name": "Each version read aloud",
+    "kind": "sound",
+    "what": "Every version is read aloud with ElevenLabs so the user hears it instead of reading it; only the versions' text is sent.",
+    "when": "When the key and a voice are set and the profile's voice.auto is true; otherwise say it once at the end.",
+    "status": "trial",
+    "why": "Status not written in the docs.",
+    "where": "scripts/voice.mjs",
+    "doc": "SKILL.md § 6. Read aloud"
+  },
+  {
+    "id": "three-feedbacks-max",
+    "name": "Three feedbacks at most",
+    "kind": "rule",
+    "what": "Each short gets at most three feedbacks, often fewer, zero when it holds: an idea to add, a big inconsistency, a link to another of the user's videos.",
+    "when": "Every short; never one about wording, never a link to something memo.mjs past does not list.",
+    "status": "validated",
+    "since": "2026-10-07",
+    "why": "Ihsane: « il ne faut pas qu'il commence à me faire trop de retours, qu'il soit contre-productif ».",
+    "doc": "references/feedback.md § The three questions, and only these"
+  },
+  {
+    "id": "lead-magnet-every-version",
+    "name": "The lead magnet in every version",
+    "kind": "rule",
+    "what": "Every version ends on the profile's lead magnet, said naturally, with its keywords; the check refuses a version without it.",
+    "when": "Every version; it is checked, never a feedback.",
+    "status": "validated",
+    "why": "Written as the skill's rule and enforced by memo.mjs check.",
+    "where": "scripts/memo.mjs",
+    "doc": "references/versions.md § The lead magnet, in every version"
+  },
+  {
+    "id": "no-lead-magnet-no-offer",
+    "name": "No lead magnet, no offer",
+    "kind": "rule",
+    "what": "When the lead magnet is left blank, the versions end on the point with no offer, and magnet is left out.",
+    "when": "An empty leadMagnet.line. Never make one up.",
+    "status": "validated",
+    "why": "Written as the skill's rule.",
+    "doc": "references/versions.md § The lead magnet, in every version"
+  },
+  {
+    "id": "arguments-and-magnet",
+    "name": "What each video really brings",
+    "kind": "rule",
+    "what": "Each short and the long version say their 2 to 4 strong arguments (point and why) and their lead magnet (offer, line, keywords, why it fits), a more specific offer only as proposed.",
+    "when": "Every short and the long version.",
+    "status": "validated",
+    "since": "2026-10-07",
+    "why": "Ihsane: « c'est quoi, réellement, les arguments de fond… et quel lead magnet dans ce script-là ».",
+    "doc": "SKILL.md § 4. Write: three versions, the feedbacks"
+  },
+  {
+    "id": "long-version",
+    "name": "The long version, always",
+    "kind": "rule",
+    "what": "Beside the shorts, memo.json holds the whole memo as one long video, every point in the user's order, so the user can pick the shorts, the long one, or ask for another cut.",
+    "when": "Every memo. The cut is a proposal, not a decision.",
+    "status": "validated",
+    "why": "Written as the skill's rule: the user may want another cut.",
+    "doc": "SKILL.md § 4. Write: three versions, the feedbacks"
+  },
+  {
+    "id": "talk-like-a-friend",
+    "name": "Like talking to a friend, simple English",
+    "kind": "rule",
+    "what": "The versions sound like the user talking to a friend, with B1 words, no idioms, no marketing words, no French built into English, their own expressions kept; the word list is refused by the check.",
+    "when": "Every version and the long one.",
+    "status": "validated",
+    "since": "2026-10-07",
+    "why": "Ihsane is not a native English speaker (plugins/video/references/how-you-talk.md).",
+    "where": "scripts/lib.mjs › bigWords",
+    "doc": "references/versions.md § Writing for the mouth"
+  },
+  {
+    "id": "short-sentences",
+    "name": "Short sentences",
+    "kind": "rule",
+    "what": "12 words most of the time and 16 at most, one idea each, contractions, I and you.",
+    "when": "Every version; checked.",
+    "status": "validated",
+    "why": "Written as the skill's rule and checked by memo.mjs check.",
+    "doc": "references/versions.md § Writing for the mouth"
+  },
+  {
+    "id": "spoken-hook",
+    "name": "A hook of 6 seconds at most",
+    "kind": "text",
+    "what": "The first line said, 22 words at most, alone as the first beat, making a promise the body keeps.",
+    "when": "Every version; version 2 especially uses the script writer's hook archetypes.",
+    "status": "validated",
+    "why": "Written as the skill's rule and checked.",
+    "doc": "references/versions.md § Writing for the mouth"
+  },
+  {
+    "id": "teleprompter-layout",
+    "name": "Laid out for the teleprompter",
+    "kind": "text",
+    "what": "A sentence a line (a breath), beats of 1 to 4 sentences with a blank line between (a real pause), the hook alone first and the lead magnet last; no block over 40 words.",
+    "when": "Every version and the long one; checked.",
+    "status": "validated",
+    "since": "2026-10-08",
+    "why": "Ihsane: « je sais pas trop quand est-ce que je dois prendre des pauses, faire des sauts de ligne ».",
+    "where": "scripts/memo.mjs › beatsOk",
+    "doc": "references/versions.md § Laid out for the teleprompter"
+  },
+  {
+    "id": "written-openers",
+    "name": "Written openers and numbered steps",
+    "kind": "text",
+    "what": "« In today's video », « Let's dive in », « Step one: », em dashes, or any sentence that sounds written.",
+    "when": "Never.",
+    "status": "refused",
+    "why": "Nothing a person would not say; a friend never numbers their sentences out loud.",
+    "doc": "references/versions.md § Writing for the mouth"
+  },
+  {
+    "id": "memo-quotes",
+    "name": "Quotes the short stands on",
+    "kind": "rule",
+    "what": "1 to 3 short quotes of the memo, word for word in its language, that the check finds in the short's ranges.",
+    "when": "Every short.",
+    "status": "validated",
+    "why": "Written as the skill's rule and checked.",
+    "doc": "references/versions.md § Nothing invented"
+  },
+  {
+    "id": "measured-lengths",
+    "name": "Lengths measured at the user's pace",
+    "kind": "rule",
+    "what": "Each version is measured in seconds at the user's own pace (words a second from their takes): 30 s to 3 min, most between 40 and 90 s.",
+    "when": "Every version: write, check, cut or add, check again.",
+    "status": "validated",
+    "why": "Written as the skill's rule; a point needing more than 3 minutes is two points.",
+    "where": "scripts/lib.mjs › pace",
+    "doc": "references/split.md § Lengths"
+  },
+  {
+    "id": "never-write-board",
+    "name": "Never write board.json",
+    "kind": "rule",
+    "what": "The Studio's board (which version is picked, where each short is) belongs to the interface.",
+    "when": "Always.",
+    "status": "validated",
+    "why": "Written as a never of the skill.",
+    "doc": "SKILL.md § What you must never do"
+  }
+]

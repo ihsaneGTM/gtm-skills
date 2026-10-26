@@ -1,0 +1,231 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+.n{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0}
+.n .rise{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0}
+.n .face{position:absolute;left:-120px;top:-312px;width:240px;height:240px;border-radius:64px;overflow:hidden;backface-visibility:hidden;
+  box-shadow:0 0 0 9px #fff,0 3px 4px rgba(26,26,26,.08),0 34px 60px -22px rgba(26,26,26,.42)}
+.n .face img{width:100%;height:100%;object-fit:cover;display:block}
+.n .back{background:var(--y);display:flex;align-items:center;justify-content:center}
+.n .ring{position:absolute;left:-146px;top:-338px;width:292px;height:292px;border-radius:86px;border:12px solid var(--y);opacity:0}
+.n .lab{position:absolute;left:0;bottom:0;transform:translateX(-50%);white-space:nowrap;background:#fff;color:var(--ink);
+  font:620 40px/1 Title;letter-spacing:-.035em;padding:14px 26px 16px;border-radius:999px;
+  box-shadow:0 2px 3px rgba(26,26,26,.07),0 18px 34px -14px rgba(26,26,26,.32)}
+.n.big .lab{font-weight:760;font-size:50px;padding:15px 30px 18px}
+.badge{position:absolute;left:56px;top:-338px;white-space:nowrap;background:var(--y);color:var(--ink);font:760 40px/1 Title;
+  letter-spacing:-.04em;padding:14px 26px 17px 18px;border-radius:999px;display:flex;align-items:center;gap:11px;transform-origin:8% 85%;
+  box-shadow:0 3px 4px rgba(26,26,26,.08),0 22px 40px -16px rgba(26,26,26,.38)}
+.ret{position:absolute;left:-180px;top:-372px;width:360px;height:360px;overflow:visible}
+.pill{position:absolute;left:0;top:0;transform-origin:0 0;white-space:nowrap;background:var(--ink);color:#fff;font:700 42px/1 Title;letter-spacing:-.035em;
+  padding:16px 28px 19px 22px;border-radius:999px;display:flex;align-items:center;gap:12px;transform-origin:50% 100%;
+  box-shadow:0 3px 4px rgba(26,26,26,.1),0 22px 40px -16px rgba(26,26,26,.45)}
+.pill i{display:block;width:16px;height:16px;border-radius:50%;background:var(--y)}
+</style></head><body><div id="stage"></div>
+<script src="vendor/gsap/gsap.min.js"></script><script src="vendor/gsap/CustomEase.min.js"></script>
+<script src="kit.js"></script><script src="words.js"></script>
+<script>
+/* A · "The floor": the org chart as an After Effects 3D scene. The people are standees on a floor seen in perspective,
+   the buyer at the far end, the team close to us; the branches are drawn ON the floor. The camera dives from the buyer
+   back to the Senior SDR, then a yellow road races along the floor from her to the buyer and the camera rides it.
+   A shifted lens puts the horizon at y = 470: nothing ever rises into the subtitles. */
+gsap.registerPlugin(CustomEase);
+const A = K.A, F = 1500, HY = 470;
+const cam = { x: 0, y: -700, z: 2570, mb: 0 };
+const NODES = [
+  { id: "cmo", who: "tom", role: "CMO", x: 0, z: 4070, k: 2 },
+  { id: "sales", who: "david", role: "Head of Sales", x: -279, z: 2353, p: "cmo" },
+  { id: "mkt", who: "emma", role: "Marketing Lead", x: 384, z: 2353, p: "cmo" },
+  { id: "sdr", who: "kenji", role: "SDR", x: -341, z: 1500, p: "sales" },
+  { id: "senior", who: "nina", role: "Senior SDR", x: -24, z: 1500, p: "sales" },
+  { id: "growth", who: "lucas", role: "Growth", x: 341, z: 1500, p: "mkt" },
+];
+const by = {}; NODES.forEach(n => (by[n.id] = n));
+const P = (X, Y, Z) => { const d = Z - cam.z, s = F / Math.max(d, 1); return { x: 540 + (X - cam.x) * s, y: HY + (Y - cam.y) * s, s, d }; };
+const FT = (tl, o, a, b, pos) => tl.fromTo(o, a, Object.assign({ immediateRender: false }, b), pos);
+
+// ── the floor (svg): dots, shadows, branches, the road
+const svg = K.el("svg", { width: 1080, height: 1920, style: { position: "absolute", left: 0, top: 0 } });
+K.el("defs", { html: `<filter id="sh" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10"/></filter>
+<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="16"/></filter>` }, svg);
+const gD = K.el("g", {}, svg), gS = K.el("g", {}, svg), gL = K.el("g", {}, svg), gT = K.el("g", {}, svg);
+const DOTS = [];
+for (let X = -1800; X <= 1800; X += 150) for (let Z = 300; Z <= 4200; Z += 150) DOTS.push({ X, Z, el: K.el("circle", { r: 1, fill: "#B9B6C2" }, gD) });
+const floor = { a: 0 };
+// a ribbon on the floor along a world polyline [[X,Z],…] with rounded corners: exact perspective, drawn up to `p`
+const sample = (pts, R) => {
+  const out = [];
+  const push = (x, z) => { const l = out.length ? out[out.length - 1] : null; if (!l || Math.hypot(x - l[0], z - l[1]) > .5) out.push([x, z]); };
+  push(...pts[0]);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const a = pts[i - 1], b = pts[i], c = pts[i + 1];
+    const l1 = Math.hypot(b[0] - a[0], b[1] - a[1]), l2 = Math.hypot(c[0] - b[0], c[1] - b[1]), r = Math.min(R, l1 / 2, l2 / 2);
+    const u = [(b[0] - a[0]) / l1, (b[1] - a[1]) / l1], v = [(c[0] - b[0]) / l2, (c[1] - b[1]) / l2];
+    const p0 = [b[0] - u[0] * r, b[1] - u[1] * r], p2 = [b[0] + v[0] * r, b[1] + v[1] * r];
+    for (let j = 0; j <= 10; j++) { const t = j / 10, m = 1 - t; push(m * m * p0[0] + 2 * m * t * b[0] + t * t * p2[0], m * m * p0[1] + 2 * m * t * b[1] + t * t * p2[1]); }
+  }
+  push(...pts[pts.length - 1]);
+  // densify
+  const d = [out[0]];
+  for (let i = 1; i < out.length; i++) { const a = out[i - 1], b = out[i], L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.ceil(L / 40); for (let j = 1; j <= n; j++) d.push([a[0] + (b[0] - a[0]) * j / n, a[1] + (b[1] - a[1]) * j / n]); }
+  return d;
+};
+const ribbon = (pts, w, p) => {
+  const c = [0]; for (let i = 1; i < pts.length; i++) c.push(c[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const L = c[c.length - 1] * p, q = [];
+  for (let i = 0; i < pts.length; i++) {
+    if (c[i] <= L) q.push(pts[i]);
+    else { const a = pts[i - 1], b = pts[i], f = (L - c[i - 1]) / (c[i] - c[i - 1]); q.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]); break; }
+  }
+  const vis = q.filter(v => v[1] - cam.z > (w < 30 ? 380 : 230));
+  if (vis.length < 2) return { d: "", head: null };
+  const L1 = [], R1 = [];
+  vis.forEach((v, i) => {
+    const a = vis[Math.max(0, i - 1)], b = vis[Math.min(vis.length - 1, i + 1)];
+    let tx = b[0] - a[0], tz = b[1] - a[1]; const l = Math.hypot(tx, tz) || 1; tx /= l; tz /= l;
+    const nx = -tz * w / 2, nz = tx * w / 2;
+    L1.push(P(v[0] + nx, 0, v[1] + nz)); R1.push(P(v[0] - nx, 0, v[1] - nz));
+  });
+  const all = [...L1, ...R1.reverse()];
+  return { d: "M" + all.map(o => `${o.x.toFixed(1)} ${o.y.toFixed(1)}`).join("L") + "Z", head: vis[vis.length - 1] };
+};
+const disc = (X, Z, r) => { let d = ""; for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2, o = P(X + Math.cos(a) * r, 0, Z + Math.sin(a) * r); d += (i ? "L" : "M") + o.x.toFixed(1) + " " + o.y.toFixed(1); } return d + "Z"; };
+const route = (Pn, C) => { const zm = (Pn.z + C.z) / 2 + 40; return sample([[Pn.x, Pn.z], [Pn.x, zm], [C.x, zm], [C.x, C.z]], 90); };
+
+// ── the standees
+NODES.forEach(n => {
+  n.k = n.k || 1;
+  n.st = { in: 0, punch: 1, flip: 0, ring: 0, dim: 0, line: 0, sel: 0, badge: 0, ret: 0 };
+  n.sh = K.el("path", { fill: "rgba(26,26,26,.13)", filter: "url(#sh)" }, gS);
+  if (n.p) n.path = K.el("path", { fill: "#1A1A1A" }, gL);
+  n.el = K.el("div", { class: "n" + (n.k > 1 ? " big" : "") });
+  n.rise = K.el("div", { class: "rise" }, n.el);
+  if (n.k > 1) n.ring = K.el("div", { class: "ring" }, n.rise);
+  n.front = K.el("div", { class: "face", html: `<img src="${K.img("people/" + n.who + ".jpg")}">` }, n.rise);
+  if (n.k > 1) {
+    n.back = K.el("div", { class: "face back", html: `<svg width="140" height="140" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#1A1A1A" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>` }, n.rise);
+    n.badge = K.el("div", { class: "badge", html: `<svg width="32" height="32" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#1A1A1A"/><path d="M7 12.3l3.2 3.2L17 8.7" fill="none" stroke="#FFD90D" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Can buy` }, n.rise);
+  }
+  n.lab = K.el("div", { class: "lab", text: n.role }, n.rise);
+});
+const sen = by.senior;
+sen.ret = K.el("svg", { class: "ret", viewBox: "-180 -180 360 360" }, sen.rise);
+sen.ret.innerHTML = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => `<path d="M${a * 172} ${b * 104}V${b * 172}H${a * 104}" fill="none" stroke="#1A1A1A" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>`).join("");
+// the road: senior → sales → cmo, along the branches
+const ROAD = (() => { const a = route(by.sales, sen).slice().reverse(), b = route(by.cmo, by.sales).slice().reverse(); return a.concat(b.slice(1)); })();
+const roadG = K.el("path", { fill: "#FFD90D", filter: "url(#glow)", opacity: .7 }, gT);
+const road = K.el("path", { fill: "#FFD90D" }, gT);
+const headE = K.el("path", { fill: "#fff", stroke: "#FFD90D", "stroke-width": 6 }, gT);
+const trail = { p: 0, glow: 0 };
+const pill = K.el("div", { class: "pill", html: `<i></i>Influence` });
+const pl = { in: 0, out: 0 };
+
+PAGE({
+  dur: 7.76,
+  cues: [
+    { t: 0.36, name: "m:smooth-whoosh", gain: -19 },
+    { t: 3.2, name: "m:premium-pop-1", gain: -16 },
+    { t: 4.66, name: "m:cinematic-fast-whoosh", gain: -18 },
+    { t: 5.46, name: "m:cinematic-click", gain: -17 },
+    { t: 6.0, name: "m:data-whoosh", gain: -18 },
+    { t: 6.96, name: "m:premium-pop-3", gain: -16 },
+  ],
+  build(tl) {
+    const C = by.cmo.st;
+    // 1 · the buyer rises from the floor, the camera close on him
+    FT(tl, C, { in: 0 }, { in: 1, duration: .6, ease: "back.out(1.8)" }, .3);
+    FT(tl, floor, { a: 0 }, { a: 1, duration: .8, ease: "power2.out" }, .3);
+    FT(tl, cam, { z: 2380 }, { z: 2620, duration: 1.05, ease: "power2.out" }, .3);
+    // 2 · « in charge » : the camera pulls back, the org rises behind the branches growing on the floor
+    tl.to(cam, { x: 12, y: -1000, z: -110, duration: 1.25, ease: "expo.inOut" }, 1.3);
+    ["sales", "mkt"].forEach((id, i) => {
+      tl.to(by[id].st, { line: 1, duration: .45, ease: "power3.inOut" }, 1.6 + i * .08);
+      tl.to(by[id].st, { in: 1, duration: .55, ease: "back.out(1.7)" }, 1.9 + i * .08);
+    });
+    ["sdr", "senior", "growth"].forEach((id, i) => {
+      tl.to(by[id].st, { line: 1, duration: .42, ease: "power3.inOut" }, 2.06 + i * .07);
+      tl.to(by[id].st, { in: 1, duration: .55, ease: "back.out(1.7)" }, 2.34 + i * .07);
+    });
+    // 3 · « buy » : push in on the buyer; he flips to yellow and lands with his ring and badge
+    tl.to(cam, { x: 0, y: -720, z: 2300, duration: .75, ease: "expo.inOut" }, 2.7);
+    tl.to(C, { flip: 1, duration: .6, ease: "power3.inOut" }, 2.9);
+    tl.to(C, { ring: 1, duration: .5, ease: "back.out(2.2)" }, 3.2);
+    tl.to(C, { badge: 1, duration: .55, ease: "back.out(2.6)" }, 3.26);
+    tl.to(cam, { x: 70, z: 2380, duration: 1.2, ease: "sine.inOut" }, 3.45);   // slow orbit while « solution »
+    FT(tl, C, { punch: 1.12 }, { punch: 1, duration: .6, ease: "elastic.out(1,.45)" }, A("buy", 2));
+    // 4 · « and then there is people » : the camera falls back down the org to the Senior SDR
+    tl.to(cam, { x: -24, y: -690, z: 400, duration: .9, ease: "expo.inOut" }, 4.62);
+    tl.to(cam, { mb: 1, duration: .45, ease: "power2.in" }, 4.62).to(cam, { mb: 0, duration: .45, ease: "power2.out" }, 5.07);
+    tl.to(sen.st, { ret: 1, duration: .45, ease: "back.out(2)" }, 5.42);
+    tl.to(sen.st, { sel: 1, duration: .3, ease: "power2.out" }, 5.46);
+    tl.to([by.sdr.st, by.growth.st, by.mkt.st], { dim: 1, duration: .4, ease: "power2.out" }, 5.46);
+    tl.to(cam, { z: 450, duration: .5, ease: "none" }, 5.52);
+    // 5 · « influence the decision » : the yellow road races along the floor to the buyer; the camera rides it
+    tl.to(trail, { p: 1, duration: 1.0, ease: CustomEase.create("tr", "M0,0 C0.26,0 0.38,0.4 0.5,0.5 0.62,0.6 0.7,1 1,1") }, 6.0);
+    tl.to(cam, { x: 0, y: -700, z: 2400, duration: 1.05, ease: "expo.inOut" }, 6.0);
+    tl.to(pl, { in: 1, duration: .45, ease: "back.out(2.4)" }, 6.42);
+    FT(tl, by.sales.st, { punch: 1.2 }, { punch: 1, duration: .55, ease: "elastic.out(1,.4)" }, 6.5);
+        FT(tl, C, { punch: 1.22 }, { punch: 1, duration: .7, ease: "elastic.out(1,.38)" }, 6.96);
+    FT(tl, C, { ring: 1.4 }, { ring: 1, duration: .55, ease: "expo.out" }, 6.96);
+    FT(tl, trail, { glow: 1 }, { glow: 0, duration: .8, ease: "power2.out" }, 6.96);
+    FT(tl, C, { badge: 1.25 }, { badge: 1, duration: .5, ease: "back.out(3)" }, A("decision"));
+    tl.to(cam, { x: -40, y: -780, z: 1100, duration: .74, ease: "power2.inOut" }, 7.02);   // a slow crane back: the road and the buyer
+    tl.set({}, {}, 7.76);
+  },
+  draw(t) {
+    // floor dots
+    DOTS.forEach(o => {
+      const q = P(o.X, 0, o.Z);
+      const a = q.d < 80 ? 0 : floor.a * K.clamp((q.d - 80) / 400) * K.clamp(1 - (q.d - 1800) / 1800) * .45;
+      o.el.setAttribute("cx", q.x.toFixed(1)); o.el.setAttribute("cy", q.y.toFixed(1));
+      o.el.setAttribute("r", Math.min(9, 2.6 * q.s).toFixed(2)); o.el.setAttribute("opacity", a.toFixed(3));
+    });
+    const order = NODES.slice().sort((a, b) => b.z - a.z);
+    order.forEach((n, i) => {
+      const s = n.st, q = P(n.x, 0, n.z);
+      const vis = q.d < 120 ? 0 : K.clamp((q.d - 120) / 200);
+      n.el.style.zIndex = 10 + i * 2;
+      n.el.style.transform = `translate(${q.x.toFixed(1)}px,${q.y.toFixed(1)}px) scale(${(q.s * n.k * (1 - .14 * s.dim)).toFixed(4)})`;
+      // rise from the floor (scaleY from the base), then punches from the tile's centre
+      n.rise.style.transform = `scale(${(.6 + .4 * Math.min(1, s.in)).toFixed(3)},${s.in.toFixed(3)}) translate(0,-162px) scale(${s.punch.toFixed(3)}) translate(0,162px)`;
+      n.el.style.opacity = (K.clamp(s.in * 3) * vis * (1 - .5 * s.dim)).toFixed(3);
+      const blur = cam.mb * 6 * Math.min(1.2, q.s);
+      n.el.style.filter = blur > .3 ? `blur(${(blur / Math.max(q.s * n.k, .3)).toFixed(2)}px)` : "none";
+      n.sh.setAttribute("d", vis > 0 ? disc(n.x, n.z + 20, 110 * n.k) : "");
+      n.sh.setAttribute("opacity", (K.clamp(s.in) * vis * (1 - .5 * s.dim)).toFixed(3));
+      if (n.k > 1) {
+        const a = s.flip * 360;
+        n.front.style.transform = `perspective(900px) rotateY(${a}deg)`;
+        n.back.style.transform = `perspective(900px) rotateY(${a + 180}deg)`;
+        n.ring.style.opacity = K.clamp(s.ring * 2);
+        n.ring.style.transform = `scale(${(1.25 - .25 * s.ring).toFixed(3)})`;
+        n.badge.style.opacity = K.clamp(s.badge * 3);
+        n.badge.style.transform = `rotate(-7deg) scale(${s.badge.toFixed(3)})`;
+      }
+      if (n.ret) {
+        n.ret.style.opacity = K.clamp(s.ret * 2);
+        n.ret.style.transform = `scale(${(1.5 - .5 * s.ret).toFixed(3)})`;
+        n.lab.style.background = s.sel > .5 ? "#1A1A1A" : "#fff";
+        n.lab.style.color = s.sel > .5 ? "#fff" : "#1A1A1A";
+        n.lab.style.transform = `translateX(-50%) scale(${(1 + .14 * Math.sin(Math.PI * s.sel)).toFixed(3)})`;
+      }
+      if (n.path) {
+        n.route = n.route || route(by[n.p], n);
+        n.path.setAttribute("d", s.line > 0 ? ribbon(n.route, 15, s.line).d : "");
+        n.path.setAttribute("opacity", (1 - .6 * s.dim).toFixed(3));
+      }
+    });
+    // the road
+    const r = trail.p > 0 ? ribbon(ROAD, 36, trail.p) : { d: "", head: null };
+    road.setAttribute("d", r.d);
+    const rg = trail.p > 0 ? ribbon(ROAD, 70 + 90 * trail.glow, trail.p) : { d: "" };
+    roadG.setAttribute("d", rg.d); roadG.setAttribute("opacity", (.45 + .4 * trail.glow).toFixed(2));
+    if (r.head && trail.p < .995) {
+      headE.setAttribute("d", disc(r.head[0], r.head[1], 30)); headE.setAttribute("opacity", 1);
+    } else headE.setAttribute("opacity", 0);
+    // the « Influence » sign, standing on the road between the Head of Sales and the buyer (a world object)
+    const h = P(250, 0, 3420), pv = h.d < 200 ? 0 : 1;
+    pill.style.transform = `translate(${h.x.toFixed(1)}px,${h.y.toFixed(1)}px) scale(${(Math.min(h.s * 1.7, 1.12) * (.4 + .6 * pl.in)).toFixed(3)}) translate(-50%,-100%) translate(0,-16px)`;
+    pill.style.opacity = (K.clamp(pl.in * 2) * pv).toFixed(3);
+    pill.style.zIndex = 11;
+  },
+});
+</script></body></html>

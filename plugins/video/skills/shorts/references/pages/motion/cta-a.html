@@ -1,0 +1,361 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body><div id="stage"></div>
+<script src="vendor/gsap/gsap.min.js"></script>
+<script src="kit.js"></script><script src="words.js"></script><script src="recap-lib.js"></script>
+<script>
+/* CTA · A — « THE CRT ». The short's last frame switches off like an old tube: a flicker, the picture stretches, then
+   squeezes into a white-hot line (bloom, RGB split), the line collapses to a dot, the dot dies to an ember. A beat of black.
+   The ember lifts, ignites, and the power-on runs the same physics backwards: dot → line → the YouTube player opens out of
+   it (overexposed, split, settling), the play button boots, the progress bar and 3:48, a tilted YouTube sticker slaps the
+   top corner, « Watch the entire video » punches in word by word, the yellow slab wipes under « entire video », a cursor
+   glides in, the play button turns red on hover, press, ripple, and the red bar starts to fill. Opaque page, one canvas;
+   every frame a pure function of t, motion blur from sub-frames (recap-lib). */
+const W = 1080, H = 1920, Y = "#FFD90D", INK = "#1A1A1A", RED = "#FF0000", BG = "#0B0B0D";
+const last = L.img("img/last-raw.png"), thumb = L.img("img/thumb.jpg");
+const E = n => gsap.parseEase(n), seg = L.seg, lerp = L.lerp, c01 = L.c01;
+// the player card
+const CW = 874, CH = CW * 1080 / 1920, CX0 = (W - CW) / 2, CY0 = 352, CCX = W / 2, CCY = CY0 + CH / 2, CR = 30;
+const DOTY = 960, PB = 86;
+// the clock
+const T = {
+  flk: 0.10, sq0: 0.15, sq1: 0.33, col0: 0.40, col1: 0.52, dot1: 0.72,
+  rise0: 0.86, rise1: 1.08, str0: 1.06, str1: 1.22, open0: 1.20, open1: 1.56,
+  pb: 1.56, ui: 1.68, stk0: 1.86, stk1: 2.06, words: [2.24, 2.34, 2.47, 2.59], slab: 2.80,
+  cur0: 3.00, cur1: 3.30, hover: 3.14, press: 3.33, rel: 3.43, fill1: 4.2,
+};
+
+// ---- precomputed layers (lazy: the images are loaded when the first seek comes)
+let P = null;
+function prep() {
+  if (P) return P;
+  P = {};
+  const chans = (img, w, h) => {
+    const cv = L.off(w, h), c = cv.getContext("2d", { willReadFrequently: true }); c.drawImage(img, 0, 0, w, h);
+    const d = c.getImageData(0, 0, w, h);
+    return [0, 1, 2].map(k => { const o = L.off(w, h), oc = o.getContext("2d"), id = oc.createImageData(w, h), q = id.data, s = d.data;
+      for (let p = 0; p < q.length; p += 4) { q[p + k] = s[p + k]; q[p + 3] = 255; } oc.putImageData(id, 0, 0); return o; });
+  };
+  P.lastC = chans(last, W, H); P.lastT = L.off(W, H);
+  P.thumbW = 1748; P.thumbH = 983; P.thumbC = chans(thumb, P.thumbW, P.thumbH); P.thumbT = L.off(P.thumbW, P.thumbH);
+  // scanlines + vignette (the dark set)
+  P.set = L.off(W, H); { const c = P.set.getContext("2d"); c.fillStyle = BG; c.fillRect(0, 0, W, H);
+    const g = c.createRadialGradient(W / 2, 760, 80, W / 2, 900, 1250); g.addColorStop(0, "rgba(30,30,35,1)"); g.addColorStop(0.55, "rgba(13,13,16,1)"); g.addColorStop(1, "rgba(0,0,0,1)");
+    c.fillStyle = g; c.fillRect(0, 0, W, H); }
+  P.scan = L.off(W, H); { const c = P.scan.getContext("2d"); c.fillStyle = "rgba(0,0,0,0.5)"; for (let y = 0; y < H; y += 4) c.fillRect(0, y, W, 2); }
+  P.noise = L.off(256, 256); { const c = P.noise.getContext("2d"), id = c.createImageData(256, 256), r = K.rand(41);
+    for (let p = 0; p < id.data.length; p += 4) { const v = r() * 255; id.data[p] = id.data[p + 1] = id.data[p + 2] = v; id.data[p + 3] = 255; } c.putImageData(id, 0, 0); }
+  // the YouTube sticker
+  P.stk = sticker();
+  // the type: « Watch the » small, then « entire » and « video » big, « video » on the yellow slab
+  const ls = -0.045, c = L.off(8, 8).getContext("2d");
+  const big = Math.min(L.fit("entire", 800, 600, ls), 210), small = 92;
+  const lines = [{ ws: ["Watch", "the"], px: small }, { ws: ["entire"], px: big }, { ws: ["video"], px: big }];
+  P.words = []; P.lines = [];
+  let top = 918;
+  lines.forEach((ln, li) => {
+    L.font(c, 800, ln.px, "Title", ls * ln.px);
+    const m = c.measureText("Wh"), asc = m.actualBoundingBoxAscent, sp = c.measureText(" ").width;
+    const ww = w => c.measureText(w).width - ls * ln.px, lw = ww(ln.ws.join(" "));
+    const base = top + asc; let x = W / 2 - lw / 2;
+    P.lines.push({ x, w: lw, base, asc, px: ln.px });
+    ln.ws.forEach(w => { const k = ww(w); P.words.push({ w, cx: x + k / 2, base, ww: k, line: li, px: ln.px, ls: ls * ln.px, asc }); x += k + sp; });
+    top = base + (li === 0 ? 34 : 58);
+  });
+  return P;
+}
+
+// the YouTube logo, drawn: the red rounded play shape + the wordmark, on a white die-cut sticker
+function ytPlay(c, x, y, h, fill = RED, tri = "#fff") {   // x,y = centre
+  const w = h * 1.42; c.save(); c.fillStyle = fill;
+  // the YouTube shape: a rounded rectangle whose sides bulge a little
+  const l = x - w / 2, t = y - h / 2, r = x + w / 2, b = y + h / 2, k = h * 0.30;
+  c.beginPath(); c.moveTo(l + k, t);
+  c.bezierCurveTo(l + w * 0.5, t - h * 0.035, l + w * 0.5, t - h * 0.035, r - k, t);
+  c.quadraticCurveTo(r - h * 0.03, t + h * 0.01, r - h * 0.02, t + k * 0.95);
+  c.bezierCurveTo(r + h * 0.025, y, r + h * 0.025, y, r - h * 0.02, b - k * 0.95);
+  c.quadraticCurveTo(r - h * 0.03, b - h * 0.01, r - k, b);
+  c.bezierCurveTo(l + w * 0.5, b + h * 0.035, l + w * 0.5, b + h * 0.035, l + k, b);
+  c.quadraticCurveTo(l + h * 0.03, b - h * 0.01, l + h * 0.02, b - k * 0.95);
+  c.bezierCurveTo(l - h * 0.025, y, l - h * 0.025, y, l + h * 0.02, t + k * 0.95);
+  c.quadraticCurveTo(l + h * 0.03, t + h * 0.01, l + k, t);
+  c.closePath(); c.fill();
+  c.fillStyle = tri; const s = h * 0.40; c.beginPath();
+  c.moveTo(x - s * 0.42, y - s * 0.5); c.lineTo(x + s * 0.5, y); c.lineTo(x - s * 0.42, y + s * 0.5); c.closePath();
+  c.lineJoin = "round"; c.strokeStyle = tri; c.lineWidth = h * 0.02; c.fill(); c.stroke(); c.restore();
+}
+function sticker() {
+  const cv = L.off(420, 180), c = cv.getContext("2d");
+  const h = 70, wx = 74, wordPx = 66;
+  L.font(c, 700, wordPx, "Text", -2.6); const ww = c.measureText("YouTube").width;
+  const w = 36 + h * 1.42 + 14 + ww + 34, hh = 112, x0 = (420 - w) / 2, y0 = (180 - hh) / 2;
+  c.fillStyle = "#fff"; L.rr(c, x0, y0, w, hh, 26); c.fill();
+  c.strokeStyle = "rgba(26,26,26,0.06)"; c.lineWidth = 2; c.stroke();
+  ytPlay(c, x0 + 36 + h * 0.71, 90, h);
+  c.fillStyle = "#212121"; c.textBaseline = "alphabetic"; L.font(c, 700, wordPx, "Text", -2.6);
+  c.fillText("YouTube", x0 + 36 + h * 1.42 + 14, 90 + wordPx * 0.36);
+  cv.box = { x0, y0, w, hh };
+  return cv;
+}
+
+// a picture with the tube's effects: RGB split (frame px → source px) and overexposure
+function tube(srcImg, chans, tmp, split, white, k) {
+  if (Math.abs(split) < 0.25 && white < 0.004) return srcImg;
+  const c = tmp.getContext("2d"); L.reset(c); c.fillStyle = "#000"; c.fillRect(0, 0, tmp.width, tmp.height);
+  c.globalCompositeOperation = "lighter";
+  c.drawImage(chans[0], -split * k, 0, tmp.width, tmp.height); c.drawImage(chans[1], 0, 0, tmp.width, tmp.height); c.drawImage(chans[2], split * k, 0, tmp.width, tmp.height);
+  c.globalCompositeOperation = "source-over";
+  if (white > 0) { c.globalAlpha = Math.min(1, white); c.fillStyle = "#fff"; c.fillRect(0, 0, tmp.width, tmp.height); c.globalAlpha = 1; }
+  return tmp;
+}
+// a glowing line / dot of phosphor
+function glow(c, x, y, w, h, a = 1, bloom = 1) {
+  if (a <= 0) return;
+  c.save(); c.globalCompositeOperation = "lighter";
+  const R = Math.max(w, h);
+  for (const [bl, al] of [[90 * bloom, 0.22], [34 * bloom, 0.45], [10, 0.9]]) {
+    c.shadowColor = `rgba(225,235,255,${al * a})`; c.shadowBlur = bl; c.fillStyle = `rgba(255,255,255,${0.35 * a})`;
+    L.rr(c, x - w / 2, y - h / 2, w, h, h / 2); c.fill();
+  }
+  L.noShadow(c); c.fillStyle = `rgba(255,255,255,${a})`; L.rr(c, x - w / 2, y - h / 2, w, h, h / 2); c.fill();
+  if (w < 60) {   // a dot: a real halo of phosphor
+    const R = 34 + 70 * bloom, g = c.createRadialGradient(x, y, 0, x, y, R);
+    g.addColorStop(0, `rgba(235,242,255,${0.55 * a})`); g.addColorStop(0.18, `rgba(200,215,255,${0.22 * a})`); g.addColorStop(1, "rgba(200,215,255,0)");
+    c.fillStyle = g; c.fillRect(x - R, y - R, R * 2, R * 2);
+  }
+  c.restore();
+}
+function set(c, T_, a) {   // the dark set behind the CTA
+  c.drawImage(P.set, 0, 0);
+  const n = Math.floor(T_ * 30), r = K.rand(n * 7 + 3);
+  c.save(); c.globalAlpha = 0.045 * a; c.globalCompositeOperation = "screen";
+  const ox = Math.floor(r() * 256), oy = Math.floor(r() * 256);
+  for (let y = -oy; y < H; y += 256) for (let x = -ox; x < W; x += 256) c.drawImage(P.noise, x, y);
+  c.restore();
+  c.save(); c.globalAlpha = 0.35 * a; c.drawImage(P.scan, 0, 0); c.restore();
+}
+
+// ---- the off
+function off(c, t, T_) {
+  c.fillStyle = "#000"; c.fillRect(0, 0, W, H);
+  if (t < T.sq0) {   // the picture, untouched, then the flicker
+    const f = Math.sin(Math.PI * seg(t, T.flk, T.sq0)), j = f > 0 ? 5 * f * (Math.floor(T_ * 30) % 2 ? 1 : -1) : 0;
+    const img = tube(last, P.lastC, P.lastT, 6 * f, 0.10 * f, 1);
+    c.drawImage(img, j, 0, W, H);
+    if (f > 0.05) {   // the dying signal: a few torn bands slip sideways
+      const r = K.rand(Math.floor(T_ * 30) * 13 + 5);
+      for (let k = 0; k < 4; k++) { const y = Math.floor(r() * H), h = 20 + Math.floor(r() * 90), dx = (r() - 0.5) * 70 * f;
+        c.drawImage(img, 0, y, W, h, dx + j, y, W, h); }
+      c.save(); c.globalCompositeOperation = "lighter"; c.fillStyle = `rgba(255,255,255,${0.10 * f})`; c.fillRect(0, 0, W, H); c.restore();
+    }
+    return;
+  }
+  set(c, T_, seg(t, T.sq0, T.col1));
+  const u = seg(t, T.sq0, T.sq1);
+  if (u < 1) {   // the squeeze: a small stretch first, then down to a line, burning white
+    const a0 = 0.22, v = seg(u, a0, 1), ev = E("power2.in")(v);
+    const sy = u < a0 ? 1 + 0.035 * Math.sin(Math.PI * u / a0) : lerp(1, 5.4 / H, ev), sx = 1 + 0.05 * ev;
+    const white = 0.95 * E("power2.in")(v), split = 4 + 18 * Math.sin(Math.PI * Math.min(1, v * 1.3));
+    const img = tube(last, P.lastC, P.lastT, split, white, 1);
+    const h = H * sy, w = W * sx;
+    c.save(); c.translate(W / 2, DOTY); c.drawImage(img, -w / 2, -h / 2, w, h); c.restore();
+    if (h < 90) glow(c, W / 2, DOTY, w, Math.max(4, Math.min(h, 9)), 1 - seg(h, 6, 90), 1.2);
+    // the screen's own light falling around it
+    if (v > 0.3) { c.save(); c.globalCompositeOperation = "lighter"; const g = c.createRadialGradient(W / 2, DOTY, 0, W / 2, DOTY, 900);
+      g.addColorStop(0, `rgba(255,255,255,${0.16 * seg(v, 0.3, 1)})`); g.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = g; c.fillRect(0, 0, W, H); c.restore(); }
+    return;
+  }
+  // the line (bloom flash), then its collapse to a dot
+  const fl = 1 - seg(t, T.sq1, T.sq1 + 0.14);
+  if (fl > 0) { c.save(); c.globalCompositeOperation = "lighter"; const g = c.createRadialGradient(W / 2, DOTY, 0, W / 2, DOTY, 1100);
+    g.addColorStop(0, `rgba(255,255,255,${0.38 * fl * fl})`); g.addColorStop(0.35, `rgba(220,232,255,${0.12 * fl * fl})`); g.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = g; c.fillRect(0, 0, W, H); c.restore(); }
+  const cu = seg(t, T.col0, T.col1), ec = E("power3.in")(cu);
+  if (cu < 1) {
+    const w = lerp(W * 1.05, 16, ec), h = lerp(lerp(5.4, 3.4, seg(t, T.sq1, T.col0)), 13, ec * ec);
+    // the chromatic fringes on the line ends
+    c.save(); c.globalCompositeOperation = "lighter"; const s = 10 * (1 - cu);
+    c.fillStyle = "rgba(255,40,40,0.55)"; L.rr(c, W / 2 - w / 2 - s, DOTY - h / 2, w, h, h / 2); c.fill();
+    c.fillStyle = "rgba(40,90,255,0.55)"; L.rr(c, W / 2 - w / 2 + s, DOTY - h / 2, w, h, h / 2); c.fill(); c.restore();
+    glow(c, W / 2, DOTY, w, h, 1, 1 + cu);
+    return;
+  }
+  ember(c, t);
+}
+function emberState(t) {   // the dot: alive, dying to an ember, lifting, igniting
+  const d = seg(t, T.col1, T.dot1), r0 = lerp(9, 4, E("power2.out")(d));
+  let a = lerp(1, 0.22, E("power2.out")(d)), y = DOTY, bloom = lerp(2.2, 0.6, d);
+  a *= 1 - 0.25 * seg(t, T.dot1, T.rise0);
+  const ru = seg(t, T.rise0, T.rise1);
+  if (ru > 0) { y = lerp(DOTY, CCY, E("expo.inOut")(ru)); a = lerp(a, 1, E("power2.in")(seg(ru, 0, 0.8))); bloom = lerp(bloom, 1.8, ru); }
+  return { r: lerp(r0, 8, ru), a, y, bloom };
+}
+function ember(c, t) {
+  const e = emberState(t); glow(c, W / 2, e.y, e.r * 2, e.r * 2, e.a, e.bloom);
+}
+
+// ---- the CTA
+function cta(c, t, T_) {
+  set(c, T_, 1);
+  const ou = seg(t, T.open0, T.open1);
+  // the card's halo
+  const on = seg(t, T.open0, T.open1 + 0.3);
+  if (on > 0) { c.save(); c.globalCompositeOperation = "lighter"; const g = c.createRadialGradient(CCX, CCY, 0, CCX, CCY, 760);
+    g.addColorStop(0, `rgba(255,255,255,${0.085 * on})`); g.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = g; c.fillRect(0, 0, W, H); c.restore(); }
+  if (t < T.str0) { ember(c, t); return words(c, t); }
+  // the float (after the click) and the knock of the sticker
+  const fz = seg(t, T.rel, T.rel + 0.5), fy = 5 * Math.sin((t - T.rel) * 2.6) * fz;
+  const kn = t > T.stk1 ? Math.exp(-(t - T.stk1) * 9) * Math.sin((t - T.stk1) * 38) : 0;
+  const ky = 7 * kn, ks = 1 - 0.008 * kn;
+  c.save(); c.translate(CCX, CCY + fy + ky); c.scale(ks, ks); c.translate(-CCX, -CCY);
+  const su = seg(t, T.str0, T.str1);
+  if (ou <= 0) {   // the line stretching out of the dot
+    const w = lerp(14, CW, E("expo.out")(su)), h = lerp(13, 4, E("power2.out")(su));
+    glow(c, CCX, CCY, w, h, 1, 1.4);
+  } else {
+    const eo = E("back.out(1.3)")(ou), h = Math.max(4, lerp(4, CH, eo)), w = CW * (1 + 0.012 * Math.sin(Math.PI * c01(ou * 1.4)));
+    const white = 1 - E("power2.out")(seg(t, T.open0 + 0.04, T.open1 + 0.08)), split = 16 * (1 - E("power2.out")(seg(t, T.open0, T.open1 + 0.05)));
+    const img = tube(thumb, P.thumbC, P.thumbT, split, white, P.thumbW / CW);
+    c.save(); L.rr(c, CCX - w / 2, CCY - h / 2, w, h, Math.min(CR, h / 2)); c.clip();
+    c.drawImage(img, CCX - w / 2, CCY - CH / 2 * (h / CH), w, h);
+    player(c, t);
+    c.restore();
+    // the rim
+    c.save(); c.strokeStyle = `rgba(255,255,255,${0.16 * ou})`; c.lineWidth = 1.5; L.rr(c, CCX - w / 2, CCY - h / 2, w, h, Math.min(CR, h / 2)); c.stroke(); c.restore();
+    const lg = 1 - seg(ou, 0, 0.45);   // the line's light fading as the picture opens
+    if (lg > 0) { glow(c, CCX, CCY - h / 2 + 2, w, 4, lg, 1.2); glow(c, CCX, CCY + h / 2 - 2, w, 4, lg, 1.2); }
+    playButton(c, t);
+  }
+  c.restore();
+  stickerDraw(c, t, fy + ky);
+  words(c, t);
+  cursor(c, t, fy);
+}
+function player(c, t) {   // inside the card's clip: the progress bar, the duration
+  const u = seg(t, T.ui, T.ui + 0.36); if (u <= 0) return;
+  const hv = seg(t, T.hover, T.hover + 0.14), bh = lerp(6, 10, hv), by = CY0 + CH - bh;
+  // the track draws out from the left
+  const tw = CW * E("expo.out")(u);
+  c.fillStyle = "rgba(255,255,255,0.32)"; c.fillRect(CX0, by, tw, bh);
+  const f = E("power1.inOut")(seg(t, T.rel + 0.02, T.fill1 + 0.25)) * 0.17;
+  if (f > 0) { c.fillStyle = RED; c.fillRect(CX0, by, CW * f, bh); }
+  // the duration badge slides up from under the bar
+  const bu = E("expo.out")(seg(t, T.ui + 0.10, T.ui + 0.46));
+  if (bu > 0) {
+    c.save(); L.font(c, 600, 31, "Text", 0.3); const tw2 = c.measureText("3:48").width, bw = tw2 + 22, bhh = 44;
+    const bx = CX0 + CW - 18 - bw, byy = lerp(by + 30, by - 14 - bhh, bu);
+    c.beginPath(); c.rect(CX0, CY0, CW, by - CY0); c.clip();
+    c.fillStyle = "rgba(0,0,0,0.82)"; L.rr(c, bx, byy, bw, bhh, 9); c.fill();
+    c.fillStyle = "#fff"; c.textBaseline = "middle"; c.fillText("3:48", bx + 11, byy + bhh / 2 + 1); c.restore();
+  }
+}
+function scrubber(t) { const f = E("power1.inOut")(seg(t, T.rel + 0.02, T.fill1 + 0.25)) * 0.17; return { x: CX0 + CW * f, s: E("back.out(2.5)")(seg(t, T.rel, T.rel + 0.25)) }; }
+function playButton(c, t) {
+  const u = seg(t, T.pb, T.pb + 0.34); if (u <= 0) return;
+  const hv = E("power2.out")(seg(t, T.hover, T.hover + 0.16));
+  const pr = seg(t, T.press, T.press + 0.07) * (1 - seg(t, T.rel, T.rel + 0.18));
+  const pulse = Math.sin(Math.PI * seg(t, T.rel, T.rel + 0.32)) * 0.09 + Math.sin(Math.PI * seg(t, 3.92, 4.2)) * 0.035;
+  const s = E("back.out(2.2)")(u) * (1 + 0.06 * hv - 0.09 * pr + pulse);
+  // the ripples
+  for (const r0 of [T.rel, T.rel + 0.42]) {
+    const ru = seg(t, r0, r0 + 0.62); if (ru <= 0 || ru >= 1) continue;
+    const k = 1 + 1.3 * E("power2.out")(ru), h = PB * k, w = h * 1.42;
+    c.save(); c.strokeStyle = `rgba(255,255,255,${0.75 * (1 - ru)})`; c.lineWidth = lerp(7, 1, ru); L.rr(c, CCX - w / 2, CCY - h / 2, w, h, h * 0.3); c.stroke(); c.restore();
+  }
+  c.save(); c.translate(CCX, CCY); c.scale(s, s);
+  L.shadow(c, 0.45, 30, 10); c.fillStyle = "rgba(0,0,0,0.001)"; L.rr(c, -PB * 0.7, -PB / 2, PB * 1.4, PB, PB * 0.3); c.fill(); L.noShadow(c);
+  // dark (YouTube's idle button), red on hover
+  const r = Math.round(lerp(33, 255, hv)), g = Math.round(lerp(33, 0, hv)), b = Math.round(lerp(33, 0, hv)), a = lerp(0.82, 1, hv);
+  const pd = 1 - 0.18 * pr;   // pressed: a bit darker
+  ytPlay(c, 0, 0, PB, `rgba(${Math.round(r * pd)},${Math.round(g * pd)},${Math.round(b * pd)},${a})`);
+  c.restore();
+  // the scrubber's head on the bar
+  const sc = scrubber(t);
+  if (sc.s > 0) { c.save(); c.beginPath(); c.arc(sc.x, CY0 + CH - 5, 11 * sc.s, 0, Math.PI * 2); c.fillStyle = RED; L.shadow(c, 0.4, 8, 2); c.fill(); c.restore(); }
+}
+function stickerDraw(c, t, dy) {
+  const u = seg(t, T.stk0, T.stk1); if (u <= 0) return;
+  const e = E("power3.in")(u);   // it falls from the camera onto the card
+  const s = lerp(2.5, 1, e), rot = lerp(-31, -6, E("power2.out")(u)) * Math.PI / 180;
+  const fx = 752, fyy = 290;
+  const x = lerp(620, fx, E("power2.out")(u)), y = lerp(150, fyy, E("power2.out")(u)) + dy * c01((t - T.stk1) * 6);
+  // the landing: a squash, then it settles
+  const lt = t - T.stk1, sq = lt > 0 ? Math.exp(-lt * 11) * Math.sin(lt * 34 + 0.0001) : 0;
+  const sx = s * (1 + 0.07 * sq), sy = s * (1 - 0.07 * sq);
+  const a = c01(u * 5);
+  c.save(); c.globalAlpha = a; c.translate(x, y); c.rotate(rot);
+  // depth: high up, a wide soft shadow far away; landed, a tight one
+  const hgt = 1 - e;
+  c.save(); c.scale(sx, sy); c.shadowColor = `rgba(0,0,0,${lerp(0.55, 0.15, hgt)})`; c.shadowBlur = lerp(22, 70, hgt); c.shadowOffsetY = lerp(10, 60, hgt); c.shadowOffsetX = lerp(3, 26, hgt);
+  c.drawImage(P.stk, -P.stk.width / 2, -P.stk.height / 2); c.restore();
+  c.restore();
+}
+function words(c, t) {
+  for (const [i, wd] of P.words.entries()) {
+    const u = seg(t, T.words[i], T.words[i] + 0.34); if (u <= 0) continue;
+    const e = E("expo.out")(u);
+    const wt = Math.round(lerp(200, 800, E("power3.out")(c01(u * 1.35))));
+    const s = lerp(1.7, 1, e) * (1 + 0.035 * Math.sin(Math.PI * seg(u, 0.35, 1)));
+    c.save(); c.globalAlpha = c01(u * 6);
+    const cy = wd.base - wd.asc / 2;
+    c.translate(wd.cx, cy + lerp(-40, 0, e)); c.scale(s, s);
+    L.font(c, wt, wd.px, "Title", wd.ls); c.textAlign = "center"; c.textBaseline = "alphabetic";
+    c.fillStyle = "#fff"; c.shadowColor = "rgba(0,0,0,0.55)"; c.shadowBlur = 30; c.shadowOffsetY = 12;
+    c.fillText(wd.w, 0, wd.asc / 2);
+    c.restore();
+  }
+  // the yellow slab wipes under « video »; the letters it covers turn ink
+  const su = seg(t, T.slab, T.slab + 0.36); if (su <= 0) return;
+  const wd = P.words[3], pad = 34, x0 = wd.cx - wd.ww / 2 - pad, y0 = wd.base - wd.asc - 26, w = wd.ww + pad * 2, h = wd.asc + 52;
+  const e = E("expo.inOut")(su), ww = w * e;
+  c.save(); c.translate(W / 2, y0 + h / 2); c.rotate(-2.2 * Math.PI / 180); c.translate(-W / 2, -(y0 + h / 2));
+  c.save(); L.shadow(c, 0.5, 34, 14); c.fillStyle = Y; L.rr(c, x0, y0, ww, h, 24); c.fill(); c.restore();
+  c.beginPath(); c.rect(x0, y0, ww, h); c.clip();
+  L.font(c, 800, wd.px, "Title", wd.ls); c.textAlign = "center"; c.textBaseline = "alphabetic"; c.fillStyle = INK;
+  c.fillText(wd.w, wd.cx, wd.base);
+  c.restore();
+}
+// the cursor: a classic arrow, tip = hotspot
+const ARROW = [[0, 0], [0, 17.2], [4.1, 13.4], [6.9, 19.9], [9.6, 18.8], [6.9, 12.5], [12.3, 12.5]];
+function cursor(c, t, fy) {
+  const u = seg(t, T.cur0, T.cur1); if (u <= 0) return;
+  const e = E("expo.out")(u), tx = CCX + 14, ty = CCY + 12 + fy;
+  // an arc in, from the bottom right
+  const x0 = 1180, y0 = 1420, cx1 = 1020, cy1 = 760;
+  const bx = (1 - e) * (1 - e) * x0 + 2 * (1 - e) * e * cx1 + e * e * tx, by = (1 - e) * (1 - e) * y0 + 2 * (1 - e) * e * cy1 + e * e * ty;
+  const dr = E("power2.inOut")(seg(t, T.rel + 0.25, T.fill1));   // after the click it slides off the button a little
+  const x = bx + 44 * dr, y = by + 58 * dr;
+  const pr = seg(t, T.press, T.press + 0.06) * (1 - seg(t, T.rel, T.rel + 0.14));
+  const s = 6.4 * (1 - 0.14 * pr), rot = lerp(14, 0, e) * Math.PI / 180;
+  c.save(); c.translate(x, y); c.rotate(rot); c.scale(s, s);
+  c.beginPath(); ARROW.forEach(([a, b], i) => i ? c.lineTo(a, b) : c.moveTo(a, b)); c.closePath();
+  c.shadowColor = "rgba(0,0,0,0.55)"; c.shadowBlur = lerp(30, 14, 1 - pr); c.shadowOffsetY = lerp(3, 9, 1 - pr); c.shadowOffsetX = 2;
+  c.fillStyle = "#fff"; c.fill(); L.noShadow(c);
+  c.lineJoin = "round"; c.lineWidth = 1.15; c.strokeStyle = INK; c.stroke();
+  c.restore();
+  // the tap's flash at the tip
+  const fu = seg(t, T.press, T.press + 0.3);
+  if (fu > 0 && fu < 1) { c.save(); c.globalCompositeOperation = "lighter"; c.globalAlpha = 0.5 * (1 - fu);
+    c.fillStyle = "#fff"; c.beginPath(); c.arc(tx, ty, lerp(10, 60, E("power2.out")(fu)), 0, Math.PI * 2); c.fill(); c.restore(); }
+}
+
+function scene(ctx, t, T_) {
+  prep();
+  if (t < T.col1) { off(ctx, t, T_); return; }
+  cta(ctx, t, T_);
+}
+
+let TL = null;
+const draw = L.mount({ tl: () => TL, scene, samples: T_ => (T_ >= 0.24 && T_ <= 0.36) || (T_ >= 0.44 && T_ <= 0.53) ? 28 : L.windows([[0.09, 1.62], [1.84, 2.12], [2.22, 3.24], [3.3, 3.5]], 10)(T_), shutter: 1 / 50 });
+PAGE({
+  dur: 4.2,
+  cues: [
+    { t: 0.08, name: "m:ui-glitch-flicker", gain: -17 },
+    { t: 0.15, name: "t:glitch", gain: -20 },
+    { t: 0.16, name: "m:deep-short-whoosh", gain: -16 },
+    { t: 0.40, name: "m:thump-click", gain: -15 },
+    { t: 1.06, name: "m:ui-premium-open", gain: -17 },
+    { t: 2.04, name: "m:premium-pop-1", gain: -15 },
+    { t: 3.32, name: "m:mouse-click-2", gain: -14 },
+  ],
+  build(tl) { TL = tl; L.preload(); tl.set({}, {}, 4.2); },
+  draw: t => draw(t),
+});
+</script></body></html>

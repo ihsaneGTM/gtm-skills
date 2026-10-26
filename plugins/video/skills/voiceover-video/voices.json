@@ -1,0 +1,16 @@
+{
+  "about": "The voices a user can pick on their first video besides their own clone (clone.mjs). « pipecorn » is Ihsane's voice, offered as an option: a voice shared from Ihsane's ElevenLabs account, added to the user's own account with their key (POST /v1/voices/add/{publicUserId}/{voiceId}). An instant clone cannot be shared outside its workspace (ElevenLabs): it must be a Professional Voice Clone shared with « Anyone with the link ». Until publicUserId and voiceId are set, the option is not offered (the app and clone.mjs --choices say it is not available).",
+  "pipecorn": {
+    "name": "Ihsane · Pipecorn",
+    "publicUserId": null,
+    "voiceId": null,
+    "model": "eleven_v4",
+    "language": "en",
+    "prefix": "[French accent] ",
+    "stability": 0.5,
+    "similarity": 0.85
+  },
+  "premade": {
+    "about": "The user's account's default voices (voice.mjs voices: category « premade »; they work on every plan, the free one included): three that suit the language and a calm narration are auditioned (voice.mjs audition), the user keeps one (clone.mjs --premade <id> --name <name>)."
+  }
+}

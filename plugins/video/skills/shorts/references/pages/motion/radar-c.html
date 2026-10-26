@@ -1,0 +1,214 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+.mk{position:absolute;border-radius:50%;background:#fff;display:grid;place-items:center;
+  box-shadow:0 2px 3px rgba(26,26,26,.06),0 18px 34px -16px rgba(26,26,26,.30);will-change:transform}
+.mk svg{width:46%;height:46%}
+.mk.far{box-shadow:0 1px 2px rgba(26,26,26,.05),0 10px 18px -10px rgba(26,26,26,.22)}
+.pill{position:absolute;height:56px;padding:0 22px 0 18px;border-radius:28px;background:var(--ink);color:#fff;display:flex;align-items:center;gap:12px;
+  font:700 28px/1 Title;letter-spacing:-.02em;white-space:nowrap;box-shadow:0 2px 3px rgba(26,26,26,.1),0 16px 30px -12px rgba(26,26,26,.4)}
+.pill i{width:14px;height:14px;border-radius:50%;background:var(--y)}
+.pill em{font-style:normal;color:var(--y)}
+.seat{position:absolute;width:132px;height:132px;margin:-66px 0 0 -66px;border-radius:50%;overflow:hidden;border:6px solid #fff;
+  box-shadow:0 2px 3px rgba(26,26,26,.08),0 18px 32px -14px rgba(26,26,26,.38)}
+.seat img{width:100%;height:100%;object-fit:cover;display:block}
+</style></head><body><div id="stage"></div>
+<script src="vendor/gsap/gsap.min.js"></script><script src="vendor/gsap/CustomEase.min.js"></script>
+<script src="vendor/gsap/MorphSVGPlugin.min.js"></script><script src="vendor/gsap/DrawSVGPlugin.min.js"></script>
+<script src="kit.js"></script><script src="words.js"></script>
+<script>
+/* C · THE SIGNAL. A burst of companies fills the frame in depth. On « hiring » one yellow wave leaves the centre: every
+   company it crosses goes quiet, except three that answer, yellow. We dive into one: it opens into its round table, the
+   sales team around it and one empty chair. Filled on « improvements », then the table's rim unrolls into its sales line. */
+gsap.registerPlugin(CustomEase, MorphSVGPlugin, DrawSVGPlugin);
+const C0 = [540, 975];
+const GLY = [
+  '<circle cx="23" cy="23" r="15" fill="none" stroke="#1A1A1A" stroke-width="7"/>',
+  '<path d="M6 38 L23 8 L40 38Z" fill="#1A1A1A"/>',
+  '<rect x="8" y="8" width="30" height="30" rx="8" fill="#1A1A1A"/><rect x="18" y="18" width="10" height="10" rx="3" fill="#fff"/>',
+  '<path d="M8 30a15 15 0 0 1 30 0Z" fill="#1A1A1A"/><rect x="8" y="34" width="30" height="5" rx="2.5" fill="#1A1A1A"/>',
+  '<path d="M23 5 L41 23 L23 41 L5 23Z" fill="#1A1A1A"/>',
+  '<path d="M8 10h12l6 13-6 13H8l6-13Z" fill="#1A1A1A"/><path d="M26 10h12l-6 13 6 13H26l6-13Z" fill="#1A1A1A" opacity=".45"/>',
+  '<circle cx="15" cy="23" r="9" fill="#1A1A1A"/><circle cx="31" cy="23" r="9" fill="#1A1A1A" opacity=".45"/>',
+  '<path d="M8 38V8l30 30V8" fill="none" stroke="#1A1A1A" stroke-width="7" stroke-linejoin="round"/>',
+];
+// the three that answer (label side), the hero last
+const HIRE = [
+  { x: 250, y: 655, s: 100, side: 1, g: 4 },
+  { x: 830, y: 880, s: 100, side: -1, g: 1 },
+  { x: 318, y: 1215, s: 112, side: 1, g: 7, hero: true },
+];
+const ZONES = [[195, 590, 590, 720], [500, 815, 890, 945], [255, 1145, 650, 1285], [C0[0] - 120, C0[1] - 120, C0[0] + 120, C0[1] + 120]];
+const R = K.rand(23);
+const M = [];
+for (let tries = 0; M.length < 64 && tries < 6000; tries++) {
+  const layer = R() < 0.42 ? 0 : R() < 0.6 ? 1 : 2;
+  const s = [46, 72, 98][layer] * (0.85 + R() * 0.3);
+  const x = 130 + s / 2 + R() * (820 - s), y = 495 + s / 2 + R() * (990 - s);
+  if (ZONES.some(z => x + s / 2 > z[0] && x - s / 2 < z[2] && y + s / 2 > z[1] && y - s / 2 < z[3])) continue;
+  if ([...M, ...HIRE].some(m => Math.hypot(m.x - x, m.y - y) < (m.s + s) / 2 + 22)) continue;
+  M.push({ x, y, s, layer, g: Math.floor(R() * GLY.length) });
+}
+HIRE.forEach(h => { h.layer = 1; h.hire = true; M.push(h); });
+M.forEach(m => { m.d = Math.hypot(m.x - C0[0], m.y - C0[1]); m.ph = R() * 6.28; });
+const ease = n => gsap.parseEase(n), seg = (t, a, b, e = x => x) => e(K.clamp((t - a) / (b - a)));
+const eO = ease("expo.out"), eIO = ease("expo.inOut"), eP2 = ease("power2.out"), eBack = ease("back.out(1.6)");
+
+let ring, ring2, emit, heroEl, ST = { dive: 0, out: 0 };
+const HI = () => K.A("hiring");
+const waveR = t => 1150 * seg(t, HI() - 0.02, HI() + 1.0, ease("power2.out"));
+
+PAGE({ dur: 9.64,
+  cues: [
+    { t: 1.55, name: "m:cinematic-data-collect", gain: -18 },
+    { t: 4.04, name: "m:data-whoosh", gain: -16 },
+    { t: 4.78, name: "m:premium-pop-2", gain: -18 },
+    { t: 5.30, name: "m:cinematic-fast-whoosh", gain: -18 },
+    { t: 7.72, name: "m:premium-pop-1", gain: -16 },
+    { t: 8.42, name: "m:ui-stretch", gain: -19 },
+  ],
+  build(tl) {
+    const st = document.getElementById("stage");
+    const svg = K.el("svg", { width: 1080, height: 1920, viewBox: "0 0 1080 1920", style: { position: "absolute", left: 0, top: 0, overflow: "visible" } }, st);
+    const field = K.el("div", { style: { position: "absolute", inset: 0 } }, st);
+    // the field: far layer first
+    [...M].sort((a, b) => a.layer - b.layer).forEach(m => {
+      const e = m.el = K.el("div", { class: "mk" + (m.layer === 0 ? " far" : ""), style: { left: m.x - m.s / 2 + "px", top: m.y - m.s / 2 + "px", width: m.s + "px", height: m.s + "px" } }, field);
+      e.innerHTML = `<svg viewBox="0 0 46 46">${GLY[m.g]}</svg>`;
+      if (m.layer === 0) e.style.filter = "blur(1.6px)";
+    });
+    // the burst: from the centre, out to their places, far ones last (1.15 → 2.5, on « whole list of companies »)
+    const B0 = 0.42;
+    M.forEach(m => {
+      m.t0 = B0 + (m.layer === 2 ? 0 : m.layer === 1 ? 0.35 : 0.8) + m.d / 1600 + R() * 0.2;
+    });
+    // the emitter
+    emit = K.el("circle", { cx: C0[0], cy: C0[1], r: 0, fill: "#1A1A1A" }, svg);
+    ring2 = K.el("circle", { cx: C0[0], cy: C0[1], r: 0, fill: "none", stroke: "#1A1A1A", "stroke-width": 3, opacity: 0 }, svg);
+    ring = K.el("circle", { cx: C0[0], cy: C0[1], r: 0, fill: "none", stroke: "#FFD90D", "stroke-width": 14, opacity: 0 }, svg);
+    const AC = K.A("actually");
+    tl.to(emit, { attr: { r: 16 }, duration: 0.35, ease: "back.out(3)" }, 0.3);
+    tl.fromTo(ring2, { attr: { r: 16 }, opacity: 0.5 }, { attr: { r: 120 }, opacity: 0, duration: 0.5, ease: "power2.out", immediateRender: false }, AC);
+    tl.to(emit, { attr: { r: 26 }, fill: "#FFD90D", duration: 0.12, ease: "power2.out" }, HI() - 0.08);
+    tl.to(emit, { attr: { r: 0 }, duration: 0.3, ease: "back.in(2)" }, HI() + 0.5);
+    // labels « Hiring · SDR »
+    const SD = K.A("sdr,") - 0.1;
+    HIRE.forEach((h, k) => {
+      const p = h.pill = K.el("div", { class: "pill", html: `<i></i>Hiring · <em>SDR</em>` }, st);
+      const w = 214;
+      p.style.left = (h.side > 0 ? h.x + h.s / 2 + 18 : h.x - h.s / 2 - 18 - w) + "px";
+      p.style.top = h.y - 28 + "px";
+      p.style.width = w + "px";
+      tl.fromTo(p, { scaleX: 0, opacity: 0, transformOrigin: h.side > 0 ? "0% 50%" : "100% 50%" }, { scaleX: 1, opacity: 1, duration: 0.42, ease: "back.out(1.8)", immediateRender: true }, SD + k * 0.1);
+    });
+    // ── « so you know »: the dive. The field rushes past, the hero comes to the centre and opens into a table
+    const S = K.A("so") - 0.1;
+    tl.to(ST, { out: 1, duration: 0.55, ease: "power3.in" }, S);
+    HIRE.filter(h => !h.hero).forEach(h => tl.to(h.pill, { opacity: 0, x: h.side * -30, duration: 0.2, ease: "power2.in" }, S));
+    const hero = HIRE[2];
+    tl.to(hero.pill, { opacity: 0, scaleX: 0, duration: 0.22, ease: "power2.in" }, S + 0.05);
+    heroEl = hero.el;
+    const TB = 640;     // the table's diameter
+    tl.to(heroEl, { left: C0[0] - TB / 2, top: C0[1] - TB / 2, width: TB, height: TB, duration: 0.8, ease: "expo.inOut" }, S + 0.15);
+    const hsvg = heroEl.querySelector("svg");
+    gsap.set(hsvg, { width: hero.s * 0.46, height: hero.s * 0.46 });
+    tl.fromTo(hsvg, { width: hero.s * 0.46, height: hero.s * 0.46, y: 0 }, { immediateRender: false, width: 92, height: 92, y: -34, duration: 0.8, ease: "expo.inOut" }, S + 0.15);
+    const name = K.el("div", { text: "Fennick", style: { position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, 34px)", font: "800 54px/1 Title", letterSpacing: "-.04em", color: "var(--ink)", opacity: 0 } }, heroEl);
+    tl.to(name, { opacity: 1, duration: 0.3 }, S + 0.75);
+    tl.fromTo(heroEl, { backgroundColor: "#FFD90D" }, { backgroundColor: "#FFFFFF", duration: 0.5, immediateRender: false }, S + 0.3);
+    // the rim of the table (it will unroll into the sales line)
+    const rim = K.el("path", { d: `M${C0[0]},${C0[1] - TB / 2} A${TB / 2},${TB / 2} 0 1,1 ${C0[0] - 0.1},${C0[1] - TB / 2}`, fill: "none", stroke: "#1A1A1A", "stroke-width": 8, "stroke-linecap": "round" }, svg);
+    MorphSVGPlugin.convertToPath(rim);
+    tl.fromTo(rim, { drawSVG: "0%" }, { drawSVG: "100%", duration: 0.6, ease: "power2.inOut", immediateRender: true }, S + 0.85);
+    svg.parentNode.appendChild(svg);   // the rim above the table disk
+    // seats around the table
+    const people = ["marcus", "julia", "kenji", "sofia", "omar"];
+    const ang = [-150, -90, -30, 150, 90].map(a => a * Math.PI / 180);   // 30° (bottom right) stays empty
+    const RAD = TB / 2 + 8;
+    const seats = people.map((p, k) => {
+      const s = K.el("div", { class: "seat", style: { left: C0[0] + RAD * Math.cos(ang[k]) + "px", top: C0[1] + RAD * Math.sin(ang[k]) + "px" } }, st);
+      K.el("img", { src: K.img(`people/${p}.jpg`) }, s); return s;
+    });
+    const ea = 30 * Math.PI / 180, ex = C0[0] + RAD * Math.cos(ea), ey = C0[1] + RAD * Math.sin(ea);
+    const empty = K.el("div", { text: "SDR", style: { position: "absolute", left: ex - 66 + "px", top: ey - 66 + "px", width: "132px", height: "132px", borderRadius: "50%", border: "5px dashed #C3C0CC", background: "#fff", display: "grid", placeItems: "center", font: "700 34px/1 Title", color: "#A3A0AE", letterSpacing: "-.02em" } }, st);
+    const pulse = K.el("div", { style: { position: "absolute", left: ex - 80 + "px", top: ey - 80 + "px", width: "160px", height: "160px", borderRadius: "50%", border: "7px solid var(--y)", opacity: 0 } }, st);
+    const hire = K.el("div", { class: "seat", style: { left: ex + "px", top: ey + "px", borderColor: "var(--y)", opacity: 0 } }, st);
+    K.el("img", { src: K.img("people/nina.jpg") }, hire);
+    const tag = K.el("div", { text: "SDR", style: { position: "absolute", left: ex + 30 + "px", top: ey + 44 + "px", padding: "8px 16px", borderRadius: "16px", background: "var(--ink)", color: "var(--y)", font: "700 28px/1 Title", boxShadow: "var(--shadow)", opacity: 0 } }, st);
+    const TS = K.A("team") - 0.1;
+    seats.forEach((s, k) => tl.fromTo(s, { scale: 0 }, { scale: 1, duration: 0.45, ease: "back.out(2.2)", immediateRender: true }, TS + k * 0.07));
+    tl.fromTo(empty, { scale: 0, rotation: -60 }, { scale: 1, rotation: 0, duration: 0.45, ease: "back.out(2.2)", immediateRender: true }, TS + 0.4);
+    const L = K.A("looking");
+    [0, 0.5].forEach(d => tl.fromTo(pulse, { scale: 0.85, opacity: 1 }, { scale: 1.4, opacity: 0, duration: 0.5, ease: "power2.out", immediateRender: false }, L + d));
+    const I = K.A("improvements");
+    tl.to(empty, { scale: 0.4, opacity: 0, duration: 0.16, ease: "power2.in" }, I - 0.06);
+    tl.fromTo(hire, { scale: 2.2, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.42, ease: "back.out(1.6)", immediateRender: false }, I);
+    tl.fromTo(tag, { scale: 0, opacity: 1 }, { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(3)", immediateRender: false }, I + 0.25);
+
+    // ── « sales field »: the rim unrolls into the sales line; the team rides onto it, the new SDR at the knee
+    const U = K.A("improvements") + 0.5;
+    const pts = [[150, 1330], [290, 1310], [430, 1290], [570, 1262], [700, 1215], [790, 1080], [920, 720]];
+    const LINE = "M150,1330 C 220,1322 260,1312 330,1304 S 520,1280 600,1258 S 720,1205 760,1150 C 800,1080 860,860 920,720";
+    tl.to(rim, { morphSVG: { shape: LINE, type: "linear" }, duration: 0.8, ease: "expo.inOut" }, U);
+    tl.fromTo(heroEl, { scale: 1, opacity: 1 }, { scale: 0, opacity: 0, duration: 0.45, ease: "back.in(1.4)", immediateRender: false }, U - 0.05);
+    const on = [[230, 1318], [360, 1300], [490, 1280], [620, 1252], [150, 1330]];
+    // the team sits on the line (its order around the table: k)
+    const order = [0, 1, 2, 3];
+    [[seats[0], 200, 1322], [seats[1], 340, 1302], [seats[2], 480, 1284], [seats[3], 620, 1250]].forEach(([s, x, y], k) =>
+      tl.to(s, { left: x, top: y, scale: 0.78, duration: 0.8, ease: "expo.inOut" }, U + k * 0.03));
+    tl.to(seats[4], { scale: 0, duration: 0.3, ease: "back.in(2)" }, U);
+    tl.to(hire, { left: 760, top: 1150, duration: 0.8, ease: "expo.inOut" }, U + 0.1);
+    tl.to(tag, { left: 760 + 30, top: 1150 + 44, duration: 0.8, ease: "expo.inOut" }, U + 0.1);
+    const hot = K.el("path", { d: "M760,1150 C 800,1080 860,860 920,720", fill: "none", stroke: "#FFD90D", "stroke-width": 9, "stroke-linecap": "round" }, svg);
+    tl.fromTo(hot, { drawSVG: "0%" }, { drawSVG: "100%", duration: 0.35, ease: "power2.out", immediateRender: true }, U + 0.6);
+    const dot = K.el("circle", { cx: 920, cy: 720, r: 20, fill: "#FFD90D", stroke: "#1A1A1A", "stroke-width": 7 }, svg);
+    tl.fromTo(dot, { scale: 0, transformOrigin: "50% 50%" }, { scale: 1, duration: 0.4, ease: "back.out(3)", immediateRender: true }, U + 0.8);
+    const sales = K.el("div", { class: "pill", html: `Sales <em>↗</em>`, style: { left: "760px", top: "620px" } }, st);
+    tl.fromTo(sales, { scale: 0, transformOrigin: "100% 100%" }, { scale: 1, duration: 0.4, ease: "back.out(2.4)", immediateRender: true }, U + 0.88);
+  },
+  draw(t) {
+    const r = waveR(t);
+    ring.setAttribute("r", r.toFixed(1));
+    ring.setAttribute("opacity", r > 1 ? K.clamp(1 - r / 640).toFixed(3) : 0);
+    ring.setAttribute("stroke-width", (14 * (1 - r / 1400)).toFixed(1));
+    for (const m of M) {
+      const isHero = m === HIRE[2], tt = isHero ? Math.min(t, K.A("so") - 0.1) : t;
+      const p = seg(tt, m.t0, m.t0 + 0.7, eO);
+      // burst: from the centre (scaled down) out to its place, a little overshoot
+      const bx = K.lerp(C0[0], m.x, p), by = K.lerp(C0[1], m.y, p);
+      const sc0 = seg(tt, m.t0, m.t0 + 0.5, eBack);
+      // parallax drift by layer
+      const sp = [5, 10, 17][m.layer];
+      const dx = Math.sin(tt * 0.6 + m.ph) * sp * 0.6 + (tt - 5) * sp * 0.5, dy = Math.cos(tt * 0.5 + m.ph) * sp * 0.4;
+      // the wave: what it crosses goes quiet; the hiring ones answer
+      const hit = K.clamp((r - m.d) / 160);
+      let sc = sc0, op = sc0 > 0 ? 1 : 0;
+      if (m.hire) {
+        const pop = seg(r - m.d, 0, 140, x => x) ;
+        sc *= 1 + 0.28 * Math.sin(Math.PI * K.clamp(pop)) ;
+        if (!isHero || t < K.A("so") + 0.2) m.el.style.background = pop > 0 ? "#FFD90D" : "#fff";
+      } else {
+        op *= 1 - 0.78 * hit; sc *= 1 - 0.14 * hit;
+      }
+      // the dive: everything else rushes out past the frame, growing and blurring
+      const o = ST.out;
+      let x = bx + dx, y = by + dy;
+      if (o > 0 && m !== HIRE[2]) {
+        const k = 1 + o * (2.2 + m.layer * 0.8);
+        x = C0[0] + (x - C0[0]) * k; y = C0[1] + (y - C0[1]) * (1 + o * 1.1);
+        sc *= 1 + o * (1 + m.layer);
+        op *= 1 - K.clamp(o * 1.6);
+        m.el.style.filter = `blur(${(o * 10 + (m.layer === 0 ? 1.6 : 0)).toFixed(1)}px)`;
+      } else if (m.layer !== 0) m.el.style.filter = "none";
+      if (isHero) {
+        m.el.style.translate = `${(x - m.x).toFixed(1)}px ${(y - m.y).toFixed(1)}px`;
+        m.el.style.scale = t < K.A("so") - 0.1 ? Math.max(0, sc).toFixed(3) : "1";
+        if (t < K.A("so") - 0.1) m.el.style.opacity = op.toFixed(3); else if (t < K.A("improvements") + 0.45) m.el.style.opacity = "1";
+      } else {
+        m.el.style.transform = `translate(${(x - m.x).toFixed(1)}px,${(y - m.y).toFixed(1)}px) scale(${Math.max(0, sc).toFixed(3)})`;
+        m.el.style.opacity = op.toFixed(3);
+      }
+      if (m.hire && m.pill) m.pill.style.translate = `${(x - m.x).toFixed(1)}px ${(y - m.y).toFixed(1)}px`;
+    }
+  }
+});
+</script></body></html>

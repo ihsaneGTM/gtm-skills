@@ -1,0 +1,83 @@
+{
+  "_source": "a snapshot of the GTM OS map used in the reference short",
+  "_syncedAt": "2026-09-01",
+  "_note": "Example data, frozen on the day the short rendered. Write your own file of the same shape for your own map.",
+  "rx": 372,
+  "ry": 168,
+  "nodes": [
+    {
+      "id": "linkedin_collabs",
+      "label": "LinkedIn collabs",
+      "icon": "linkedin",
+      "status": "grey",
+      "paused": true,
+      "a": -90
+    },
+    {
+      "id": "linkedin_content",
+      "label": "LinkedIn content",
+      "icon": "linkedin",
+      "status": "orange",
+      "paused": false,
+      "a": -54.4
+    },
+    {
+      "id": "newsletter",
+      "label": "Newsletter",
+      "icon": "customerio",
+      "status": "orange",
+      "paused": false,
+      "a": 0.02
+    },
+    {
+      "id": "outreach",
+      "label": "Outreach",
+      "icon": "pipecorn",
+      "status": "grey",
+      "paused": true,
+      "a": 54.41
+    },
+    {
+      "id": "ads",
+      "label": "ADS",
+      "icon": "ads",
+      "status": "grey",
+      "paused": false,
+      "a": 90.02
+    },
+    {
+      "id": "youtube",
+      "label": "YouTube",
+      "icon": "youtube",
+      "status": "green",
+      "paused": false,
+      "a": 125.6
+    },
+    {
+      "id": "partners",
+      "label": "Partners",
+      "icon": "users",
+      "status": "grey",
+      "paused": false,
+      "a": -179.98
+    },
+    {
+      "id": "website",
+      "label": "Website",
+      "icon": "globe",
+      "status": "grey",
+      "paused": false,
+      "a": -125.59
+    }
+  ],
+  "buildOrder": [
+    "linkedin_collabs",
+    "linkedin_content",
+    "newsletter",
+    "outreach",
+    "ads",
+    "youtube",
+    "partners",
+    "website"
+  ]
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "one-take-in-place",
+    "name": "One take, in its own order, in the shorts' look",
+    "kind": "rule",
+    "what": "One raw vertical take edited in place into one short with the code of Long video to shorts: the take heard, its retakes dropped and its dead air cut, graded, never reordered, then the same look (Dynamic text, pictures behind you, white pages, the hook, the sound).",
+    "when": "Every Whiteboard edit. No long-video analysis, no reordering, no three lengths, no end card unless the user asks.",
+    "status": "trial",
+    "since": "2026-10-15",
+    "why": "« Le style qu'on a sur Long video to shorts doit être également un style de montage qu'on peut retrouver dans le Short video editor… le style principal, vu que c'est mon préféré avec Dynamic text. »",
+    "where": "shorts/scripts/new.mjs › --one; shorts/scripts/cut.mjs › --one (ONE)",
+    "doc": "SKILL.md § The run"
+  },
+  {
+    "id": "words-top-vertical-headroom",
+    "name": "Words above the head on a vertical take with room",
+    "kind": "text",
+    "what": "A vertical take kept whole has its words above the head, behind it (Dynamic text's place), when the top of the head sits at 0.20 of the frame or lower (project.json › headroom, measured by Apple Vision in the cut); a tight take keeps them below the head, in front.",
+    "when": "Every Whiteboard edit; the template decides from headroom.",
+    "status": "trial",
+    "since": "2026-10-15",
+    "why": "The shorts' words go above the head (« au-dessus de moi, un peu derrière moi ») only where the room exists: a third line sank behind the head on the long video's shorts.",
+    "where": "shorts/scripts/cut.mjs › headroom; shorts/templates/plan.mjs › TOP",
+    "doc": "SKILL.md § What the short is, rule 3"
+  },
+  {
+    "id": "white-page-every-short",
+    "name": "A white page in every Whiteboard short",
+    "kind": "rule",
+    "what": "One motion page under about 45 s, two or three in a 1 min+ short: the idea drawn as a moving schema over the whole frame, a different concept each time.",
+    "when": "Every Whiteboard edit (the style's name).",
+    "status": "trial",
+    "since": "2026-10-15",
+    "why": "The style is named for the white pages that draw the idea; the 30 s short of the leads video carried one (round 12).",
+    "where": "shorts/scripts/motionpage.mjs, shorts/scripts/dt.mjs › whitePage",
+    "doc": "plugins/video/skills/shorts/references/motion-pages.md"
+  }
+]

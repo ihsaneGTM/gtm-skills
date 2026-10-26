@@ -1,0 +1,371 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body><div id="stage"></div>
+<script src="vendor/gsap/gsap.min.js"></script>
+<script src="kit.js"></script><script src="words.js"></script><script src="channel.js" onerror="window.CHANNEL=null"></script><script src="cta-lib.js"></script>
+<script>
+/* CTA · B — « LIGHTS OUT, THEN THE PAPER ». The short's last frame is a phone's screen. It switches off (the light drains,
+   the vignette closes in, a thin afterglow line dies in the middle), then the dark glass pulls back in 3D: it was a phone,
+   held close to the eye, that now falls back onto the Pipecorn paper desk, turning sideways on the way (the way you turn
+   your phone to watch YouTube). It lands flat; its screen wakes on the long video's thumbnail, the player's UI comes up
+   (play button, red progress bar, 3:48), the YouTube logo is stuck above it like a sticker, « Watch the entire video »
+   rises under it with one yellow marker stroke on « entire », and the channel row (Your brand's logo and name, channel.js; none without a name) comes in under the player, a cursor glides in, hovers (the play button turns red,
+   as on YouTube) and clicks: press, ripple, the phone lifts, the red bar starts to run. A slow dolly to the end. */
+const W = 1080, H = 1920, Y = "#FFD90D", INK = "#1A1A1A", RED = "#FF0000";
+const paper = L.img("paper.png"), last = L.img("img/last-plain.png"), thumb = L.img("img/thumb.jpg"), avatar = window.CHANNEL?.logo ? L.img(window.CHANNEL.logo) : null;
+// the channel: Your brand's name and logo (motionpage.mjs writes channel.js from the run's brand/theme.json; never a
+// name the user did not give). No name: no channel row.
+const CHAN = String(window.CHANNEL?.name || "").trim();
+
+// ── the phone, in its own units: the screen is the frame (1080 × 1920), the bezel around it ─────────────────────────
+const BZ = 48, PW = 1080 + 2 * BZ, PH = 1920 + 2 * BZ, RB = 150, RS = 104;
+const SF = 800 / 1920;                      // landed: the screen, landscape, is 800 × 450 px
+const CX1 = 515, CY1 = 790;                 // landed centre
+const F = 1900;                             // focal length (px)
+const TS = 0.75;                            // texture scale
+const tex = L.off(Math.round(PW * TS), Math.round(PH * TS));
+function buildTex() {
+  const c = tex.getContext("2d"); L.reset(c); c.clearRect(0, 0, tex.width, tex.height); c.scale(TS, TS);
+  // body: dark satin, a lighter rim
+  const g = c.createLinearGradient(0, 0, PW, PH); g.addColorStop(0, "#26262b"); g.addColorStop(0.5, "#141417"); g.addColorStop(1, "#1d1d21");
+  L.rr(c, 0, 0, PW, PH, RB); c.fillStyle = g; c.fill();
+  c.lineWidth = 5; c.strokeStyle = "#45454d"; L.rr(c, 2.5, 2.5, PW - 5, PH - 5, RB - 2); c.stroke();
+  c.lineWidth = 2; c.strokeStyle = "#0a0a0b"; L.rr(c, 9, 9, PW - 18, PH - 18, RB - 8); c.stroke();
+  // the glass, off
+  L.rr(c, BZ, BZ, 1080, 1920, RS); c.fillStyle = "#060607"; c.fill();
+  c.save(); L.rr(c, BZ, BZ, 1080, 1920, RS); c.clip();
+  const s = c.createLinearGradient(BZ + 100, BZ, BZ + 1000, BZ + 1920);
+  s.addColorStop(0, "rgba(255,255,255,0)"); s.addColorStop(0.36, "rgba(255,255,255,0.0)"); s.addColorStop(0.42, "rgba(255,255,255,0.075)");
+  s.addColorStop(0.5, "rgba(255,255,255,0.02)"); s.addColorStop(0.56, "rgba(255,255,255,0.05)"); s.addColorStop(0.62, "rgba(255,255,255,0)"); s.addColorStop(1, "rgba(255,255,255,0)");
+  c.fillStyle = s; c.fillRect(0, 0, PW, PH); c.restore();
+}
+
+// ── state, filled by the timeline ───────────────────────────────────────────────────────────────────────────────────
+const S = {
+  off: 0, vig: 0, zoom: 1, corner: 0, glow: 0, glowW: 1,     // the switch-off
+  s: 0.965, cx: 540, cy: 960, rx: 0, ry: 0, rz: 0, dim: 0,    // the phone in 3D
+  wake: 0, play: 0, bar: 0, badge: 0, prog: 0,                // the screen and its UI
+  logo: 0, chan: 0, chanName: 0, l1: 0, l2: 0, mark: 0,                             // logo sticker, words, marker
+  cur: 0, hover: 0, press: 0, ripple: 0, lift: 0,             // the cursor and the click
+  dolly: 0,
+};
+
+// ── projection ──────────────────────────────────────────────────────────────────────────────────────────────────────
+function proj(x, y) {
+  const rz = S.rz * Math.PI / 180, rx = S.rx * Math.PI / 180, ry = S.ry * Math.PI / 180;
+  const x1 = x * Math.cos(rz) - y * Math.sin(rz), y1 = x * Math.sin(rz) + y * Math.cos(rz);
+  const y2 = y1 * Math.cos(rx), z2 = y1 * Math.sin(rx);
+  const x3 = x1 * Math.cos(ry) + z2 * Math.sin(ry), z3 = -x1 * Math.sin(ry) + z2 * Math.cos(ry);
+  const D = F / S.s, k = F / (D + z3);
+  return [S.cx + x3 * k, S.cy + y2 * k];
+}
+function triangle(c, img, s0, s1, s2, d0, d1, d2) {   // map texture triangle s → screen triangle d (affine), seams closed
+  const mx = (d0[0] + d1[0] + d2[0]) / 3, my = (d0[1] + d1[1] + d2[1]) / 3, e = p => { const dx = p[0] - mx, dy = p[1] - my, l = Math.hypot(dx, dy) || 1; return [p[0] + dx / l * 0.9, p[1] + dy / l * 0.9]; };
+  const a = e(d0), b = e(d1), q = e(d2);
+  c.save(); c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.lineTo(q[0], q[1]); c.closePath(); c.clip();
+  const [u0, v0] = s0, [u1, v1] = s1, [u2, v2] = s2;
+  const den = (u1 - u0) * (v2 - v0) - (u2 - u0) * (v1 - v0);
+  const A = ((d1[0] - d0[0]) * (v2 - v0) - (d2[0] - d0[0]) * (v1 - v0)) / den, Cc = ((d2[0] - d0[0]) * (u1 - u0) - (d1[0] - d0[0]) * (u2 - u0)) / den;
+  const B = ((d1[1] - d0[1]) * (v2 - v0) - (d2[1] - d0[1]) * (v1 - v0)) / den, Dd = ((d2[1] - d0[1]) * (u1 - u0) - (d1[1] - d0[1]) * (u2 - u0)) / den;
+  c.setTransform(A, B, Cc, Dd, d0[0] - A * u0 - Cc * v0, d0[1] - B * u0 - Dd * v0);
+  c.drawImage(img, 0, 0); c.restore();
+}
+function outline(c) {   // the body's projected outline (rounded rect)
+  c.beginPath(); const hw = PW / 2, hh = PH / 2, r = RB; let first = true;
+  const pts = [];
+  const corner = (cx, cy, a0) => { for (let i = 0; i <= 8; i++) { const a = a0 + i / 8 * Math.PI / 2; pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } };
+  corner(hw - r, -hh + r, -Math.PI / 2); corner(hw - r, hh - r, 0); corner(-hw + r, hh - r, Math.PI / 2); corner(-hw + r, -hh + r, Math.PI);
+  for (const p of pts) { const q = proj(p[0], p[1]); if (first) { c.moveTo(q[0], q[1]); first = false; } else c.lineTo(q[0], q[1]); }
+  c.closePath();
+}
+function phone3D(c) {
+  // shadow on the desk: the higher the phone (the closer to the eye), the wider and softer
+  const hgt = L.c01((S.s - SF) / (0.965 - SF));
+  c.save(); c.shadowColor = `rgba(26,26,26,${(0.34 - 0.16 * hgt).toFixed(3)})`; c.shadowBlur = 40 + 160 * hgt; c.shadowOffsetY = 24 + 120 * hgt; c.shadowOffsetX = 10 + 40 * hgt;
+  outline(c); c.fillStyle = "#141417"; c.fill(); c.restore();
+  const N = 10, hw = PW / 2, hh = PH / 2;
+  const P = [], T = [];
+  for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) { const x = -hw + PW * i / N, y = -hh + PH * j / N; P.push(proj(x, y)); T.push([(x + hw) * TS, (y + hh) * TS]); }
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const a = j * (N + 1) + i, b = a + 1, d = a + N + 1, e = d + 1;
+    triangle(c, tex, T[a], T[b], T[e], P[a], P[b], P[e]);
+    triangle(c, tex, T[a], T[e], T[d], P[a], P[e], P[d]);
+  }
+}
+
+// ── the switch-off (the phone flat, portrait, filling the frame) ─────────────────────────────────────────────────────
+function switchOff(c) {
+  const s = S.zoom;
+  c.save(); c.translate(540, 960); c.scale(s, s); c.translate(-PW / 2, -PH / 2);
+  c.drawImage(tex, 0, 0, PW, PH);
+  const rad = RS * S.corner;
+  c.save(); L.rr(c, BZ, BZ, 1080, 1920, rad); c.clip();
+  if (S.off < 1) {
+    c.drawImage(last, BZ, BZ, 1080, 1920);
+    // the vignette closing in, then the light draining
+    if (S.vig > 0) {
+      const r1 = L.lerp(1500, 120, L.E("power2.in")(S.vig)), r0 = r1 * 0.35;
+      const g = c.createRadialGradient(BZ + 540, BZ + 960, r0, BZ + 540, BZ + 960, r1);
+      g.addColorStop(0, "rgba(6,6,7,0)"); g.addColorStop(1, `rgba(6,6,7,${Math.min(1, S.vig * 1.6).toFixed(3)})`);
+      c.fillStyle = g; c.fillRect(BZ, BZ, 1080, 1920);
+      if (r1 < 2200) { c.fillStyle = `rgba(6,6,7,${Math.min(1, S.vig * 1.6).toFixed(3)})`; c.beginPath(); c.rect(BZ - 10, BZ - 10, 1100, 1940); c.arc(BZ + 540, BZ + 960, r1, 0, Math.PI * 2, true); c.fill(); }
+    }
+    c.fillStyle = `rgba(6,6,7,${S.off.toFixed(3)})`; c.fillRect(BZ, BZ, 1080, 1920);
+  } else { c.fillStyle = "#060607"; c.fillRect(BZ, BZ, 1080, 1920); }
+  // the afterglow: a thin bright line through the middle, pinching to a dot
+  if (S.glow > 0) {
+    const w = 980 * S.glowW, h = L.lerp(2, 7, S.glowW);
+    c.globalCompositeOperation = "lighter";
+    c.shadowColor = `rgba(200,225,255,${(0.9 * S.glow).toFixed(3)})`; c.shadowBlur = 40;
+    const g = c.createLinearGradient(BZ + 540 - w / 2, 0, BZ + 540 + w / 2, 0);
+    g.addColorStop(0, "rgba(220,235,255,0)"); g.addColorStop(0.5, `rgba(255,255,255,${S.glow.toFixed(3)})`); g.addColorStop(1, "rgba(220,235,255,0)");
+    c.fillStyle = g; c.fillRect(BZ + 540 - w / 2, BZ + 960 - h / 2, w, h);
+    L.noShadow(c); c.fillStyle = `rgba(255,255,255,${(S.glow * 0.95).toFixed(3)})`; c.beginPath(); c.ellipse(BZ + 540, BZ + 960, 6 + 12 * S.glowW, 3, 0, 0, Math.PI * 2); c.fill();
+    c.globalCompositeOperation = "source-over";
+  }
+  c.restore(); c.restore();
+}
+
+// ── the landed phone: the player ───────────────────────────────────────────────────────────────────────────────────
+const SW = 800, SH = 450, BW = PW * SF, BH = PH * SF, RSp = RS * SF;
+const ICON = new Path2D("M27.97 3.12C27.64 1.89 26.68.93 25.45.6 23.22 0 14.28 0 14.28 0S5.34 0 3.11.6C1.88.93.92 1.89.59 3.12 0 5.35 0 10 0 10s0 4.65.59 6.88c.33 1.23 1.29 2.19 2.52 2.52C5.34 20 14.28 20 14.28 20s8.94 0 11.17-.6c1.23-.33 2.19-1.29 2.52-2.52.59-2.23.59-6.88.59-6.88s0-4.65-.59-6.88z");
+const TRI = new Path2D("M11.43 14.29 18.85 10 11.43 5.71z");
+const TI = 0.94;   // the thumbnail, whole, inset in the glass (its black ground meets the screen's)
+const float = t => Math.sin(Math.max(0, t - 1.5) * 2.1) * 5;
+function landed(c, t) {
+  const lift = L.E("back.out(2)")(S.lift), k = 1 + 0.03 * lift;
+  const fy = float(t) - 10 * lift;
+  c.save(); c.translate(CX1, CY1 + fy); c.scale(k, k);
+  // shadows: a wide soft one, a contact one; the lift widens them
+  c.save(); c.shadowColor = `rgba(26,26,26,${(0.3 + 0.06 * lift).toFixed(3)})`; c.shadowBlur = 54 + 40 * lift; c.shadowOffsetY = 26 + 22 * lift - fy * 0.6; c.shadowOffsetX = 10;
+  L.rr(c, -BH / 2, -BW / 2, BH, BW, RB * SF); c.fillStyle = "#141417"; c.fill(); c.restore();
+  c.save(); c.shadowColor = "rgba(26,26,26,.22)"; c.shadowBlur = 10; c.shadowOffsetY = 5;
+  L.rr(c, -BH / 2, -BW / 2, BH, BW, RB * SF); c.fill(); c.restore();
+  c.save(); c.rotate(-Math.PI / 2); c.drawImage(tex, -BW / 2, -BH / 2, BW, BH); c.restore();
+  // the screen
+  c.save(); L.rr(c, -SW / 2, -SH / 2, SW, SH, RSp); c.clip();
+  if (S.wake > 0) {
+    const wk = S.wake, sc = L.lerp(1.04, 1, L.E("expo.out")(wk));
+    c.save(); c.scale(sc * TI, sc * TI); L.rr(c, -SW / 2, -SH / 2, SW, SH, 14); c.clip(); c.drawImage(thumb, -SW / 2, -SH / 2, SW, SH); c.restore();
+    // YouTube's player shade at the bottom
+    const g = c.createLinearGradient(0, SH / 2 - 120, 0, SH / 2); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, `rgba(0,0,0,${(0.55 * S.bar).toFixed(3)})`);
+    c.fillStyle = g; c.fillRect(-SW / 2, SH / 2 - 120, SW, 120);
+    ui(c, t);
+    c.fillStyle = `rgba(6,6,7,${(1 - L.E("power2.out")(wk)).toFixed(3)})`; c.fillRect(-SW / 2, -SH / 2, SW, SH);
+    // the screen's own light on wake: a soft bloom
+    const bl = Math.sin(Math.PI * L.c01(wk * 1.3)) * 0.18;
+    if (bl > 0) { c.fillStyle = `rgba(255,255,255,${bl.toFixed(3)})`; c.fillRect(-SW / 2, -SH / 2, SW, SH); }
+  }
+  // the ripple of the click, inside the glass
+  if (S.ripple > 0 && S.ripple < 1) {
+    const u = L.E("power2.out")(S.ripple);
+    c.strokeStyle = `rgba(255,255,255,${(0.6 * (1 - S.ripple)).toFixed(3)})`; c.lineWidth = L.lerp(14, 2, u);
+    c.beginPath(); c.arc(0, 0, L.lerp(50, 330, u), 0, Math.PI * 2); c.stroke();
+    c.fillStyle = `rgba(255,255,255,${(0.16 * (1 - S.ripple)).toFixed(3)})`; c.beginPath(); c.arc(0, 0, L.lerp(50, 330, u), 0, Math.PI * 2); c.fill();
+  }
+  // glass sheen over the content
+  const s = c.createLinearGradient(-SW / 2, -SH / 2, SW / 2, SH / 2);
+  s.addColorStop(0, "rgba(255,255,255,0.05)"); s.addColorStop(0.35, "rgba(255,255,255,0)"); s.addColorStop(1, "rgba(255,255,255,0)");
+  c.fillStyle = s; c.fillRect(-SW / 2, -SH / 2, SW, SH);
+  c.restore();
+  c.restore();
+}
+function ui(c, t) {
+  // big play button: YouTube's grey until the pointer is over it, then red
+  if (S.play > 0) {
+    const pr = L.c01(S.press), sp = L.E("back.out(2.2)")(S.play) * (1 - 0.1 * Math.sin(Math.PI * pr));
+    c.save(); c.scale(sp, sp);
+    const w = 132, h = w * 20 / 28.57;
+    c.translate(-w / 2, -h / 2); c.scale(w / 28.57, w / 28.57);
+    const hv = S.hover;
+    c.fillStyle = `rgb(${Math.round(L.lerp(33, 255, hv))},${Math.round(L.lerp(33, 0, hv))},${Math.round(L.lerp(33, 0, hv))})`; c.globalAlpha = L.lerp(0.82, 1, hv);
+    c.fill(ICON); c.globalAlpha = 1; c.fillStyle = "#fff"; c.fill(TRI);
+    c.restore();
+  }
+  // progress bar: the track draws across, the red runs
+  if (S.bar > 0) {
+    const x0 = -SW / 2 + 22, x1 = SW / 2 - 22, y = SH / 2 - 22, u = L.E("expo.out")(S.bar);
+    const xe = L.lerp(x0, x1, u);
+    c.fillStyle = "rgba(255,255,255,0.35)"; L.rr(c, x0, y - 3, xe - x0, 6, 3); c.fill();
+    const xr = x0 + (x1 - x0) * S.prog * u;
+    c.fillStyle = RED; L.rr(c, x0, y - 3, Math.max(0, xr - x0), 6, 3); c.fill();
+    c.beginPath(); c.arc(xr, y, 9 * u, 0, Math.PI * 2); c.fill();
+  }
+  // duration badge
+  if (S.badge > 0) {
+    const u = L.E("expo.out")(S.badge);
+    L.font(c, 600, 26, "Text", 0.2); const tw = c.measureText("3:48").width;
+    const bw = tw + 20, bh = 38, bx = SW / 2 - 22 - bw + (1 - u) * 40, by = SH / 2 - 44 - bh;
+    c.globalAlpha = u; c.fillStyle = "rgba(0,0,0,0.8)"; L.rr(c, bx, by, bw, bh, 8); c.fill();
+    c.fillStyle = "#fff"; c.textBaseline = "middle"; c.textAlign = "left"; c.fillText("3:48", bx + 10, by + bh / 2 + 1); c.globalAlpha = 1;
+  }
+}
+
+// ── the YouTube logo, a sticker ───────────────────────────────────────────────────────────────────────────────────────
+const LX = 318, LY = 477;
+function sticker(c, t) {
+  if (S.logo <= 0) return;
+  const u = S.logo, sc = L.E("back.out(2.6)")(L.c01(u)), rot = L.lerp(-30, -8, L.E("expo.out")(u)) + Math.sin(Math.max(0, t - 2.4) * 1.7) * 0.8;
+  const up = (1 - L.E("power3.out")(u)) * 1;   // high at first: big soft shadow, then pressed down
+  c.save(); c.translate(LX, LY + float(t) * 0.5); c.rotate(rot * Math.PI / 180); c.scale(sc * (1 + 0.12 * up), sc * (1 + 0.12 * up));
+  const iw = 104, ih = iw * 20 / 28.57;
+  L.font(c, 700, 66, "Title", -2.6); const ww = c.measureText("YouTube").width;
+  const pad = 24, gap = 14, w = pad * 2 + iw + gap + ww, h = 124;
+  c.save(); c.shadowColor = `rgba(26,26,26,${(0.24 - 0.08 * up).toFixed(3)})`; c.shadowBlur = 30 + 50 * up; c.shadowOffsetY = 12 + 40 * up; c.shadowOffsetX = 4;
+  L.rr(c, -w / 2, -h / 2, w, h, 30); c.fillStyle = "#fff"; c.fill(); c.restore();
+  c.save(); c.fillStyle = "#fff"; c.shadowColor = "rgba(26,26,26,.12)"; c.shadowBlur = 3; c.shadowOffsetY = 1.5; L.rr(c, -w / 2, -h / 2, w, h, 30); c.fill(); c.restore();
+  c.strokeStyle = "rgba(26,26,26,0.06)"; c.lineWidth = 1.5; L.rr(c, -w / 2 + 6, -h / 2 + 6, w - 12, h - 12, 24); c.stroke();
+  c.save(); c.translate(-w / 2 + pad, -ih / 2); c.scale(iw / 28.57, iw / 28.57); c.fillStyle = RED; c.fill(ICON); c.fillStyle = "#fff"; c.fill(TRI); c.restore();
+  c.fillStyle = "#212121"; c.textBaseline = "alphabetic"; c.textAlign = "left"; L.font(c, 700, 66, "Title", -2.6);
+  c.fillText("YouTube", -w / 2 + pad + iw + gap, 23);
+  c.restore();
+}
+
+// ── the words ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+let TX = null;
+function textGeo() {
+  if (TX) return TX;
+  const px = L.fit("entire video", 800, 730, -0.045);
+  const c = L.off(8, 8).getContext("2d"); L.font(c, 800, px, "Title", -0.045 * px);
+  const w1 = c.measureText("Watch the").width, w2 = c.measureText("entire video").width, we = c.measureText("entire").width;
+  const cx = CX1, b1 = 1268, b2 = b1 + px * 0.98;
+  TX = { px, w1, w2, we, cx, b1, b2 };
+  return TX;
+}
+function words(c, t) {
+  const g = textGeo(), ls = -0.045 * g.px, fy = float(t) * 0.25;
+  const line = (txt, w, base, u, before) => {
+    if (u <= 0) return;
+    const e = L.E("expo.out")(u), dy = (1 - e) * g.px * 1.05;
+    c.save(); c.beginPath(); c.rect(0, base - g.px * 1.0, W, g.px * 1.28); c.clip();
+    c.translate(0, dy + fy); c.globalAlpha = L.c01(u * 3.5);
+    if (before) before(base);
+    L.font(c, 800, g.px, "Title", ls); c.fillStyle = INK; c.textBaseline = "alphabetic"; c.textAlign = "left";
+    c.fillText(txt, g.cx - w / 2, base);
+    c.restore();
+  };
+  line("Watch the", g.w1, g.b1, S.l1);
+  line("entire video", g.w2, g.b2, S.l2, base => {
+    if (S.mark <= 0) return;
+    const u = L.E("expo.out")(S.mark), x0 = g.cx - g.w2 / 2 - 14, ww = (g.we + 26) * u;
+    c.save(); c.translate(x0, base - g.px * 0.2); c.rotate(-1.6 * Math.PI / 180);
+    c.fillStyle = Y; c.beginPath(); c.moveTo(0, -g.px * 0.17); c.lineTo(ww, -g.px * 0.2); c.lineTo(ww - 6, g.px * 0.16); c.lineTo(4, g.px * 0.19); c.closePath(); c.fill();
+    c.restore();
+  });
+}
+
+// ── the channel: Your brand, a YouTube row under the player (round avatar + name) ─────────────────────────────────────
+const CHX = CX1 - SW / 2 + 6, CHY = 1094, AV = 72;
+function channel(c, t) {
+  if (S.chan <= 0 || !CHAN) return;
+  const fy = float(t) * 0.4, u = S.chan, sc = L.E("back.out(2.4)")(u), rot = (1 - L.E("expo.out")(u)) * -70;
+  const ax = CHX + AV / 2, ay = CHY + fy;
+  c.save(); c.translate(ax, ay); c.rotate(rot * Math.PI / 180); c.scale(sc, sc);
+  c.save(); c.shadowColor = "rgba(26,26,26,.22)"; c.shadowBlur = 16; c.shadowOffsetY = 6;
+  c.beginPath(); c.arc(0, 0, AV / 2, 0, Math.PI * 2); c.fillStyle = Y; c.fill(); c.restore();
+  c.beginPath(); c.arc(0, 0, AV / 2, 0, Math.PI * 2); c.clip();
+  if (avatar?.complete && avatar.naturalWidth) c.drawImage(avatar, -AV * 0.62, -AV * 0.62, AV * 1.24, AV * 1.24);
+  else { L.font(c, 800, AV * 0.5, "Title", 0); c.fillStyle = INK; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(CHAN.charAt(0).toUpperCase(), 0, 2); }
+  c.restore();
+  if (S.chanName > 0) {   // the name slides out from behind the avatar
+    const v = L.E("expo.out")(S.chanName), x0 = CHX + AV + 18;
+    c.save(); c.beginPath(); c.rect(CHX + AV + 4, ay - 40, 420, 80); c.clip();
+    c.globalAlpha = L.c01(S.chanName * 3);
+    let px = 44; L.font(c, 700, px, "Title", -1);
+    while (px > 26 && c.measureText(CHAN).width > 400) { px -= 2; L.font(c, 700, px, "Title", -1); }   // a long name fits the row
+    c.fillStyle = INK; c.textBaseline = "middle"; c.textAlign = "left";
+    c.fillText(CHAN, x0 - (1 - v) * 90, ay + 1);
+    c.restore();
+  }
+}
+
+// ── the cursor ────────────────────────────────────────────────────────────────────────────────────────────────────────
+const CUR = new Path2D("M0 0 L0 46 L11 35.5 L19 53 L27.5 49.5 L19.5 32 L34 32 Z");
+const P0 = [1160, 1010], PC = [900, 620], P1 = [CX1 + 14, CY1 + 10];
+function cursor(c, t) {
+  if (S.cur <= 0) return;
+  const u = L.E("power3.inOut")(S.cur), m = 1 - u;
+  let x = m * m * P0[0] + 2 * m * u * PC[0] + u * u * P1[0], y = m * m * P0[1] + 2 * m * u * PC[1] + u * u * P1[1];
+  y += float(t) - 10 * L.E("back.out(2)")(S.lift);
+  const pr = Math.sin(Math.PI * L.c01(S.press)), sc = 1.35 * (1 - 0.14 * pr);
+  c.save(); c.translate(x, y); c.rotate((-6 + 6 * u) * Math.PI / 180); c.scale(sc, sc);
+  c.shadowColor = "rgba(26,26,26,.32)"; c.shadowBlur = 14; c.shadowOffsetY = 6 * (1 - pr * 0.6);
+  c.fillStyle = INK; c.fill(CUR); L.noShadow(c);
+  c.lineJoin = "round"; c.lineWidth = 3.2; c.strokeStyle = "#fff"; c.stroke(CUR);
+  c.restore();
+}
+
+// ── the frame ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+function scene(c, t) {
+  if (t < 0.6) { c.fillStyle = "#0a0a0b"; c.fillRect(0, 0, W, H); switchOff(c); return; }
+  const d = 1 + 0.025 * L.E("sine.inOut")(S.dolly);
+  c.save(); c.translate(CX1, 880); c.scale(d, d); c.translate(-CX1, -880);
+  c.drawImage(paper, -20, -20, W + 40, H + 40);
+  if (S.dim > 0) { c.fillStyle = `rgba(10,10,11,${S.dim.toFixed(3)})`; c.fillRect(-40, -40, W + 80, H + 80); }
+  if (t < 1.4) phone3D(c); else landed(c, t);
+  channel(c, t);
+  words(c, t);
+  sticker(c, t);
+  cursor(c, t);
+  c.restore();
+}
+
+let TL = null;
+const draw = L.mount({ tl: () => TL, scene, samples: L.windows([[0.14, 0.62], [0.6, 1.52], [1.84, 2.95], [2.92, 3.7]], 10), shutter: 1 / 50 });
+PAGE({
+  dur: 4.2,
+  cues: [
+    { t: 0.14, name: "m:thump-click", gain: -15 },
+    { t: 0.15, name: "m:deep-short-whoosh", gain: -17 },
+    { t: 0.36, name: "m:ui-glitch-flicker", gain: -20 },
+    { t: 1.18, name: "p:mixkit-paper-slide-1530", gain: -16 },
+    { t: 1.86, name: "m:premium-pop-1", gain: -16 },
+    { t: 2.1, name: "m:normal-pop-2", gain: -19 },
+    { t: 3.46, name: "m:mouse-click-1", gain: -14 },
+  ],
+  build(tl) {
+    TL = tl; L.preload(); buildTex();
+    // 1 · lights out
+    tl.to(S, { zoom: 0.965, duration: 0.48, ease: "power2.out" }, 0.15);
+    tl.to(S, { corner: 1, duration: 0.3, ease: "power2.out" }, 0.15);
+    tl.to(S, { vig: 1, duration: 0.22, ease: "sine.out" }, 0.15);
+    tl.to(S, { off: 1, duration: 0.22, ease: "sine.inOut" }, 0.16);
+    tl.to(S, { glow: 1, duration: 0.05, ease: "none" }, 0.36);
+    tl.fromTo(S, { glowW: 1 }, { glowW: 0, duration: 0.2, ease: "expo.in", immediateRender: false }, 0.38);
+    tl.to(S, { glow: 0, duration: 0.08, ease: "power1.in" }, 0.54);
+    // 2 · the phone falls back onto the desk, turning sideways
+    tl.set(S, { s: 0.965, dim: 0.5 }, 0.6);
+    tl.to(S, { s: SF, duration: 0.62, ease: "power3.inOut" }, 0.6);
+    tl.to(S, { cx: CX1, cy: CY1, duration: 0.62, ease: "power3.inOut" }, 0.6);
+    tl.to(S, { rz: -90, duration: 0.6, ease: "power2.inOut" }, 0.64);
+    tl.to(S, { rx: 30, ry: -12, duration: 0.3, ease: "power2.out" }, 0.6);
+    tl.to(S, { rx: -4, ry: 2, duration: 0.3, ease: "power3.in" }, 0.9);
+    tl.to(S, { rx: 0, ry: 0, duration: 0.28, ease: "power2.out" }, 1.2);
+    tl.to(S, { dim: 0, duration: 0.6, ease: "power2.out" }, 0.62);
+    // 3 · the screen wakes on the thumbnail, the player comes up
+    tl.to(S, { wake: 1, duration: 0.3, ease: "none" }, 1.4);
+    tl.to(S, { play: 1, duration: 0.36, ease: "none" }, 1.56);
+    tl.to(S, { bar: 1, duration: 0.5, ease: "none" }, 1.58);
+    tl.to(S, { prog: 0.14, duration: 0.5, ease: "power2.out" }, 1.62);
+    tl.to(S, { badge: 1, duration: 0.4, ease: "none" }, 1.68);
+    // 4 · the sticker
+    tl.to(S, { logo: 1, duration: 0.42, ease: "none" }, 1.84);
+    // 5 · the words, the marker
+    // 4b · the channel: Your brand
+    tl.to(S, { chan: 1, duration: 0.42, ease: "none" }, 2.08);
+    tl.to(S, { chanName: 1, duration: 0.45, ease: "none" }, 2.2);
+    tl.to(S, { l1: 1, duration: 0.55, ease: "none" }, 2.34);
+    tl.to(S, { l2: 1, duration: 0.55, ease: "none" }, 2.44);
+    tl.to(S, { mark: 1, duration: 0.4, ease: "none" }, 2.76);
+    // 6 · the pointer: glide, hover, click
+    tl.to(S, { cur: 1, duration: 0.5, ease: "none" }, 2.92);
+    tl.to(S, { hover: 1, duration: 0.1, ease: "power1.out" }, 3.32);
+    tl.to(S, { press: 1, duration: 0.16, ease: "none" }, 3.44);
+    tl.to(S, { ripple: 1, duration: 0.55, ease: "none" }, 3.5);
+    tl.to(S, { lift: 1, duration: 0.5, ease: "none" }, 3.5);
+    tl.to(S, { prog: 0.24, duration: 0.7, ease: "none" }, 3.48);
+    // the slow dolly
+    tl.to(S, { dolly: 1, duration: 2.9, ease: "none" }, 1.3);
+    tl.set({}, {}, 4.2);
+  },
+  draw: t => draw(t),
+});
+</script></body></html>

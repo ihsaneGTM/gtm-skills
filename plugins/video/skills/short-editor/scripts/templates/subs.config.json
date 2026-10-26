@@ -1,0 +1,5 @@
+{
+  "_note": "Corrections are matched as word PATTERNS, longest first. Add the words the transcript gets wrong (your brand, your product, people's names), e.g. { \"find\": \"acme corp\", \"replace\": [\"AcmeCorp\"] }. Words in hot are the ones worth turning yellow. Anything that fails to match is reported by build_subs.mjs.",
+  "corrections": [],
+  "hot": []
+}

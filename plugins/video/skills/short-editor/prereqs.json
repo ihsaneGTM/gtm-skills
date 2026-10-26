@@ -1,0 +1,118 @@
+{
+  "skill": "short-editor",
+  "summary": "Vertical (9:16) video editor: raw take in, finished short out, in the Pipecorn vertical language (headlines at the top passing behind you, paper plates in stop-motion, the SFX pack, -14 LUFS), with an old-radio hook offered every time.",
+  "prerequisites": [
+    {
+      "id": "ffmpeg",
+      "label": "ffmpeg (render, mix, measurements)",
+      "type": "bin",
+      "required": true,
+      "bin": "ffmpeg",
+      "hint": "brew install ffmpeg"
+    },
+    {
+      "id": "ffprobe",
+      "label": "ffprobe (file checks)",
+      "type": "bin",
+      "required": true,
+      "bin": "ffprobe",
+      "hint": "Ships with ffmpeg."
+    },
+    {
+      "id": "python3",
+      "label": "Python 3 (speech-to-text runtime)",
+      "type": "bin",
+      "required": true,
+      "bin": "python3",
+      "hint": "xcode-select --install"
+    },
+    {
+      "id": "node",
+      "label": "Node.js and npm (the skills' scripts, in Claude Code)",
+      "type": "bin",
+      "required": true,
+      "bin": "npm",
+      "hint": "brew install node"
+    },
+    {
+      "id": "canvas",
+      "label": "Rendering engine (node packages)",
+      "type": "npm",
+      "required": false,
+      "auto": true,
+      "pkg": "@napi-rs/canvas",
+      "hint": "Installed on first run by scripts/bootstrap.mjs."
+    },
+    {
+      "id": "whisper",
+      "label": "Speech-to-text (Whisper, on your Mac's GPU)",
+      "type": "file",
+      "required": false,
+      "auto": true,
+      "path": "${WHISPER_PY:-~/.venv/whisper/bin/python}",
+      "hint": "Installed on first run by scripts/bootstrap.mjs."
+    },
+    {
+      "id": "music",
+      "label": "Music shelf (4 Mixkit tracks + 2 of the sound pack)",
+      "type": "files",
+      "required": false,
+      "auto": true,
+      "paths": [
+        "plugins/video/assets/music/mixkit-complicated-281.mp3",
+        "plugins/video/assets/music/mixkit-deep-urban-623.mp3",
+        "plugins/video/assets/music/mixkit-gimme-that-groove-872.mp3",
+        "plugins/video/assets/music/mixkit-hip-hop-02-738.mp3",
+        "plugins/video/assets/music/convergence.mp3",
+        "plugins/video/assets/music/ridgeclub-do-i-clench-my-fists.mp3"
+      ],
+      "hint": "The Mixkit tracks download from mixkit.co on first run; the other two come with the app's sound pack (not Mixkit: fine in a video, they can block its monetisation)."
+    },
+    {
+      "id": "sfx",
+      "label": "SFX pack (flash, click, whoosh, glitch, riser)",
+      "type": "files",
+      "required": false,
+      "paths": [
+        "plugins/video/assets/sfx/top5/camera-flash.wav",
+        "plugins/video/assets/sfx/top5/click.wav",
+        "plugins/video/assets/sfx/top5/whoosh.wav",
+        "plugins/video/assets/sfx/top5/glitch.wav",
+        "plugins/video/assets/sfx/top5/riser.wav"
+      ],
+      "hint": "Kept in the shelf; init.sh copies it into every project."
+    },
+    {
+      "id": "swiftc",
+      "label": "Swift compiler (the person matte: text behind the speaker)",
+      "type": "bin",
+      "required": false,
+      "bin": "swiftc",
+      "hint": "xcode-select --install"
+    },
+    {
+      "id": "gemini",
+      "label": "GEMINI_API_KEY (only when a plan needs a generated picture)",
+      "type": "env",
+      "required": false,
+      "vars": [
+        "GEMINI_API_KEY"
+      ],
+      "hint": "Most edits need no generated image.",
+      "does": "Makes a picture when an edit needs one that you don't have (Nano Banana 2).",
+      "without": "The edit uses your own pictures and logos. Most edits need no generated picture.",
+      "cost": "About $0.07 a picture, billed by Google."
+    },
+    {
+      "id": "elevenlabs",
+      "label": "ELEVENLABS_API_KEY (your voice made better, a bonus)",
+      "type": "env",
+      "required": false,
+      "vars": [
+        "ELEVENLABS_API_KEY"
+      ],
+      "hint": "Your own ElevenLabs key: in the app, Settings › Connectors › Add key. Only for the bonus « Your voice made better » (ElevenLabs' voice isolator: the room's echo and the noise out of your take), billed by ElevenLabs per minute of sound.",
+      "offer": "Your voice can be made better (the room's echo and the noise taken out) with an ElevenLabs key. Without one, the take's own sound is used."
+    }
+  ]
+}

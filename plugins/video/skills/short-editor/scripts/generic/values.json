@@ -1,0 +1,35 @@
+{
+  "_": "The Pipecorn generic's values (Nico's list, 2026-10-05): the edit picks 1 to 4 by id (generic.mjs --values phone-coverage,connect-rate,pipeline), in that order. The words come first, the number (n) after them in the pill; a value without n shows its word (or only its pictogram) there. These are claims of Pipecorn's: confirm a number before publishing it.",
+  "default": [
+    "phone-coverage",
+    "connect-rate",
+    "pipeline"
+  ],
+  "values": {
+    "phone-coverage": {
+      "label": "Phone coverage",
+      "n": "95%",
+      "glyph": "phone"
+    },
+    "connect-rate": {
+      "label": "Connect rate",
+      "n": "×3",
+      "glyph": "users"
+    },
+    "pipeline": {
+      "label": "Pipeline",
+      "n": "+50%",
+      "glyph": "chart"
+    },
+    "sales-improving": {
+      "label": "Sales improving our data",
+      "n": "+2000",
+      "glyph": "bolt"
+    },
+    "best-gtm-data": {
+      "label": "The best GTM data",
+      "word": "worldwide",
+      "glyph": "globe"
+    }
+  }
+}

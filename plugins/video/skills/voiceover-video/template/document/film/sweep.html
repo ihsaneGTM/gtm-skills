@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sweep · face ↔ screen</title>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="brand.css">
+<style>
+  /* The junction between Nico's face and the drawn screens: the yellow V page's torn sheet, alone and fast. It rises from
+     the bottom (its torn top edge first), covers the whole frame for one frame (the cut happens under it), then goes on
+     upward (its torn bottom edge last) and unveils what follows. Drawn on a transparent page; the assembly lays it on the
+     cut. ?seed= varies the tear, ?dir=down plays it from the top. */
+  html,body{margin:0;background:transparent!important;overflow:hidden}
+  #w{position:absolute;left:0;top:0;width:1920px;height:1080px;filter:drop-shadow(0 -18px 26px rgba(28,26,46,.28)) drop-shadow(0 18px 26px rgba(28,26,46,.28))}
+  #s{position:absolute;left:0;top:0;width:1920px;height:1080px}
+  #s .ln{position:absolute;left:50%;top:50%;width:220px;height:8px;margin:-4px 0 0 -110px;border-radius:4px;background:var(--ink);transform-origin:50% 50%}
+</style>
+</head>
+<body>
+<div id="w"><div id="s" class="paperbg accent"><i class="ln"></i></div></div>
+<script>
+  const Q = new URLSearchParams(location.search);
+  const SEED = +(Q.get('seed') || 3), DOWN = Q.get('dir') === 'down';
+  const N = 21, MID = 10;                       // 21 frames at 30 fps: covered on frame 10 (the cut)
+  const rand = (x) => { const s = Math.sin(x * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const io = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const torn = (y, seed) => { const p = []; for (let x = -20, i = 0; x <= 1940; x += 24, i++) p.push([x, y + Math.sin(i * 0.9 + seed) * 10 + (rand(seed + i) - 0.5) * 26 + Math.sin(i * 0.23) * 18]); return p; };
+  const w = document.getElementById('w'), s = document.getElementById('s'), ln = s.querySelector('.ln');
+  if (DOWN) w.style.transform = 'scaleY(-1)';
+  window.draw = (f) => {
+    let pts;
+    if (f <= MID) {
+      const u = io(clamp(f / MID));
+      const top = 1160 - u * 1240;              // the torn top edge rises past the top on the cut frame
+      pts = torn(top, SEED + 3).concat([[1940, 1300], [-20, 1300]]);
+    } else {
+      const u = io(clamp((f - MID) / (N - 1 - MID)));
+      const bot = 1160 - u * 1260;              // the torn bottom edge rises and leaves at the top
+      pts = [[-20, -300], [1940, -300]].concat(torn(bot, SEED + 9).reverse());
+    }
+    s.style.clipPath = `path('M${pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join('L')}Z')`;
+    // the ink line draws in while it covers, and slides up with it
+    const k = clamp((f - 5) / 5) * (1 - clamp((f - MID - 4) / 5));
+    ln.style.transform = `translateY(${(f > MID ? -(f - MID) * 70 : (1 - clamp((f - 3) / 7)) * 90).toFixed(1)}px) scaleX(${k.toFixed(3)})`;
+    // the post's grid shifts a little with the sheet (it is paper moving, not a wipe)
+    s.style.backgroundPosition = `0 ${(-f * 9).toFixed(1)}px`;
+  };
+  window.SWEEP = { N, MID };
+  window.draw(0);
+  document.fonts.ready.then(() => { window.__ready = true; });
+</script>
+</body>
+</html>

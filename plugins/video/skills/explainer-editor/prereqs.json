@@ -1,0 +1,114 @@
+{
+  "skill": "explainer-editor",
+  "summary": "Explainer editor: a vertical take of someone talking to the camera becomes a short in the Pipecorn explainer language (the speaker in a frame at the bottom, their head rising out of it; above them a stage that explains what they say as they say it: a title per section, numbered bars, pills, trees, a phone, their own screenshots; their words one at a time; full-screen breathers; -14 LUFS). Runs on the short-editor's engine.",
+  "prerequisites": [
+    {
+      "id": "ffmpeg",
+      "label": "ffmpeg (render, mix, measurements)",
+      "type": "bin",
+      "required": true,
+      "bin": "ffmpeg",
+      "hint": "brew install ffmpeg"
+    },
+    {
+      "id": "ffprobe",
+      "label": "ffprobe (file checks)",
+      "type": "bin",
+      "required": true,
+      "bin": "ffprobe",
+      "hint": "Ships with ffmpeg."
+    },
+    {
+      "id": "python3",
+      "label": "Python 3 (speech-to-text runtime)",
+      "type": "bin",
+      "required": true,
+      "bin": "python3",
+      "hint": "xcode-select --install"
+    },
+    {
+      "id": "engine",
+      "label": "The video engine (the short-editor skill's scripts)",
+      "type": "file",
+      "required": true,
+      "path": "plugins/video/skills/short-editor/scripts/build.sh",
+      "hint": "The explainer editor renders with the short editor's engine: keep both skills installed."
+    },
+    {
+      "id": "canvas",
+      "label": "Rendering engine (node packages)",
+      "type": "npm",
+      "required": false,
+      "auto": true,
+      "pkg": "@napi-rs/canvas",
+      "siblingSkill": "short-editor",
+      "hint": "Installed on first run by the engine's bootstrap.mjs."
+    },
+    {
+      "id": "whisper",
+      "label": "Speech-to-text (Whisper, on your Mac's GPU)",
+      "type": "file",
+      "required": false,
+      "auto": true,
+      "path": "${WHISPER_PY:-~/.venv/whisper/bin/python}",
+      "hint": "Installed on first run by the engine's bootstrap.mjs."
+    },
+    {
+      "id": "music",
+      "label": "Music shelf (4 Mixkit tracks + 2 of the sound pack)",
+      "type": "files",
+      "required": false,
+      "auto": true,
+      "paths": [
+        "plugins/video/assets/music/mixkit-complicated-281.mp3",
+        "plugins/video/assets/music/mixkit-deep-urban-623.mp3",
+        "plugins/video/assets/music/mixkit-gimme-that-groove-872.mp3",
+        "plugins/video/assets/music/mixkit-hip-hop-02-738.mp3",
+        "plugins/video/assets/music/convergence.mp3",
+        "plugins/video/assets/music/ridgeclub-do-i-clench-my-fists.mp3"
+      ],
+      "hint": "The Mixkit tracks download from mixkit.co on first run; the other two come with the app's sound pack (not Mixkit: fine in a video, they can block its monetisation)."
+    },
+    {
+      "id": "sfx",
+      "label": "SFX pack (flash, click, whoosh, glitch, riser)",
+      "type": "files",
+      "required": false,
+      "paths": [
+        "plugins/video/assets/sfx/top5/camera-flash.wav",
+        "plugins/video/assets/sfx/top5/click.wav",
+        "plugins/video/assets/sfx/top5/whoosh.wav",
+        "plugins/video/assets/sfx/top5/glitch.wav",
+        "plugins/video/assets/sfx/top5/riser.wav"
+      ],
+      "hint": "Kept in the shelf; init.sh copies it into every project."
+    },
+    {
+      "id": "sfx-motionix",
+      "label": "Motionix SFX pack (84 light sounds: pops, swishes, UI clicks, shutters, data, typing)",
+      "type": "file",
+      "required": false,
+      "path": "plugins/video/assets/sfx/motionix/kit.json",
+      "hint": "Kept in the shelf (plugins/video/assets/sfx/motionix/); init.sh copies it into every explainer project. Without it the small sounds fall back on the SFX pack."
+    },
+    {
+      "id": "swiftc",
+      "label": "Swift compiler (the person matte: your head rising out of the frame)",
+      "type": "bin",
+      "required": false,
+      "bin": "swiftc",
+      "hint": "xcode-select --install"
+    },
+    {
+      "id": "elevenlabs",
+      "label": "ELEVENLABS_API_KEY (your voice made better, a bonus)",
+      "type": "env",
+      "required": false,
+      "vars": [
+        "ELEVENLABS_API_KEY"
+      ],
+      "hint": "Your own ElevenLabs key: in the app, Settings › Connectors › Add key. Only for the bonus « Your voice made better » (ElevenLabs' voice isolator: the room's echo and the noise out of your take), billed by ElevenLabs per minute of sound.",
+      "offer": "Your voice can be made better (the room's echo and the noise taken out) with an ElevenLabs key. Without one, the take's own sound is used."
+    }
+  ]
+}

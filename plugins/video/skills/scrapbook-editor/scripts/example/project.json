@@ -1,0 +1,112 @@
+{
+  "source": "/absolute/path/to/workspace/projects/<slug>/source/tight.mov",
+  "out": "/absolute/path/to/workspace/videos/<slug>.mp4",
+  "duration": 47.1,
+  "width": 720,
+  "height": 1280,
+  "fps": 30,
+  "speed": 1,
+  "blurBand": 0,
+  "anchorX": 0.5,
+  "anchorY": 0.4,
+  "script": "Sacramento-Regular.ttf",
+  "scriptBlack": "Sacramento-Regular.ttf",
+  "lufs": -14,
+  "ceilingDbtp": -1,
+  "sfxMasterDb": 0,
+  "appName": "Your app",
+  "wallpaper": "assets/wallpaper.png",
+  "style": "scrapbook",
+  "accent": "#FFD43B",
+  "captionKeep": [
+    "Pipecorn",
+    "Station F",
+    "Klesos",
+    "SDR"
+  ],
+  "cueGains": {},
+  "tightened": {
+    "room": -50.4,
+    "minPause": 0.16,
+    "keep": 0.1,
+    "fps": 30.0,
+    "kept": [
+      [
+        2,
+        198
+      ],
+      [
+        206,
+        321
+      ],
+      [
+        322,
+        358
+      ],
+      [
+        365,
+        444
+      ],
+      [
+        450,
+        557
+      ],
+      [
+        568,
+        613
+      ],
+      [
+        617,
+        730
+      ],
+      [
+        737,
+        807
+      ],
+      [
+        815,
+        846
+      ],
+      [
+        849,
+        872
+      ],
+      [
+        881,
+        1034
+      ],
+      [
+        1039,
+        1109
+      ],
+      [
+        1113,
+        1245
+      ],
+      [
+        1251,
+        1328
+      ],
+      [
+        1335,
+        1446
+      ],
+      [
+        1456,
+        1511
+      ]
+    ],
+    "joins": 15,
+    "removed": 3.267,
+    "takeDuration": 50.367
+  },
+  "rawSource": "/absolute/path/to/the/take.mp4",
+  "voiceM": -23.4,
+  "bed": "music.wav",
+  "bedDb": -26.9,
+  "bedTrack": "mixkit-hip-hop-02-738.mp3",
+  "bedStart": 0,
+  "bedUnder": 15,
+  "bedDrop": 43.3,
+  "paperFont": "gochi"
+}

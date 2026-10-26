@@ -1,0 +1,103 @@
+{
+  "skill": "scrapbook-editor",
+  "summary": "Scrapbook editor: a raw vertical take becomes a short in the scrapbook style the user validated (every pause cut, captions word by word, the hook in two faces with a line on paper, real GIFs as polaroids in the middle of the screen, titles on ruled notebook scraps in a marker hand, die-cut stickers, the red marker, sections, real screens annotated, Hip Hop 02 under it, real paper sounds and the Motionix pack, -14 LUFS). Runs on the short-editor's engine.",
+  "prerequisites": [
+    {
+      "id": "ffmpeg",
+      "label": "ffmpeg (render, mix, measurements)",
+      "type": "bin",
+      "required": true,
+      "bin": "ffmpeg",
+      "hint": "brew install ffmpeg"
+    },
+    {
+      "id": "ffprobe",
+      "label": "ffprobe (file checks)",
+      "type": "bin",
+      "required": true,
+      "bin": "ffprobe",
+      "hint": "Ships with ffmpeg."
+    },
+    {
+      "id": "python3",
+      "label": "Python 3 (speech-to-text runtime)",
+      "type": "bin",
+      "required": true,
+      "bin": "python3",
+      "hint": "xcode-select --install"
+    },
+    {
+      "id": "engine",
+      "label": "The video engine (the short-editor skill's scripts)",
+      "type": "file",
+      "required": true,
+      "path": "plugins/video/skills/short-editor/scripts/build.sh",
+      "hint": "The scrapbook editor renders with the short editor's engine: keep both skills installed."
+    },
+    {
+      "id": "canvas",
+      "label": "Rendering engine (node packages)",
+      "type": "npm",
+      "required": false,
+      "auto": true,
+      "pkg": "@napi-rs/canvas",
+      "siblingSkill": "short-editor",
+      "hint": "Installed on first run by the engine's bootstrap.mjs."
+    },
+    {
+      "id": "whisper",
+      "label": "Speech-to-text (Whisper, on your Mac's GPU)",
+      "type": "file",
+      "required": false,
+      "auto": true,
+      "path": "${WHISPER_PY:-~/.venv/whisper/bin/python}",
+      "hint": "Installed on first run by the engine's bootstrap.mjs."
+    },
+    {
+      "id": "swiftc",
+      "label": "Swift compiler (finds the face: the GIFs and titles placed by it, the stickers around it)",
+      "type": "bin",
+      "required": false,
+      "bin": "swiftc",
+      "hint": "xcode-select --install"
+    },
+    {
+      "id": "giphy",
+      "label": "GIPHY_API_KEY (the real reaction GIFs of the style)",
+      "type": "env",
+      "required": false,
+      "vars": [
+        "GIPHY_API_KEY"
+      ],
+      "hint": "Free at developers.giphy.com: Create an App, pick API (not SDK). Without it: GIFs you drop in, or generated reaction pictures.",
+      "offer": "The real reaction GIFs of this style need a free GIPHY key. It takes a minute.",
+      "does": "Searches the real reaction GIFs the Scrapbook style puts in the middle of the screen.",
+      "without": "GIFs you drop in, or generated reaction pictures.",
+      "cost": "Free (developers.giphy.com). GIFs are for organic posts only."
+    },
+    {
+      "id": "gemini",
+      "label": "GEMINI_API_KEY (illustrations and reaction pictures)",
+      "type": "env",
+      "required": false,
+      "vars": [
+        "GEMINI_API_KEY"
+      ],
+      "hint": "Nano Banana 2, about $0.07 a picture. Without it: your own pictures and GIFs only.",
+      "does": "Draws the Scrapbook illustrations and stickers (Nano Banana 2).",
+      "without": "Your own pictures and GIFs only.",
+      "cost": "About $0.07 a picture, billed by Google."
+    },
+    {
+      "id": "elevenlabs",
+      "label": "ELEVENLABS_API_KEY (your voice made better, a bonus)",
+      "type": "env",
+      "required": false,
+      "vars": [
+        "ELEVENLABS_API_KEY"
+      ],
+      "hint": "Your own ElevenLabs key: in the app, Settings › Connectors › Add key. Only for the bonus « Your voice made better » (ElevenLabs' voice isolator: the room's echo and the noise out of your take), billed by ElevenLabs per minute of sound.",
+      "offer": "Your voice can be made better (the room's echo and the noise taken out) with an ElevenLabs key. Without one, the take's own sound is used."
+    }
+  ]
+}

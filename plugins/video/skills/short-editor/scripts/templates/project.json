@@ -1,0 +1,26 @@
+{
+  "source": "/absolute/path/to/the/raw/take.mp4",
+  "out": "/absolute/path/to/the/finished/short.mp4",
+  "duration": 0,
+  "width": 1080,
+  "height": 1920,
+  "fps": 60,
+  "speed": 1,
+
+  "blurBand": 0,
+  "anchorX": 0.5,
+  "anchorY": 0.27,
+
+  "script": "Sacramento-Regular.ttf",
+  "scriptBlack": "Sacramento-Regular.ttf",
+
+  "bed": "music.wav",
+  "bedDb": -18.5,
+
+  "lufs": -14.0,
+  "ceilingDbtp": -1.0,
+  "sfxMasterDb": -15,
+
+  "appName": "Your app",
+  "wallpaper": "assets/wallpaper.png"
+}
